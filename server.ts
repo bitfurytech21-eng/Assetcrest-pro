@@ -1,4 +1,6 @@
 import express from "express";
+import { requireAuth, AuthRequest } from "./src/middleware/auth.ts";
+import { getUsers } from "./src/db/users.ts";
 
 const app = express();
 const PORT = 3000;
@@ -18,10 +20,23 @@ app.use((_req, res, next) => {
 app.get("/api/health", (_req, res) => {
   res.json({
     status: "ok",
+    database: "cloudsql-postgres",
+    region: "europe-west3",
     target: "https://assetcrest.co",
     appTarget: "https://app.assetcrest.co",
     timestamp: new Date().toISOString(),
   });
+});
+
+// Protected database API route
+app.get("/api/users", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const users = await getUsers();
+    res.json(users);
+  } catch (error: any) {
+    console.error("Failed to fetch users:", error);
+    res.status(500).json({ error: error.message || "Failed to fetch users" });
+  }
 });
 
 // Helper for rewriting URLs

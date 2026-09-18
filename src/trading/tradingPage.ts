@@ -1,7 +1,7 @@
 /**
  * AssetCrest Pro - Live Trading View Terminal
- * Institutional-grade trading interface styled to perfectly match AssetCrest brand colors,
- * typography (Sarabun & Roboto), and corporate tone.
+ * Mobile-friendly, static UI aligned with AssetCrest brand colors, typography (Sarabun & Roboto),
+ * and institutional tone.
  */
 
 export interface MarketSymbol {
@@ -217,15 +217,15 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>${currentSymbol.symbol} - Live Trading View | AssetCrest</title>
-  <meta name="description" content="AssetCrest institutional-grade live TradingView terminal. Advanced multi-timeframe charting, technical analysis indicators, live order book, and real-time execution.">
+  <meta name="description" content="AssetCrest institutional-grade live TradingView terminal. Advanced charting, technical analysis indicators, live order book, and execution.">
   <link rel="icon" type="image/png" href="https://assetcrest.co/wp-content/uploads/2023/07/cropped-assetcrest-favicon-32x32.png">
   
   <!-- AssetCrest Brand Fonts: Sarabun & Roboto -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Sarabun:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <style>
     :root {
@@ -240,7 +240,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       --ac-navy-border: rgba(27, 73, 98, 0.45);
       --ac-navy-glow: rgba(27, 73, 98, 0.3);
 
-      /* Canvas & Dark Surfaces (matching AssetCrest dark sections) */
+      /* Canvas & Dark Surfaces */
       --bg-canvas: #0b131c;
       --bg-panel: #0f1a26;
       --bg-panel-sub: #142232;
@@ -257,7 +257,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       --text-muted: #abb8c3;
       --text-dim: #6d8194;
 
-      /* Bullish & Bearish (Green: AssetCrest vivid green-cyan / Red: AssetCrest coral) */
+      /* Bullish & Bearish */
       --green: #00d084;
       --green-glow: rgba(0, 208, 132, 0.22);
       --green-dim: rgba(0, 208, 132, 0.12);
@@ -275,13 +275,14 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       padding: 0;
     }
 
-    body {
+    html, body {
       background-color: var(--bg-canvas);
       color: var(--text-main);
       font-family: 'Sarabun', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      max-width: 100vw;
       overflow-x: hidden;
       letter-spacing: -0.1px;
     }
@@ -290,7 +291,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       font-family: 'Roboto Mono', monospace;
     }
 
-    /* Top Accent Stripe matching AssetCrest brand */
+    /* Top Accent Stripe */
     .brand-top-stripe {
       height: 3px;
       background: linear-gradient(90deg, #e94d65 0%, #1b4962 45%, #00d084 100%);
@@ -300,36 +301,37 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       z-index: 102;
     }
 
-    /* Terminal Header */
+    /* Terminal Header: Strict 52px height, perfectly aligned, zero overflow */
     .terminal-header {
       background-color: var(--bg-panel);
       border-bottom: 1px solid var(--border-main);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 18px;
-      height: 60px;
+      padding: 0 14px;
+      height: 52px;
       position: sticky;
       top: 3px;
       z-index: 101;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     }
 
     .brand-section {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 10px;
+      flex-shrink: 0;
     }
 
     .logo-container {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
       text-decoration: none;
     }
 
     .logo-img {
-      height: 32px;
+      height: 26px;
       width: auto;
       display: block;
       object-fit: contain;
@@ -340,14 +342,15 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       color: var(--ac-coral);
       font-size: 10px;
       font-weight: 800;
-      padding: 3px 9px;
+      padding: 3px 7px;
       border-radius: 4px;
       border: 1px solid rgba(233, 77, 101, 0.35);
-      letter-spacing: 0.8px;
+      letter-spacing: 0.5px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       text-transform: uppercase;
+      white-space: nowrap;
     }
 
     .live-dot {
@@ -355,13 +358,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       height: 6px;
       border-radius: 50%;
       background: var(--ac-coral);
-      box-shadow: 0 0 8px var(--ac-coral);
-      animation: pulse 1.6s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.35; transform: scale(0.8); }
+      box-shadow: 0 0 6px var(--ac-coral);
     }
 
     /* Market Selector Dropdown Button */
@@ -369,15 +366,15 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       background: var(--bg-panel-sub);
       border: 1px solid var(--ac-navy-border);
       border-radius: 6px;
-      padding: 7px 12px;
+      padding: 6px 10px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       color: var(--text-main);
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.15s ease;
-      font-size: 13px;
+      font-size: 12px;
+      white-space: nowrap;
     }
 
     .market-selector-btn:hover {
@@ -389,7 +386,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     .header-stats {
       display: flex;
       align-items: center;
-      gap: 22px;
+      gap: 18px;
     }
 
     .stat-item {
@@ -398,20 +395,20 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
 
     .stat-label {
-      font-size: 10px;
+      font-size: 9.5px;
       color: var(--text-muted);
       text-transform: uppercase;
       font-weight: 600;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
     }
 
     .stat-value {
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 700;
     }
 
     .price-large {
-      font-size: 16px;
+      font-size: 14.5px;
       font-weight: 800;
     }
 
@@ -424,38 +421,37 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
     .btn {
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-size: 12px;
       font-weight: 700;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       cursor: pointer;
       border: none;
-      transition: all 0.15s ease;
       font-family: 'Sarabun', sans-serif;
+      white-space: nowrap;
+      height: 32px;
+      line-height: 1;
     }
 
-    /* AssetCrest Signature Coral Button */
     .btn-coral {
       background: linear-gradient(135deg, #e94d65 0%, #d83951 100%);
       color: #ffffff;
-      box-shadow: 0 3px 12px rgba(233, 77, 101, 0.35);
+      box-shadow: 0 2px 8px rgba(233, 77, 101, 0.35);
       border: 1px solid rgba(255, 255, 255, 0.15);
     }
     .btn-coral:hover {
       filter: brightness(1.08);
-      transform: translateY(-1px);
-      box-shadow: 0 5px 16px rgba(233, 77, 101, 0.45);
     }
 
-    /* AssetCrest Deep Navy Button */
     .btn-navy {
       background: var(--ac-navy);
       color: #ffffff;
@@ -463,7 +459,6 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
     .btn-navy:hover {
       background: var(--ac-navy-light);
-      border-color: rgba(255, 255, 255, 0.25);
     }
 
     .btn-secondary {
@@ -474,12 +469,11 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     .btn-secondary:hover {
       background: var(--bg-card);
       border-color: var(--ac-navy-light);
-      color: #ffffff;
     }
 
     /* Ticker Tape Bar */
     .ticker-bar {
-      height: 46px;
+      height: 40px;
       background: #080e15;
       border-bottom: 1px solid var(--border-main);
       overflow: hidden;
@@ -490,26 +484,31 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     .quick-assets-bar {
       background: var(--bg-panel);
       border-bottom: 1px solid var(--border-main);
-      padding: 7px 18px;
+      padding: 6px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       overflow-x: auto;
       white-space: nowrap;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .quick-assets-bar::-webkit-scrollbar {
+      display: none;
     }
 
     .filter-pill {
-      padding: 4px 10px;
+      padding: 4px 8px;
       border-radius: 4px;
       font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
       color: var(--text-muted);
       cursor: pointer;
       background: transparent;
       border: 1px solid transparent;
-      transition: all 0.15s;
+      flex-shrink: 0;
     }
     .filter-pill.active {
       background: var(--ac-navy);
@@ -519,39 +518,68 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
     .bar-divider {
       width: 1px;
-      height: 18px;
+      height: 16px;
       background: var(--border-main);
       margin: 0 4px;
+      flex-shrink: 0;
     }
 
     .asset-chip {
-      padding: 5px 11px;
+      padding: 4px 9px;
       border-radius: 5px;
       background: var(--bg-panel-sub);
       border: 1px solid var(--border-main);
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 600;
       color: var(--text-muted);
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
-      transition: all 0.15s ease;
+      gap: 5px;
+      flex-shrink: 0;
     }
     .asset-chip:hover {
       background: var(--bg-card);
       color: var(--text-main);
-      border-color: rgba(255, 255, 255, 0.2);
     }
     .asset-chip.active {
       background: var(--ac-coral-dim);
       border-color: var(--ac-coral);
       color: #ffffff;
-      box-shadow: 0 2px 8px var(--ac-coral-glow);
+      box-shadow: 0 2px 6px var(--ac-coral-glow);
     }
     .asset-chip.active .asset-chip-symbol {
       color: var(--ac-coral);
       font-weight: 800;
+    }
+
+    /* Mobile Segment View Switcher (Visible only on mobile <= 768px) */
+    .mobile-view-tabs {
+      display: none;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border-main);
+      padding: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .mobile-view-tab {
+      flex: 1;
+      padding: 10px 6px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: 'Sarabun', sans-serif;
+    }
+    .mobile-view-tab.active {
+      color: var(--ac-coral);
+      border-bottom-color: var(--ac-coral);
+      background: rgba(233, 77, 101, 0.05);
     }
 
     /* Main Terminal Layout */
@@ -559,16 +587,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       flex: 1;
       display: grid;
       grid-template-columns: 1fr 345px;
-      min-height: calc(100vh - 110px);
-    }
-
-    @media (max-width: 1120px) {
-      .terminal-body {
-        grid-template-columns: 1fr;
-      }
-      .header-stats {
-        display: none;
-      }
+      min-height: calc(100vh - 145px);
     }
 
     /* Chart & Bottom Area */
@@ -581,15 +600,10 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
 
     .chart-wrapper {
-      height: 570px;
+      height: 540px;
       position: relative;
       background: #091017;
-    }
-
-    @media (max-width: 768px) {
-      .chart-wrapper {
-        height: 400px;
-      }
+      width: 100%;
     }
 
     /* Bottom Section */
@@ -605,13 +619,18 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       display: flex;
       align-items: center;
       border-bottom: 1px solid var(--border-main);
-      padding: 0 16px;
+      padding: 0 12px;
       background: var(--bg-panel-sub);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .bottom-tabs::-webkit-scrollbar {
+      display: none;
     }
 
     .tab-btn {
-      padding: 12px 18px;
-      font-size: 13px;
+      padding: 11px 14px;
+      font-size: 12px;
       font-weight: 700;
       color: var(--text-muted);
       background: transparent;
@@ -620,9 +639,10 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 8px;
-      transition: all 0.15s ease;
+      gap: 6px;
       font-family: 'Sarabun', sans-serif;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .tab-btn:hover {
       color: var(--text-main);
@@ -634,7 +654,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
     .tab-badge {
       background: rgba(255, 255, 255, 0.08);
-      padding: 2px 7px;
+      padding: 1px 6px;
       border-radius: 10px;
       font-size: 10px;
       color: var(--text-main);
@@ -647,17 +667,25 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
     .tab-content {
       display: none;
-      padding: 16px;
+      padding: 14px;
       flex: 1;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
     .tab-content.active {
       display: block;
     }
 
     /* Tables */
+    .table-responsive-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
     .trading-table {
       width: 100%;
+      min-width: 600px;
       border-collapse: collapse;
       font-size: 12px;
       text-align: left;
@@ -665,28 +693,30 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     .trading-table th {
       color: var(--text-muted);
       font-weight: 700;
-      padding: 10px 12px;
+      padding: 9px 10px;
       border-bottom: 1px solid var(--border-main);
       text-transform: uppercase;
-      font-size: 10.5px;
-      letter-spacing: 0.5px;
+      font-size: 10px;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
     }
     .trading-table td {
-      padding: 12px;
+      padding: 10px;
       border-bottom: 1px solid var(--border-sub);
       color: var(--text-main);
+      white-space: nowrap;
     }
     .trading-table tr:hover td {
       background: rgba(27, 73, 98, 0.15);
     }
 
     .side-pill {
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
       font-weight: 800;
-      font-size: 10.5px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
     }
     .side-long {
       background: var(--green-dim);
@@ -708,22 +738,21 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
 
     .panel-box {
-      padding: 18px;
+      padding: 16px;
       border-bottom: 1px solid var(--border-main);
     }
 
     .panel-title {
-      font-size: 14px;
+      font-size: 13.5px;
       font-weight: 800;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      letter-spacing: -0.2px;
     }
 
     .account-balance-pill {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
     }
     .account-balance-val {
@@ -736,20 +765,18 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
     .side-btn {
-      padding: 11px;
-      border-radius: 6px;
+      padding: 10px;
+      border-radius: 5px;
       font-weight: 800;
-      font-size: 13px;
+      font-size: 12.5px;
       border: 1px solid transparent;
       cursor: pointer;
       text-align: center;
-      transition: all 0.15s ease;
       font-family: 'Sarabun', sans-serif;
-      letter-spacing: 0.3px;
     }
     .side-btn-buy {
       background: var(--green-dim);
@@ -759,7 +786,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     .side-btn-buy.active {
       background: var(--green);
       color: #0b131c;
-      box-shadow: 0 4px 14px var(--green-glow);
+      box-shadow: 0 3px 12px var(--green-glow);
     }
     .side-btn-sell {
       background: var(--red-dim);
@@ -769,31 +796,30 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     .side-btn-sell.active {
       background: var(--ac-coral);
       color: #ffffff;
-      box-shadow: 0 4px 14px var(--ac-coral-glow);
+      box-shadow: 0 3px 12px var(--ac-coral-glow);
     }
 
     /* Order Type Selector */
     .order-type-tabs {
       display: flex;
-      gap: 6px;
-      margin-bottom: 14px;
+      gap: 5px;
+      margin-bottom: 12px;
       background: var(--bg-panel-sub);
-      padding: 4px;
-      border-radius: 6px;
+      padding: 3px;
+      border-radius: 5px;
       border: 1px solid var(--border-main);
     }
     .order-type-btn {
       flex: 1;
-      padding: 6px 8px;
+      padding: 6px 6px;
       background: transparent;
       border: none;
       color: var(--text-muted);
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 700;
       border-radius: 4px;
       cursor: pointer;
       text-align: center;
-      transition: all 0.15s;
     }
     .order-type-btn.active {
       background: var(--ac-navy);
@@ -802,17 +828,16 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
     /* Form Fields */
     .form-group {
-      margin-bottom: 12px;
+      margin-bottom: 11px;
     }
     .form-label {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-muted);
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       text-transform: uppercase;
       font-weight: 700;
-      letter-spacing: 0.3px;
     }
     .input-wrapper {
       position: relative;
@@ -823,13 +848,12 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       width: 100%;
       background: var(--bg-panel-sub);
       border: 1px solid var(--border-main);
-      border-radius: 6px;
-      padding: 10px 42px 10px 12px;
+      border-radius: 5px;
+      padding: 9px 38px 9px 10px;
       color: var(--text-main);
       font-size: 13px;
       font-weight: 600;
       outline: none;
-      transition: border-color 0.15s ease;
     }
     .form-input:focus {
       border-color: var(--ac-coral);
@@ -837,8 +861,8 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
     .input-suffix {
       position: absolute;
-      right: 12px;
-      font-size: 12px;
+      right: 10px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--text-dim);
     }
@@ -847,8 +871,8 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     .percent-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-bottom: 14px;
+      gap: 5px;
+      margin-bottom: 12px;
     }
     .percent-btn {
       background: var(--bg-panel-sub);
@@ -860,7 +884,6 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       color: var(--text-muted);
       cursor: pointer;
       text-align: center;
-      transition: all 0.15s;
     }
     .percent-btn:hover {
       background: var(--bg-card);
@@ -870,18 +893,18 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
     /* Leverage Box */
     .leverage-box {
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       background: var(--bg-panel-sub);
-      padding: 12px;
-      border-radius: 6px;
+      padding: 10px 12px;
+      border-radius: 5px;
       border: 1px solid var(--border-main);
     }
     .leverage-header {
       display: flex;
       justify-content: space-between;
-      font-size: 11px;
+      font-size: 10.5px;
       color: var(--text-muted);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-weight: 700;
       text-transform: uppercase;
     }
@@ -891,8 +914,8 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
     .slider {
       width: 100%;
-      height: 5px;
-      border-radius: 3px;
+      height: 4px;
+      border-radius: 2px;
       background: var(--bg-card);
       outline: none;
       cursor: pointer;
@@ -901,7 +924,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     .leverage-presets {
       display: flex;
       justify-content: space-between;
-      margin-top: 8px;
+      margin-top: 6px;
     }
     .leverage-chip {
       font-size: 10px;
@@ -915,19 +938,18 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
     .leverage-chip:hover {
       color: var(--ac-coral);
-      background: var(--ac-coral-dim);
     }
 
     /* Order Summary */
     .summary-box {
       background: var(--bg-panel-sub);
-      border-radius: 6px;
-      padding: 12px;
-      margin-bottom: 14px;
-      font-size: 12px;
+      border-radius: 5px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      font-size: 11.5px;
       display: flex;
       flex-direction: column;
-      gap: 7px;
+      gap: 6px;
       border: 1px solid var(--border-main);
     }
     .summary-row {
@@ -943,64 +965,80 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     /* Execute Button */
     .execute-btn {
       width: 100%;
-      padding: 13px;
-      border-radius: 6px;
-      font-size: 14px;
+      padding: 12px;
+      border-radius: 5px;
+      font-size: 13.5px;
       font-weight: 800;
       border: none;
       cursor: pointer;
-      transition: all 0.15s ease;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
       font-family: 'Sarabun', sans-serif;
     }
     .execute-btn-buy {
       background: linear-gradient(135deg, #00d084 0%, #059669 100%);
       color: #0b131c;
-      box-shadow: 0 4px 16px var(--green-glow);
-    }
-    .execute-btn-buy:hover {
-      filter: brightness(1.08);
-      transform: translateY(-1px);
+      box-shadow: 0 3px 12px var(--green-glow);
     }
     .execute-btn-sell {
       background: linear-gradient(135deg, #e94d65 0%, #c5334a 100%);
       color: #ffffff;
-      box-shadow: 0 4px 16px var(--ac-coral-glow);
-    }
-    .execute-btn-sell:hover {
-      filter: brightness(1.08);
-      transform: translateY(-1px);
+      box-shadow: 0 3px 12px var(--ac-coral-glow);
     }
 
     /* Technical Analysis Gauge */
     .ta-gauge-container {
-      height: 380px;
+      height: 360px;
       overflow: hidden;
+    }
+
+    /* Mobile Sticky Bottom Trading Actions (buy / sell shortcuts) */
+    .mobile-bottom-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 99;
+      background: #0a121a;
+      border-top: 1px solid var(--border-main);
+      padding: 8px 12px;
+      gap: 10px;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+    }
+    .mobile-bottom-bar-btn {
+      flex: 1;
+      padding: 11px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      font-family: 'Sarabun', sans-serif;
+      text-align: center;
     }
 
     /* Toast */
     .toast-container {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
+      bottom: 20px;
+      right: 20px;
       z-index: 1000;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
+      max-width: 90vw;
     }
     .toast {
       background: var(--bg-panel);
       border: 1px solid var(--border-main);
-      border-radius: 6px;
-      padding: 12px 18px;
+      border-radius: 5px;
+      padding: 10px 14px;
       color: white;
-      font-size: 13px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      font-size: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
       display: flex;
       align-items: center;
-      gap: 10px;
-      animation: slideIn 0.25s ease;
-      min-width: 280px;
+      gap: 8px;
       font-weight: 600;
     }
     .toast-success {
@@ -1009,22 +1047,18 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     .toast-error {
       border-left: 4px solid var(--ac-coral);
     }
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
 
     /* Modals */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.82);
       backdrop-filter: blur(4px);
       display: none;
       align-items: center;
       justify-content: center;
       z-index: 200;
-      padding: 16px;
+      padding: 12px;
     }
     .modal-overlay.active {
       display: flex;
@@ -1034,12 +1068,12 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       border: 1px solid var(--border-main);
       border-radius: 8px;
       width: 100%;
-      max-width: 520px;
+      max-width: 480px;
       overflow: hidden;
-      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
     }
     .modal-header {
-      padding: 16px 20px;
+      padding: 14px 16px;
       border-bottom: 1px solid var(--border-main);
       display: flex;
       justify-content: space-between;
@@ -1047,42 +1081,116 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       background: var(--bg-panel-sub);
     }
     .modal-body {
-      padding: 20px;
+      padding: 16px;
+    }
+
+    /* RESPONSIVE MOBILE ADAPTATIONS */
+    @media (max-width: 1120px) {
+      .terminal-body {
+        grid-template-columns: 1fr;
+      }
+      .header-stats {
+        display: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .brand-top-stripe {
+        height: 2px;
+      }
+      .terminal-header {
+        height: 48px;
+        padding: 0 10px;
+      }
+      .logo-badge {
+        display: none; /* Hide LIVE TERMINAL badge on mobile to prevent overflow */
+      }
+      .logo-img {
+        height: 22px;
+      }
+      .market-selector-btn {
+        padding: 5px 8px;
+        font-size: 11.5px;
+      }
+      .header-actions .btn-navy,
+      .header-actions .btn-secondary {
+        display: none; /* Keep header clean: hide Portal/Website on mobile */
+      }
+      .header-actions .btn-coral {
+        padding: 5px 10px;
+        font-size: 11.5px;
+        height: 28px;
+      }
+      .ticker-bar {
+        height: 38px;
+      }
+      .quick-assets-bar {
+        padding: 5px 10px;
+      }
+
+      /* Enable mobile view switcher */
+      .mobile-view-tabs {
+        display: flex;
+      }
+
+      /* Mobile chart height */
+      .chart-wrapper {
+        height: 360px;
+      }
+
+      /* Mobile views controlled by JS tab switcher */
+      .mobile-hide {
+        display: none !important;
+      }
+      .mobile-show {
+        display: block !important;
+      }
+
+      /* Bottom bar for instant trading execution on mobile */
+      .mobile-bottom-bar {
+        display: flex;
+      }
+
+      body {
+        padding-bottom: 56px; /* space for mobile bottom bar */
+      }
+
+      .bottom-section {
+        border-top: none;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Accent Stripe (AssetCrest Tricolor Gradient) -->
+  <!-- Top Accent Stripe -->
   <div class="brand-top-stripe"></div>
 
-  <!-- Terminal Header -->
+  <!-- Terminal Header: Strict, Clean, Never Overflows -->
   <header class="terminal-header">
     <div class="brand-section">
-      <a href="/" class="logo-container" title="Return to AssetCrest Home">
-        <img class="logo-img" src="https://assetcrest.co/wp-content/uploads/2024/12/logo-new.png" alt="AssetCrest" onerror="this.onerror=null;this.style.display='none';document.getElementById('fallbackBrand').style.display='block';">
-        <span id="fallbackBrand" style="display:none; font-weight:800; font-size:20px; letter-spacing:-0.5px; color:#ffffff;">
+      <a href="/" class="logo-container" title="AssetCrest Home">
+        <img class="logo-img" src="https://assetcrest.co/wp-content/uploads/2024/12/logo-new.png" alt="AssetCrest" onerror="this.onerror=null;this.style.display='none';document.getElementById('fallbackBrand').style.display='inline';">
+        <span id="fallbackBrand" style="display:none; font-weight:800; font-size:18px; color:#ffffff;">
           <span style="color:#e94d65;">Asset</span>Crest
         </span>
       </a>
 
       <span class="logo-badge">
-        <span class="live-dot"></span> LIVE TERMINAL
+        <span class="live-dot"></span> LIVE
       </span>
 
       <!-- Market Selector Button -->
-      <div style="position:relative; margin-left: 6px;">
-        <button id="marketDropdownBtn" class="market-selector-btn" onclick="toggleMarketModal()">
-          <span id="activePairDisplay" class="mono">${currentSymbol.symbol}</span>
-          <span style="font-size:9px; color:var(--text-dim); margin-left:2px;">▼</span>
-        </button>
-      </div>
+      <button id="marketDropdownBtn" class="market-selector-btn" onclick="toggleMarketModal()">
+        <span id="activePairDisplay" class="mono">${currentSymbol.symbol}</span>
+        <span style="font-size:8px; color:var(--text-dim); margin-left:1px;">▼</span>
+      </button>
     </div>
 
-    <!-- Live Market Stats -->
+    <!-- Live Market Stats (Desktop) -->
     <div class="header-stats">
       <div class="stat-item">
-        <span class="stat-label">Last Price</span>
+        <span class="stat-label">Price</span>
         <span id="headerLastPrice" class="stat-value price-large mono text-green">$${currentSymbol.price.toLocaleString(undefined, { minimumFractionDigits: currentSymbol.precision, maximumFractionDigits: currentSymbol.precision })}</span>
       </div>
       <div class="stat-item">
@@ -1098,25 +1206,21 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         <span id="header24hLow" class="stat-value mono">$${currentSymbol.low24h.toLocaleString(undefined, { minimumFractionDigits: currentSymbol.precision })}</span>
       </div>
       <div class="stat-item">
-        <span class="stat-label">24h Volume</span>
+        <span class="stat-label">24h Vol</span>
         <span id="header24hVol" class="stat-value mono">$${currentSymbol.volume24h}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">Funding / 8h</span>
-        <span class="stat-value mono" style="color:var(--gold);">0.0100% · <span id="fundingCountdown">03:42:18</span></span>
       </div>
     </div>
 
     <!-- Header Actions -->
     <div class="header-actions">
       <button class="btn btn-coral" onclick="openDepositModal()">
-        ⚡ Deposit Funds
+        ⚡ Deposit
       </button>
       <a href="/login" class="btn btn-navy">
-        Client Portal
+        Portal
       </a>
-      <a href="/" class="btn btn-secondary" title="Return to AssetCrest Website">
-        Website
+      <a href="/" class="btn btn-secondary" title="Return to Website">
+        Home
       </a>
     </div>
   </header>
@@ -1157,16 +1261,24 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     <button class="filter-pill" onclick="filterQuickBar('commodities', this)">Commodities</button>
     <button class="filter-pill" onclick="filterQuickBar('stocks', this)">Equities</button>
     <div class="bar-divider"></div>
-    <div id="quickAssetsContainer" style="display:flex; align-items:center; gap:8px;">
+    <div id="quickAssetsContainer" style="display:flex; align-items:center; gap:6px;">
       <!-- Populated by JS -->
     </div>
+  </div>
+
+  <!-- Mobile View Switcher Tabs (Only visible on screens <= 768px) -->
+  <div class="mobile-view-tabs" id="mobileViewTabs">
+    <button class="mobile-view-tab active" onclick="switchMobileView('chart', this)">📊 Chart</button>
+    <button class="mobile-view-tab" onclick="switchMobileView('trade', this)">⚡ Place Order</button>
+    <button class="mobile-view-tab" onclick="switchMobileView('book', this)">📖 Order Book</button>
+    <button class="mobile-view-tab" onclick="switchMobileView('positions', this)">💼 Positions (<span id="mobilePosBadge">0</span>)</button>
   </div>
 
   <!-- Main Terminal Body -->
   <div class="terminal-body">
 
     <!-- Left Column: TradingView Advanced Chart & Bottom Tabs -->
-    <div class="chart-panel-container">
+    <div class="chart-panel-container" id="chartPanelContainer">
       
       <!-- Chart Area -->
       <div class="chart-wrapper" id="tv_chart_container">
@@ -1176,7 +1288,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       </div>
 
       <!-- Bottom Panel Tabs (Positions, Order Book, Trades, Watchlist) -->
-      <div class="bottom-section">
+      <div class="bottom-section" id="bottomTabsContainer">
         <div class="bottom-tabs">
           <button class="tab-btn active" onclick="switchBottomTab('positions')">
             Open Positions <span class="tab-badge" id="positionsCountBadge">0</span>
@@ -1194,117 +1306,127 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
         <!-- Tab 1: Positions -->
         <div class="tab-content active" id="tab_positions">
-          <table class="trading-table">
-            <thead>
-              <tr>
-                <th>Market</th>
-                <th>Side</th>
-                <th>Leverage</th>
-                <th>Size (USD)</th>
-                <th>Entry Price</th>
-                <th>Mark Price</th>
-                <th>Liq. Price</th>
-                <th>Margin</th>
-                <th>Unrealized PnL</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="positionsTableBody">
-              <tr>
-                <td colspan="10" style="text-align:center; padding: 36px; color: var(--text-dim);">
-                  No open positions yet. Use the execution terminal on the right to open your first long or short trade.
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-responsive-wrapper">
+            <table class="trading-table">
+              <thead>
+                <tr>
+                  <th>Market</th>
+                  <th>Side</th>
+                  <th>Leverage</th>
+                  <th>Size (USD)</th>
+                  <th>Entry Price</th>
+                  <th>Mark Price</th>
+                  <th>Liq. Price</th>
+                  <th>Margin</th>
+                  <th>Unrealized PnL</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="positionsTableBody">
+                <tr>
+                  <td colspan="10" style="text-align:center; padding: 28px; color: var(--text-dim);">
+                    No open positions yet. Use the order ticket to place a trade.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Tab 2: Live Order Book & Trades -->
         <div class="tab-content" id="tab_orderbook">
-          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
             <div>
-              <div style="font-size:11px; font-weight:800; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">
+              <div style="font-size:11px; font-weight:800; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.4px;">
                 Order Book Depth (Bids / Asks)
               </div>
-              <table class="trading-table" style="font-size:11px;">
-                <thead>
-                  <tr>
-                    <th>Price (USDT)</th>
-                    <th>Size</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody id="orderBookBody">
-                  <!-- Generated by JS -->
-                </tbody>
-              </table>
+              <div class="table-responsive-wrapper">
+                <table class="trading-table" style="min-width: 100%; font-size:11px;">
+                  <thead>
+                    <tr>
+                      <th>Price (USDT)</th>
+                      <th>Size</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="orderBookBody">
+                    <!-- Populated by JS -->
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div>
-              <div style="font-size:11px; font-weight:800; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px;">
-                Recent Market Trades (Live Feed)
+              <div style="font-size:11px; font-weight:800; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:0.4px;">
+                Market Trades
               </div>
-              <table class="trading-table" style="font-size:11px;">
-                <thead>
-                  <tr>
-                    <th>Time</th>
-                    <th>Price</th>
-                    <th>Amount</th>
-                    <th>Side</th>
-                  </tr>
-                </thead>
-                <tbody id="recentTradesBody">
-                  <!-- Generated by JS -->
-                </tbody>
-              </table>
+              <div class="table-responsive-wrapper">
+                <table class="trading-table" style="min-width: 100%; font-size:11px;">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Price</th>
+                      <th>Amount</th>
+                      <th>Side</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recentTradesBody">
+                    <!-- Populated by JS -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Tab 3: History -->
         <div class="tab-content" id="tab_history">
-          <table class="trading-table">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Market</th>
-                <th>Side</th>
-                <th>Entry</th>
-                <th>Exit</th>
-                <th>Size</th>
-                <th>Realized PnL</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="historyTableBody">
-              <tr>
-                <td colspan="8" style="text-align:center; padding: 36px; color: var(--text-dim);">
-                  No trade history records found.
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-responsive-wrapper">
+            <table class="trading-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Market</th>
+                  <th>Side</th>
+                  <th>Entry</th>
+                  <th>Exit</th>
+                  <th>Size</th>
+                  <th>Realized PnL</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody">
+                <tr>
+                  <td colspan="8" style="text-align:center; padding: 28px; color: var(--text-dim);">
+                    No trade history records found.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Tab 4: All Markets Watchlist -->
         <div class="tab-content" id="tab_markets">
-          <table class="trading-table">
-            <thead>
-              <tr>
-                <th>Asset</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Last Price</th>
-                <th>24h Change</th>
-                <th>24h High</th>
-                <th>24h Low</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="allMarketsTableBody">
-              <!-- Generated by JS -->
-            </tbody>
-          </table>
+          <div class="table-responsive-wrapper">
+            <table class="trading-table">
+              <thead>
+                <tr>
+                  <th>Asset</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Last Price</th>
+                  <th>24h Change</th>
+                  <th>24h High</th>
+                  <th>24h Low</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="allMarketsTableBody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
 
       </div>
@@ -1312,7 +1434,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     </div>
 
     <!-- Right Column: Order Placement Ticket & Technical Analysis -->
-    <div class="execution-sidebar">
+    <div class="execution-sidebar" id="executionSidebar">
 
       <!-- Order Ticket -->
       <div class="panel-box">
@@ -1337,7 +1459,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         <div class="order-type-tabs">
           <button id="orderTypeMarket" class="order-type-btn active" onclick="setOrderType('market')">Market</button>
           <button id="orderTypeLimit" class="order-type-btn" onclick="setOrderType('limit')">Limit</button>
-          <button id="orderTypeStop" class="order-type-btn" onclick="setOrderType('stop')">Stop-Market</button>
+          <button id="orderTypeStop" class="order-type-btn" onclick="setOrderType('stop')">Stop</button>
         </div>
 
         <!-- Limit Price Input (Hidden for Market) -->
@@ -1355,7 +1477,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         <!-- Amount Input -->
         <div class="form-group">
           <div class="form-label">
-            <span>Order Amount (Margin)</span>
+            <span>Order Margin (USD)</span>
             <span class="mono" id="amountUnitsDisplay">0.00 units</span>
           </div>
           <div class="input-wrapper">
@@ -1411,7 +1533,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         <!-- Order Summary -->
         <div class="summary-box">
           <div class="summary-row">
-            <span>Total Position Size:</span>
+            <span>Position Size:</span>
             <span class="summary-val mono" id="sumPositionSize">$20,000.00</span>
           </div>
           <div class="summary-row">
@@ -1419,11 +1541,11 @@ export function renderTradingPage(selectedSymbolId?: string): string {
             <span class="summary-val mono" id="sumMarginRequired">$1,000.00</span>
           </div>
           <div class="summary-row">
-            <span>Est. Liquidation Price:</span>
+            <span>Est. Liq. Price:</span>
             <span class="summary-val mono text-red" id="sumEstLiqPrice">$61,607.50</span>
           </div>
           <div class="summary-row">
-            <span>Fee (0.04%):</span>
+            <span>Trading Fee (0.04%):</span>
             <span class="summary-val mono" id="sumTradingFee">$8.00</span>
           </div>
         </div>
@@ -1435,11 +1557,11 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
       </div>
 
-      <!-- TradingView Technical Analysis Gauge Widget -->
-      <div class="panel-box">
+      <!-- Technical Analysis Rating Widget (Desktop only, avoids mobile clutter) -->
+      <div class="panel-box" id="taPanelBox">
         <div class="panel-title">
-          <span>Technical Analysis Rating</span>
-          <span style="font-size:11px; color:var(--text-dim); font-weight:600;">LIVE FEED</span>
+          <span>Technical Rating</span>
+          <span style="font-size:10px; color:var(--text-dim); font-weight:600;">STATIC</span>
         </div>
 
         <div class="ta-gauge-container" id="taGaugeContainer">
@@ -1450,7 +1572,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
               "interval": "15m",
               "width": "100%",
               "isTransparent": true,
-              "height": 360,
+              "height": 340,
               "symbol": "${currentSymbol.tvSymbol}",
               "showIntervalTabs": true,
               "displayMode": "single",
@@ -1466,17 +1588,27 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
   </div>
 
+  <!-- Mobile Sticky Bottom Quick Bar: 1-Tap Access to Buy / Sell -->
+  <div class="mobile-bottom-bar" id="mobileBottomBar">
+    <button class="mobile-bottom-bar-btn" style="background:linear-gradient(135deg,#00d084 0%,#059669 100%); color:#0b131c;" onclick="mobileQuickTrade('buy')">
+      ▲ BUY / LONG
+    </button>
+    <button class="mobile-bottom-bar-btn" style="background:linear-gradient(135deg,#e94d65 0%,#c5334a 100%); color:#ffffff;" onclick="mobileQuickTrade('sell')">
+      ▼ SELL / SHORT
+    </button>
+  </div>
+
   <!-- Market Selector Modal -->
   <div class="modal-overlay" id="marketModalOverlay" onclick="closeMarketModal(event)">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-header">
-        <h3 style="font-size:15px; font-weight:800; letter-spacing:-0.2px;">Select Market to Trade</h3>
+        <h3 style="font-size:14px; font-weight:800;">Select Market to Trade</h3>
         <button onclick="toggleMarketModal()" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">✕</button>
       </div>
       <div class="modal-body">
-        <input type="text" id="marketSearchInput" class="form-input" placeholder="Search crypto, forex, commodities, stocks..." oninput="filterMarkets(this.value)" style="margin-bottom:14px;">
+        <input type="text" id="marketSearchInput" class="form-input" placeholder="Search crypto, forex, commodities, stocks..." oninput="filterMarkets(this.value)" style="margin-bottom:12px;">
         
-        <div style="max-height:360px; overflow-y:auto;" id="marketModalList">
+        <div style="max-height:340px; overflow-y:auto;" id="marketModalList">
           <!-- Populated by JS -->
         </div>
       </div>
@@ -1487,29 +1619,29 @@ export function renderTradingPage(selectedSymbolId?: string): string {
   <div class="modal-overlay" id="depositModalOverlay" onclick="closeDepositModal(event)">
     <div class="modal-card" onclick="event.stopPropagation()">
       <div class="modal-header">
-        <h3 style="font-size:15px; font-weight:800;">Deposit Funds & Account Margin</h3>
+        <h3 style="font-size:14px; font-weight:800;">Account Balance & Deposit</h3>
         <button onclick="closeDepositModal()" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;">✕</button>
       </div>
       <div class="modal-body">
-        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
-          Top up your trading balance instantly with demo practice capital, or connect your verified AssetCrest account.
+        <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">
+          Top up your practice balance instantly or access your investor client account.
         </p>
 
-        <div style="background:var(--bg-panel-sub); padding:16px; border-radius:6px; border:1px solid var(--border-main); margin-bottom:16px;">
-          <div style="font-weight:800; margin-bottom:6px; font-size:13px; color:var(--text-main);">🎮 Instant Demo Capital Top-Up</div>
-          <p style="font-size:12px; color:var(--text-dim); margin-bottom:12px;">Add instant practice capital to test your trading strategies with zero risk.</p>
-          <div style="display:flex; gap:8px;">
-            <button class="btn btn-coral" style="flex:1; justify-content:center;" onclick="addBalance(5000)">+$5,000</button>
-            <button class="btn btn-coral" style="flex:1; justify-content:center;" onclick="addBalance(10000)">+$10,000</button>
+        <div style="background:var(--bg-panel-sub); padding:14px; border-radius:6px; border:1px solid var(--border-main); margin-bottom:14px;">
+          <div style="font-weight:800; margin-bottom:4px; font-size:12.5px; color:var(--text-main);">🎮 Instant Demo Balance</div>
+          <p style="font-size:11.5px; color:var(--text-dim); margin-bottom:10px;">Practice trading with zero risk and static margin.</p>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-coral" style="flex:1; justify-content:center;" onclick="addBalance(5000)">+$5k</button>
+            <button class="btn btn-coral" style="flex:1; justify-content:center;" onclick="addBalance(10000)">+$10k</button>
             <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="resetBalance(10000)">Reset $10k</button>
           </div>
         </div>
 
-        <div style="background:var(--bg-panel-sub); padding:16px; border-radius:6px; border:1px solid var(--border-main);">
-          <div style="font-weight:800; margin-bottom:6px; font-size:13px; color:var(--text-main);">💼 AssetCrest Client Gateway</div>
-          <p style="font-size:12px; color:var(--text-dim); margin-bottom:12px;">Sign in to your registered investor dashboard to make crypto and bank wire deposits.</p>
+        <div style="background:var(--bg-panel-sub); padding:14px; border-radius:6px; border:1px solid var(--border-main);">
+          <div style="font-weight:800; margin-bottom:4px; font-size:12.5px; color:var(--text-main);">💼 AssetCrest Portal</div>
+          <p style="font-size:11.5px; color:var(--text-dim); margin-bottom:10px;">Sign in to your client account for wire & crypto funding.</p>
           <a href="/login" class="btn btn-navy" style="display:flex; justify-content:center;">
-            Go to AssetCrest Deposit Portal
+            Go to AssetCrest Portal
           </a>
         </div>
       </div>
@@ -1519,7 +1651,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
   <!-- Toast Notification Container -->
   <div class="toast-container" id="toastContainer"></div>
 
-  <!-- TradingView Library & Logic -->
+  <!-- TradingView Library & Static Logic -->
   <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
   <script>
     const MARKETS = ${marketsJson};
@@ -1560,12 +1692,14 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       }
     }
 
-    // Initialize TradingView Chart with AssetCrest Color Theme
+    // Initialize TradingView Chart: responsive & mobile optimized
     let tvWidget = null;
     function initTradingViewChart(symbolProName) {
       const container = document.getElementById('tradingview_chart_element');
       if (!container) return;
       container.innerHTML = '';
+
+      const isMobile = window.innerWidth <= 768;
 
       if (window.TradingView) {
         tvWidget = new TradingView.widget({
@@ -1578,10 +1712,10 @@ export function renderTradingPage(selectedSymbolId?: string): string {
           "locale": "en",
           "toolbar_bg": "#0f1a26",
           "enable_publishing": false,
-          "allow_symbol_change": true,
-          "hide_side_toolbar": false,
-          "withdateranges": true,
-          "save_image": true,
+          "allow_symbol_change": false,
+          "hide_side_toolbar": isMobile ? true : false, // Hide left drawing tools on mobile so candlesticks have space
+          "withdateranges": !isMobile,
+          "save_image": false,
           "container_id": "tradingview_chart_element",
           "studies": [
             "RSI@tv-basicstudies",
@@ -1621,7 +1755,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         interval: "15m",
         width: "100%",
         isTransparent: true,
-        height: 360,
+        height: 340,
         symbol: symbolProName,
         showIntervalTabs: true,
         displayMode: "single",
@@ -1629,6 +1763,51 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         colorTheme: "dark"
       });
       container.querySelector('.tradingview-widget-container').appendChild(script);
+    }
+
+    // Mobile View Navigation
+    function switchMobileView(view, btnEl) {
+      if (window.innerWidth > 768) return;
+
+      document.querySelectorAll('.mobile-view-tab').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      const chartPanel = document.getElementById('chartPanelContainer');
+      const executionSidebar = document.getElementById('executionSidebar');
+      const bottomTabs = document.getElementById('bottomTabsContainer');
+      const chartWrapper = document.getElementById('tv_chart_container');
+
+      if (view === 'chart') {
+        chartPanel.style.display = 'flex';
+        chartWrapper.style.display = 'block';
+        bottomTabs.style.display = 'none';
+        executionSidebar.style.display = 'none';
+      } else if (view === 'trade') {
+        chartPanel.style.display = 'none';
+        executionSidebar.style.display = 'flex';
+        // Hide TA gauge on mobile to keep order form focused
+        document.getElementById('taPanelBox').style.display = 'none';
+      } else if (view === 'book') {
+        chartPanel.style.display = 'flex';
+        chartWrapper.style.display = 'none';
+        bottomTabs.style.display = 'flex';
+        executionSidebar.style.display = 'none';
+        switchBottomTab('orderbook');
+      } else if (view === 'positions') {
+        chartPanel.style.display = 'flex';
+        chartWrapper.style.display = 'none';
+        bottomTabs.style.display = 'flex';
+        executionSidebar.style.display = 'none';
+        switchBottomTab('positions');
+      }
+    }
+
+    // Quick trade trigger from mobile bottom bar
+    function mobileQuickTrade(side) {
+      setOrderSide(side);
+      const tradeTabBtn = document.querySelectorAll('.mobile-view-tab')[1];
+      switchMobileView('trade', tradeTabBtn);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // Quick bar filter
@@ -1773,11 +1952,11 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     function handleExecuteOrder() {
       const amountUsd = parseFloat(document.getElementById('inputAmountUsd').value) || 0;
       if (amountUsd <= 0) {
-        showToast('Please specify a valid order amount', 'error');
+        showToast('Please specify an order amount', 'error');
         return;
       }
       if (amountUsd > balance) {
-        showToast('Insufficient margin balance ($' + balance.toFixed(2) + '). Please top up funds.', 'error');
+        showToast('Insufficient margin ($' + balance.toFixed(2) + '). Please deposit funds.', 'error');
         return;
       }
 
@@ -1819,7 +1998,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
       playChime(orderSide);
       showToast(
-        'Order Executed: ' + orderSide.toUpperCase() + ' ' + activeSymbol.symbol + ' @ $' + entryPrice.toLocaleString() + ' (' + leverage + 'x)',
+        'Executed ' + orderSide.toUpperCase() + ' ' + activeSymbol.symbol + ' @ $' + entryPrice.toLocaleString() + ' (' + leverage + 'x)',
         'success'
       );
     }
@@ -1865,13 +2044,15 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     function renderPositions() {
       const tbody = document.getElementById('positionsTableBody');
       const badge = document.getElementById('positionsCountBadge');
+      const mobBadge = document.getElementById('mobilePosBadge');
       badge.innerText = positions.length;
+      if (mobBadge) mobBadge.innerText = positions.length;
 
       if (positions.length === 0) {
         tbody.innerHTML = \`
           <tr>
-            <td colspan="10" style="text-align:center; padding: 36px; color: var(--text-dim);">
-              No open positions yet. Use the execution terminal on the right to open your first long or short trade.
+            <td colspan="10" style="text-align:center; padding: 28px; color: var(--text-dim);">
+              No open positions yet. Use the order ticket to place a trade.
             </td>
           </tr>
         \`;
@@ -1898,7 +2079,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
               \${pnlSign}$\${pnl.toFixed(2)} (\${pnlSign}\${pnlPercent.toFixed(2)}%)
             </td>
             <td>
-              <button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="closePosition('\${pos.id}')">
+              <button class="btn btn-secondary" style="padding:3px 8px; font-size:11px; height:24px;" onclick="closePosition('\${pos.id}')">
                 Close
               </button>
             </td>
@@ -1910,7 +2091,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     function renderHistory() {
       const tbody = document.getElementById('historyTableBody');
       if (tradeHistory.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 36px; color: var(--text-dim);">No trade history records found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 28px; color: var(--text-dim);">No trade history records found.</td></tr>';
         return;
       }
       tbody.innerHTML = tradeHistory.map(t => {
@@ -1943,7 +2124,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
           <td class="mono">$\${m.high24h.toLocaleString(undefined, { minimumFractionDigits: m.precision })}</td>
           <td class="mono">$\${m.low24h.toLocaleString(undefined, { minimumFractionDigits: m.precision })}</td>
           <td>
-            <button class="btn btn-secondary" style="padding:4px 10px; font-size:11px;" onclick="selectMarket('\${m.id}')">
+            <button class="btn btn-secondary" style="padding:3px 8px; font-size:11px; height:24px;" onclick="selectMarket('\${m.id}')">
               Trade
             </button>
           </td>
@@ -1965,26 +2146,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       \`).join('');
     }
 
-    function tickPrices() {
-      const delta = (Math.random() - 0.49) * (activeSymbol.price * 0.0008);
-      activeSymbol.price = Math.max(0.0001, activeSymbol.price + delta);
-
-      positions.forEach(p => {
-        if (p.symbolId === activeSymbol.id) {
-          p.markPrice = activeSymbol.price;
-        }
-      });
-      renderPositions();
-
-      const priceEl = document.getElementById('headerLastPrice');
-      priceEl.innerText = '$' + activeSymbol.price.toLocaleString(undefined, { minimumFractionDigits: activeSymbol.precision, maximumFractionDigits: activeSymbol.precision });
-      priceEl.className = 'stat-value price-large mono ' + (delta >= 0 ? 'text-green' : 'text-red');
-
-      if (Math.random() > 0.4) {
-        addRandomMarketTrade();
-      }
-    }
-
+    // Static Order Book generation (stable, no erratic jumping)
     function generateOrderBook() {
       const tbody = document.getElementById('orderBookBody');
       const p = activeSymbol.price;
@@ -1993,7 +2155,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
       for (let i = 5; i >= 1; i--) {
         const askP = p + (i * p * 0.0004);
-        const sz = (Math.random() * 2 + 0.1).toFixed(3);
+        const sz = (0.45 + i * 0.28).toFixed(3);
         rows += \`
           <tr>
             <td class="mono text-red">$\${askP.toFixed(prec)}</td>
@@ -2004,14 +2166,14 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       }
       rows += \`
         <tr style="background:rgba(27,73,98,0.3);">
-          <td colspan="3" class="mono text-green" style="font-weight:700; text-align:center; padding:6px; letter-spacing:0.3px;">
+          <td colspan="3" class="mono text-green" style="font-weight:700; text-align:center; padding:5px; letter-spacing:0.3px; font-size:11px;">
             SPREAD $\${(p * 0.0002).toFixed(2)} (MARK $\${p.toFixed(prec)})
           </td>
         </tr>
       \`;
       for (let i = 1; i <= 5; i++) {
         const bidP = p - (i * p * 0.0004);
-        const sz = (Math.random() * 2 + 0.1).toFixed(3);
+        const sz = (0.52 + i * 0.24).toFixed(3);
         rows += \`
           <tr>
             <td class="mono text-green">$\${bidP.toFixed(prec)}</td>
@@ -2023,15 +2185,20 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       tbody.innerHTML = rows;
     }
 
+    // Static Recent Trades feed (clean, professional)
     function generateRecentTrades() {
       const tbody = document.getElementById('recentTradesBody');
       let rows = '';
       const now = new Date();
-      for (let i = 0; i < 8; i++) {
-        const side = Math.random() > 0.5 ? 'buy' : 'sell';
-        const p = activeSymbol.price + (Math.random() - 0.5) * (activeSymbol.price * 0.001);
-        const amt = (Math.random() * 1.5 + 0.05).toFixed(3);
-        const time = new Date(now.getTime() - i * 1400).toLocaleTimeString();
+      const tradeSizes = [0.42, 1.15, 0.08, 0.65, 2.10, 0.33, 0.94, 0.18];
+      const tradeSides = ['buy', 'buy', 'sell', 'buy', 'sell', 'sell', 'buy', 'sell'];
+
+      for (let i = 0; i < tradeSizes.length; i++) {
+        const side = tradeSides[i];
+        const offset = (i % 2 === 0 ? 1 : -1) * (i * 0.0002 * activeSymbol.price);
+        const p = activeSymbol.price + offset;
+        const amt = tradeSizes[i].toFixed(3);
+        const time = new Date(now.getTime() - i * 65000).toLocaleTimeString();
         rows += \`
           <tr>
             <td style="color:var(--text-dim);">\${time}</td>
@@ -2042,26 +2209,6 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         \`;
       }
       tbody.innerHTML = rows;
-    }
-
-    function addRandomMarketTrade() {
-      const tbody = document.getElementById('recentTradesBody');
-      if (!tbody) return;
-      const side = Math.random() > 0.48 ? 'buy' : 'sell';
-      const p = activeSymbol.price;
-      const amt = (Math.random() * 2 + 0.05).toFixed(3);
-      const time = new Date().toLocaleTimeString();
-      const tr = document.createElement('tr');
-      tr.innerHTML = \`
-        <td style="color:var(--text-dim);">\${time}</td>
-        <td class="mono \${side === 'buy' ? 'text-green' : 'text-red'}">$\${p.toFixed(activeSymbol.precision)}</td>
-        <td class="mono">\${amt}</td>
-        <td><span class="side-pill \${side === 'buy' ? 'side-long' : 'side-short'}">\${side.toUpperCase()}</span></td>
-      \`;
-      tbody.insertBefore(tr, tbody.firstChild);
-      if (tbody.children.length > 10) {
-        tbody.removeChild(tbody.lastChild);
-      }
     }
 
     function updateBalanceUI() {
@@ -2101,11 +2248,11 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:6px; cursor:pointer; margin-bottom:4px; background:var(--bg-panel-sub); border:1px solid var(--border-sub);" onclick="selectMarket('\${m.id}')">
           <div>
             <div class="mono" style="font-weight:700;">\${m.symbol}</div>
-            <div style="font-size:12px; color:var(--text-dim);">\${m.name} · \${m.category.toUpperCase()}</div>
+            <div style="font-size:11.5px; color:var(--text-dim);">\${m.name} · \${m.category.toUpperCase()}</div>
           </div>
           <div style="text-align:right;">
             <div class="mono" style="font-weight:700;">$\${m.price.toLocaleString(undefined, { minimumFractionDigits: m.precision })}</div>
-            <div class="mono \${m.change24h >= 0 ? 'text-green' : 'text-red'}" style="font-size:12px; font-weight:700;">\${m.change24h >= 0 ? '+' : ''}\${m.change24h}%</div>
+            <div class="mono \${m.change24h >= 0 ? 'text-green' : 'text-red'}" style="font-size:11.5px; font-weight:700;">\${m.change24h >= 0 ? '+' : ''}\${m.change24h}%</div>
           </div>
         </div>
       \`).join('');
@@ -2148,17 +2295,6 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       }, 4000);
     }
 
-    setInterval(() => {
-      const cdEl = document.getElementById('fundingCountdown');
-      if (!cdEl) return;
-      const now = new Date();
-      const nextHour = 8 - (now.getUTCHours() % 8);
-      const mins = 59 - now.getUTCMinutes();
-      const secs = 59 - now.getUTCSeconds();
-      const fmt = (n) => n.toString().padStart(2, '0');
-      cdEl.innerText = fmt(nextHour - 1) + ':' + fmt(mins) + ':' + fmt(secs);
-    }, 1000);
-
     window.addEventListener('DOMContentLoaded', () => {
       updateBalanceUI();
       renderQuickAssetChips();
@@ -2169,11 +2305,25 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       generateRecentTrades();
       calculateOrder();
 
+      // On mobile initial load, show Chart tab
+      if (window.innerWidth <= 768) {
+        switchMobileView('chart', document.querySelectorAll('.mobile-view-tab')[0]);
+      }
+
       setTimeout(() => {
         initTradingViewChart('${currentSymbol.tvSymbol}');
       }, 150);
 
-      setInterval(tickPrices, 2200);
+      // Handle window resize dynamically between mobile and desktop layout
+      window.addEventListener('resize', () => {
+        if (window.innerWidth > 768) {
+          document.getElementById('chartPanelContainer').style.display = 'flex';
+          document.getElementById('tv_chart_container').style.display = 'block';
+          document.getElementById('bottomTabsContainer').style.display = 'flex';
+          document.getElementById('executionSidebar').style.display = 'flex';
+          document.getElementById('taPanelBox').style.display = 'block';
+        }
+      });
     });
   </script>
 

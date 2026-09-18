@@ -1,6 +1,7 @@
 import express from "express";
 import { requireAuth, AuthRequest } from "./src/middleware/auth.ts";
-import { getUsers } from "./src/db/users.ts";
+import { getUsers, getOrCreateUser } from "./src/db/users.ts";
+import { createPool } from "./src/db/index.ts";
 
 const app = express();
 const PORT = process.env.RENDER ? (Number(process.env.PORT) || 3000) : 3000;
@@ -17,16 +18,47 @@ app.use((_req, res, next) => {
   next();
 });
 
-// Health check endpoint
-app.get("/api/health", (_req, res) => {
+// Real functioning health check endpoint (checks Cloud SQL connection and upstream proxy)
+app.get("/api/health", async (_req, res) => {
+  let dbStatus = "connected";
+  try {
+    const pool = createPool();
+    await pool.query("SELECT 1;");
+  } catch (err: any) {
+    dbStatus = "disconnected: " + (err.message || "error");
+  }
+
+  let upstreamStatus = "connected";
+  try {
+    const upstream = await fetch("https://assetcrest.co/", { method: "HEAD" });
+    upstreamStatus = upstream.ok ? "connected" : `status ${upstream.status}`;
+  } catch (err: any) {
+    upstreamStatus = "unreachable: " + (err.message || "error");
+  }
+
   res.json({
-    status: "ok",
-    database: "cloudsql-postgres",
+    status: dbStatus.startsWith("connected") ? "ok" : "degraded",
+    database: dbStatus,
     region: "europe-west3",
     target: "https://assetcrest.co",
     appTarget: "https://app.assetcrest.co",
+    upstream: upstreamStatus,
     timestamp: new Date().toISOString(),
   });
+});
+
+// Protected user profile endpoint
+app.get("/api/user/profile", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const user = await getOrCreateUser(req.user.uid, req.user.email || "", req.user.name);
+    res.json(user);
+  } catch (error: any) {
+    console.error("Failed to fetch user profile:", error);
+    res.status(500).json({ error: error.message || "Failed to fetch user profile" });
+  }
 });
 
 // Protected database API route
@@ -57,7 +89,7 @@ function rewriteContent(content: string): string {
     .replaceAll("http://app.assetcrest.co", "/app");
 }
 
-// Patch JavaScript files to guard against null element classList errors
+// Patch JavaScript files: remove demo/test simulation and guard against null elements
 function patchJavaScript(content: string): string {
   return content
     // FormValidation: protect classSet, addClass, removeClass, hasClass from null elements
@@ -95,6 +127,50 @@ function patchJavaScript(content: string): string {
     .replaceAll(
       's.setAttribute(i.css.monthsContainer,',
       's&&s.setAttribute(i.css.monthsContainer,'
+    )
+    // Authentication: replace demo simulation test timeouts with real form submission
+    .replaceAll(
+      '// Simulate ajax request\n                    setTimeout(function () {',
+      '// Real form submission\n                    if(form){submitButton.setAttribute("data-kt-indicator","on");submitButton.disabled=true;form.submit();return;}setTimeout(function () {'
+    )
+    .replaceAll(
+      '// Simulate ajax request\r\n                    setTimeout(function () {',
+      '// Real form submission\r\n                    if(form){submitButton.setAttribute("data-kt-indicator","on");submitButton.disabled=true;form.submit();return;}setTimeout(function () {'
+    )
+    // Support standard form and button lookups in authentication forms
+    .replaceAll(
+      "form = document.querySelector('#kt_sign_in_form');",
+      "form = document.querySelector('#kt_sign_in_form') || document.querySelector('form[action*=\"login\"]') || document.querySelector('form.form');"
+    )
+    .replaceAll(
+      "submitButton = document.querySelector('#kt_sign_in_submit');",
+      "submitButton = document.querySelector('#kt_sign_in_submit') || (form ? form.querySelector('button[type=\"submit\"]') : null);"
+    )
+    .replaceAll(
+      "form = document.querySelector('#kt_sign_up_form');",
+      "form = document.querySelector('#kt_sign_up_form') || document.querySelector('form[action*=\"register\"]') || document.querySelector('form.form');"
+    )
+    .replaceAll(
+      "submitButton = document.querySelector('#kt_sign_up_submit');",
+      "submitButton = document.querySelector('#kt_sign_up_submit') || (form ? form.querySelector('button[type=\"submit\"]') : null);"
+    )
+    .replaceAll(
+      "form = document.querySelector('#kt_password_reset_form');",
+      "form = document.querySelector('#kt_password_reset_form') || document.querySelector('form.form');"
+    )
+    .replaceAll(
+      "submitButton = document.querySelector('#kt_password_reset_submit');",
+      "submitButton = document.querySelector('#kt_password_reset_submit') || (form ? form.querySelector('button[type=\"submit\"]') : null);"
+    )
+    // Guard passwordMeter when element is not present
+    .replaceAll(
+      "passwordMeter = KTPasswordMeter.getInstance(form.querySelector('[data-kt-password-meter=\"true\"]'));",
+      "passwordMeter = (form && form.querySelector('[data-kt-password-meter=\"true\"]')) ? KTPasswordMeter.getInstance(form.querySelector('[data-kt-password-meter=\"true\"]')) : null;"
+    )
+    // Ensure relative action URLs are recognized as valid for real submission
+    .replaceAll(
+      "var isValidUrl = function(url) {",
+      "var isValidUrl = function(url) { return true; "
     );
 }
 
@@ -108,15 +184,18 @@ async function handleProxy(req: express.Request, res: express.Response) {
   try {
     const isApp =
       req.path.startsWith("/app") ||
-      req.path === "/login" ||
-      req.path === "/register" ||
-      req.path === "/forgot-password" ||
-      req.path.startsWith("/password") ||
-      req.path.startsWith("/dashboard") ||
+      req.path.startsWith("/user") ||
       req.path.startsWith("/admin") ||
       req.path.startsWith("/livewire") ||
       req.path.startsWith("/storage") ||
-      req.path.startsWith("/themes");
+      req.path.startsWith("/themes") ||
+      req.path.startsWith("/password") ||
+      req.path.startsWith("/dashboard") ||
+      req.path === "/login" ||
+      req.path === "/register" ||
+      req.path === "/logout" ||
+      req.path === "/forgot-password" ||
+      req.path === "/reset-password";
 
     const baseOrigin = isApp ? "https://app.assetcrest.co" : "https://assetcrest.co";
 
@@ -178,26 +257,6 @@ async function handleProxy(req: express.Request, res: express.Response) {
       redirect: "manual",
     });
 
-    // Handle redirects (301, 302, 303, 307, 308)
-    if (upstreamResponse.status >= 300 && upstreamResponse.status < 400) {
-      const location = upstreamResponse.headers.get("location");
-      if (location) {
-        let rewrittenLocation = location
-          .replace(/^https?:\/\/assetcrest\.co\//, "/")
-          .replace(/^https?:\/\/assetcrest\.co/, "/")
-          .replace(/^https?:\/\/app\.assetcrest\.co\//, "/app/")
-          .replace(/^https?:\/\/app\.assetcrest\.co/, "/app");
-        res.setHeader("Location", rewrittenLocation);
-      }
-      res.status(upstreamResponse.status).end();
-      return;
-    }
-
-    const contentType = upstreamResponse.headers.get("content-type") || "";
-    if (contentType) {
-      res.setHeader("Content-Type", contentType);
-    }
-
     // Forward and rewrite Set-Cookie headers
     const rawCookies = upstreamResponse.headers.getSetCookie
       ? upstreamResponse.headers.getSetCookie()
@@ -207,6 +266,32 @@ async function handleProxy(req: express.Request, res: express.Response) {
         cookie.replace(/Domain=[^;]+;?/gi, "").replace(/Secure;?/gi, "")
       );
       res.setHeader("Set-Cookie", rewrittenCookies);
+    }
+
+    // Handle redirects (301, 302, 303, 307, 308)
+    if (upstreamResponse.status >= 300 && upstreamResponse.status < 400) {
+      const location = upstreamResponse.headers.get("location");
+      if (location) {
+        let rewrittenLocation = location
+          .replace(/^https?:\/\/assetcrest\.co\//, "/")
+          .replace(/^https?:\/\/assetcrest\.co/, "/")
+          .replace(/^https?:\/\/app\.assetcrest\.co\//, "/app/")
+          .replace(/^https?:\/\/app\.assetcrest\.co/, "/app");
+
+        // If request is from app target and redirects to relative path without /app prefix, route within /app
+        if (isApp && rewrittenLocation.startsWith("/") && !rewrittenLocation.startsWith("/app/")) {
+          rewrittenLocation = "/app" + rewrittenLocation;
+        }
+
+        res.setHeader("Location", rewrittenLocation);
+      }
+      res.status(upstreamResponse.status).end();
+      return;
+    }
+
+    const contentType = upstreamResponse.headers.get("content-type") || "";
+    if (contentType) {
+      res.setHeader("Content-Type", contentType);
     }
 
     const cacheControl = upstreamResponse.headers.get("cache-control");

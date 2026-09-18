@@ -377,16 +377,6 @@ async function handleProxy(req: express.Request, res: express.Response) {
         rewrittenHtml = rewrittenHtml.replace('</header>', `</header>${tickerWidget}`);
       }
 
-      // Inject floating quick-access Live Trading View button on all pages
-      const floatingBtn = `
-<a href="/trading" id="assetcrest-floating-trading-btn" style="position:fixed;bottom:24px;right:24px;z-index:9999;background:linear-gradient(135deg,#1b4962 0%,#0f2838 100%);color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:30px;font-family:'Sarabun',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,0.55);display:flex;align-items:center;gap:8px;border:1px solid rgba(233,77,101,0.5);transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
-  <span style="width:7px;height:7px;border-radius:50%;background:#e94d65;box-shadow:0 0 8px #e94d65;display:inline-block;"></span>
-  <span>Live Trading Terminal</span>
-  <span style="background:#e94d65;color:#ffffff;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:0.5px;">LIVE</span>
-</a>`;
-      if (rewrittenHtml.includes('</body>')) {
-        rewrittenHtml = rewrittenHtml.replace('</body>', `${floatingBtn}</body>`);
-      }
       res.status(upstreamResponse.status).send(rewrittenHtml);
       return;
     }

@@ -5,7 +5,7 @@ import { createPool } from "./src/db/index.ts";
 import { renderTradingPage } from "./src/trading/tradingPage.ts";
 
 const app = express();
-const PORT = process.env.RENDER ? (Number(process.env.PORT) || 3000) : 3000;
+const PORT = process.env.APPLET_ID ? 3000 : (Number(process.env.PORT) || 3000);
 
 
 // Parse raw bodies for POST/PUT requests (form submissions, JSON, uploads)
@@ -433,6 +433,15 @@ async function handleProxy(req: express.Request, res: express.Response) {
 // Proxy all requests
 app.all("*", handleProxy);
 
-app.listen(PORT, "0.0.0.0", () => {
+const server = app.listen(PORT, "0.0.0.0", () => {
   console.log(`AssetCrest Proxy Server running on http://0.0.0.0:${PORT}`);
+});
+
+server.on("error", (err: any) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(`Port ${PORT} is already in use.`);
+  } else {
+    console.error("Server error:", err);
+  }
+  process.exit(1);
 });

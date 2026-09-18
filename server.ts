@@ -336,13 +336,13 @@ async function handleProxy(req: express.Request, res: express.Response) {
       }
 
       // Inject Live Trading link into primary navigation menu
-      const liveTradingMenuItem = `<li id="menu-item-live-trading" class="menu-item menu-item-type-custom menu-item-object-custom"><a href="/trading" style="color:#10b981!important;font-weight:700!important;display:inline-flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;display:inline-block;"></span>Live Trading</a></li>`;
+      const liveTradingMenuItem = `<li id="menu-item-live-trading" class="menu-item menu-item-type-custom menu-item-object-custom"><a href="/trading" style="color:#e94d65!important;font-weight:700!important;display:inline-flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:#e94d65;box-shadow:0 0 8px #e94d65;display:inline-block;"></span>Live Trading</a></li>`;
       if (rewrittenHtml.includes('id="menu-primary-menu"')) {
         rewrittenHtml = rewrittenHtml.replace(/(<ul[^>]*id="menu-primary-menu"[^>]*>)/i, `$1${liveTradingMenuItem}`);
       }
 
       // Inject Live Trading button in header near login/register
-      const liveTradingHeaderBtn = `<div class="btBox widget_bt_button_widget btIconWidget btIconWidgetLeft"><a href="/trading" target="_self" class="bt_button_widget bt_bb_button_link" style="background:#10b981!important;border-color:#10b981!important;color:#ffffff!important;" title="Live Trading View"><span class="bt_bb_button_text">📊 Live Trading</span></a></div>`;
+      const liveTradingHeaderBtn = `<div class="btBox widget_bt_button_widget btIconWidget btIconWidgetLeft"><a href="/trading" target="_self" class="bt_button_widget bt_bb_button_link" style="background:linear-gradient(135deg,#e94d65 0%,#d83951 100%)!important;border-color:#e94d65!important;color:#ffffff!important;box-shadow:0 3px 12px rgba(233,77,101,0.35);" title="Live Trading Terminal"><span class="bt_bb_button_text">📊 Live Trading</span></a></div>`;
       if (rewrittenHtml.includes('widget_bt_button_widget')) {
         rewrittenHtml = rewrittenHtml.replace(/(<div[^>]*class="[^"]*widget_bt_button_widget[^"]*"[^>]*>)/i, `${liveTradingHeaderBtn}$1`);
       }
@@ -350,7 +350,7 @@ async function handleProxy(req: express.Request, res: express.Response) {
       // Inject TradingView live ticker tape below the main header
       if (rewrittenHtml.includes('</header>')) {
         const tickerWidget = `
-<div class="assetcrest-tv-ticker-bar" style="background:#080c14;border-bottom:1px solid rgba(255,255,255,0.08);position:relative;z-index:90;height:46px;overflow:hidden;">
+<div class="assetcrest-tv-ticker-bar" style="background:#0b131c;border-bottom:1px solid rgba(27,73,98,0.5);position:relative;z-index:90;height:46px;overflow:hidden;">
   <div class="tradingview-widget-container">
     <div class="tradingview-widget-container__widget"></div>
     <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
@@ -379,10 +379,10 @@ async function handleProxy(req: express.Request, res: express.Response) {
 
       // Inject floating quick-access Live Trading View button on all pages
       const floatingBtn = `
-<a href="/trading" id="assetcrest-floating-trading-btn" style="position:fixed;bottom:24px;right:24px;z-index:9999;background:linear-gradient(135deg,#10b981 0%,#059669 100%);color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:30px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;box-shadow:0 8px 20px rgba(16,185,129,0.35);display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.25);transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
-  <span style="width:7px;height:7px;border-radius:50%;background:#ffffff;box-shadow:0 0 6px #ffffff;display:inline-block;"></span>
-  <span>Live Trading View</span>
-  <span style="background:rgba(0,0,0,0.25);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:0.5px;">LIVE</span>
+<a href="/trading" id="assetcrest-floating-trading-btn" style="position:fixed;bottom:24px;right:24px;z-index:9999;background:linear-gradient(135deg,#1b4962 0%,#0f2838 100%);color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:30px;font-family:'Sarabun',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,0.55);display:flex;align-items:center;gap:8px;border:1px solid rgba(233,77,101,0.5);transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+  <span style="width:7px;height:7px;border-radius:50%;background:#e94d65;box-shadow:0 0 8px #e94d65;display:inline-block;"></span>
+  <span>Live Trading Terminal</span>
+  <span style="background:#e94d65;color:#ffffff;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:0.5px;">LIVE</span>
 </a>`;
       if (rewrittenHtml.includes('</body>')) {
         rewrittenHtml = rewrittenHtml.replace('</body>', `${floatingBtn}</body>`);

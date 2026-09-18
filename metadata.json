@@ -1,6 +1,6 @@
 {
   "name": "AssetCrest Proxy",
-  "description": "High-fidelity proxy and gateway for AssetCrest investment platform.",
+  "description": "High-fidelity proxy, live TradingView charting terminal, and gateway for AssetCrest investment platform.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

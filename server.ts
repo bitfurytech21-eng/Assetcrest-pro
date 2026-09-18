@@ -2,6 +2,7 @@ import express from "express";
 import { requireAuth, AuthRequest } from "./src/middleware/auth.ts";
 import { getUsers, getOrCreateUser } from "./src/db/users.ts";
 import { createPool } from "./src/db/index.ts";
+import { renderTradingPage } from "./src/trading/tradingPage.ts";
 
 const app = express();
 const PORT = process.env.RENDER ? (Number(process.env.PORT) || 3000) : 3000;
@@ -70,6 +71,14 @@ app.get("/api/users", requireAuth, async (req: AuthRequest, res) => {
     console.error("Failed to fetch users:", error);
     res.status(500).json({ error: error.message || "Failed to fetch users" });
   }
+});
+
+// Live Trading View routes
+app.get(["/trading", "/live-trading", "/app/trading", "/app/live-trading", "/markets"], (req, res) => {
+  const symbol = (req.query.symbol as string) || "BTCUSDT";
+  const html = renderTradingPage(symbol);
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(html);
 });
 
 // Helper for rewriting URLs
@@ -324,6 +333,59 @@ async function handleProxy(req: express.Request, res: express.Response) {
         rewrittenHtml = rewrittenHtml.replace("<head>", `<head>${guardScript}`);
       } else if (rewrittenHtml.includes("<head ")) {
         rewrittenHtml = rewrittenHtml.replace(/<head\b[^>]*>/, `$&${guardScript}`);
+      }
+
+      // Inject Live Trading link into primary navigation menu
+      const liveTradingMenuItem = `<li id="menu-item-live-trading" class="menu-item menu-item-type-custom menu-item-object-custom"><a href="/trading" style="color:#10b981!important;font-weight:700!important;display:inline-flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:#10b981;box-shadow:0 0 8px #10b981;display:inline-block;"></span>Live Trading</a></li>`;
+      if (rewrittenHtml.includes('id="menu-primary-menu"')) {
+        rewrittenHtml = rewrittenHtml.replace(/(<ul[^>]*id="menu-primary-menu"[^>]*>)/i, `$1${liveTradingMenuItem}`);
+      }
+
+      // Inject Live Trading button in header near login/register
+      const liveTradingHeaderBtn = `<div class="btBox widget_bt_button_widget btIconWidget btIconWidgetLeft"><a href="/trading" target="_self" class="bt_button_widget bt_bb_button_link" style="background:#10b981!important;border-color:#10b981!important;color:#ffffff!important;" title="Live Trading View"><span class="bt_bb_button_text">📊 Live Trading</span></a></div>`;
+      if (rewrittenHtml.includes('widget_bt_button_widget')) {
+        rewrittenHtml = rewrittenHtml.replace(/(<div[^>]*class="[^"]*widget_bt_button_widget[^"]*"[^>]*>)/i, `${liveTradingHeaderBtn}$1`);
+      }
+
+      // Inject TradingView live ticker tape below the main header
+      if (rewrittenHtml.includes('</header>')) {
+        const tickerWidget = `
+<div class="assetcrest-tv-ticker-bar" style="background:#080c14;border-bottom:1px solid rgba(255,255,255,0.08);position:relative;z-index:90;height:46px;overflow:hidden;">
+  <div class="tradingview-widget-container">
+    <div class="tradingview-widget-container__widget"></div>
+    <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+    {
+      "symbols": [
+        { "proName": "BINANCE:BTCUSDT", "title": "Bitcoin" },
+        { "proName": "BINANCE:ETHUSDT", "title": "Ethereum" },
+        { "proName": "BINANCE:SOLUSDT", "title": "Solana" },
+        { "proName": "BINANCE:BNBUSDT", "title": "BNB" },
+        { "proName": "FX:EURUSD", "title": "EUR/USD" },
+        { "proName": "FX:GBPUSD", "title": "GBP/USD" },
+        { "proName": "OANDA:XAUUSD", "title": "Gold" },
+        { "proName": "FOREXCOM:SPXUSD", "title": "S&P 500" }
+      ],
+      "showSymbolLogo": true,
+      "isTransparent": true,
+      "displayMode": "adaptive",
+      "colorTheme": "dark",
+      "locale": "en"
+    }
+    </script>
+  </div>
+</div>`;
+        rewrittenHtml = rewrittenHtml.replace('</header>', `</header>${tickerWidget}`);
+      }
+
+      // Inject floating quick-access Live Trading View button on all pages
+      const floatingBtn = `
+<a href="/trading" id="assetcrest-floating-trading-btn" style="position:fixed;bottom:24px;right:24px;z-index:9999;background:linear-gradient(135deg,#10b981 0%,#059669 100%);color:#ffffff;text-decoration:none;padding:11px 18px;border-radius:30px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-weight:700;font-size:13px;box-shadow:0 8px 20px rgba(16,185,129,0.35);display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,0.25);transition:transform 0.15s ease;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'">
+  <span style="width:7px;height:7px;border-radius:50%;background:#ffffff;box-shadow:0 0 6px #ffffff;display:inline-block;"></span>
+  <span>Live Trading View</span>
+  <span style="background:rgba(0,0,0,0.25);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:800;letter-spacing:0.5px;">LIVE</span>
+</a>`;
+      if (rewrittenHtml.includes('</body>')) {
+        rewrittenHtml = rewrittenHtml.replace('</body>', `${floatingBtn}</body>`);
       }
       res.status(upstreamResponse.status).send(rewrittenHtml);
       return;

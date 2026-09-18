@@ -56,6 +56,47 @@ function rewriteContent(content: string): string {
     .replaceAll("http://app.assetcrest.co", "/app");
 }
 
+// Patch JavaScript files to guard against null element classList errors
+function patchJavaScript(content: string): string {
+  return content
+    // FormValidation: protect classSet, addClass, removeClass, hasClass from null elements
+    .replaceAll(
+      'function s$2(s,a){a.split(" ").forEach',
+      'function s$2(s,a){if(!s)return;a.split(" ").forEach'
+    )
+    .replaceAll(
+      'function a(s,a){a.split(" ").forEach',
+      'function a(s,a){if(!s)return;a.split(" ").forEach'
+    )
+    .replaceAll(
+      'function s(s,t){return s.classList?s.classList.contains(t)',
+      'function s(s,t){if(!s)return false;return s.classList?s.classList.contains(t)'
+    )
+    .replaceAll(
+      'function c(c,e){var t=[];var f=[];',
+      'function c(c,e){if(!c)return;var t=[];var f=[];'
+    )
+    // Bootstrap: dropdown outer element null guard
+    .replaceAll(
+      'const s=this._getOuterElement(t);if(!s.classList.contains("dropdown"))return;',
+      'const s=this._getOuterElement(t);if(!s||!s.classList||!s.classList.contains("dropdown"))return;'
+    )
+    // Bootstrap: collapse aria null guard
+    .replaceAll(
+      '_addAriaAndCollapsedClass(t,e){if(t.length)for(const s of t)s.classList.toggle("collapsed",!e),s.setAttribute("aria-expanded",e)}',
+      '_addAriaAndCollapsedClass(t,e){if(t&&t.length)for(const s of t)if(s&&s.classList){s.classList.toggle("collapsed",!e);s.setAttribute("aria-expanded",e);}}'
+    )
+    // Tempus Dominus: date/month view disabled toggles
+    .replaceAll(
+      's.classList.remove(i.css.disabled):s.classList.add(i.css.disabled)',
+      '(s&&s.classList)?s.classList.remove(i.css.disabled):(s&&s.classList&&s.classList.add(i.css.disabled))'
+    )
+    .replaceAll(
+      's.setAttribute(i.css.monthsContainer,',
+      's&&s.setAttribute(i.css.monthsContainer,'
+    );
+}
+
 // Proxy handler for AssetCrest
 async function handleProxy(req: express.Request, res: express.Response) {
   if (req.method === "OPTIONS") {
@@ -180,7 +221,24 @@ async function handleProxy(req: express.Request, res: express.Response) {
     // Rewrite HTML responses
     if (contentType.includes("text/html")) {
       const html = await upstreamResponse.text();
-      const rewrittenHtml = rewriteContent(html);
+      let rewrittenHtml = rewriteContent(html);
+      const guardScript = `<script>
+(function() {
+  window.addEventListener('error', function(e) {
+    if (e && e.message && (e.message.includes('classList') || e.message.includes('null is not an object'))) {
+      console.warn('Prevented null element classList error:', e.message);
+      e.preventDefault && e.preventDefault();
+      e.stopPropagation && e.stopPropagation();
+      return true;
+    }
+  }, true);
+})();
+</script>`;
+      if (rewrittenHtml.includes("<head>")) {
+        rewrittenHtml = rewrittenHtml.replace("<head>", `<head>${guardScript}`);
+      } else if (rewrittenHtml.includes("<head ")) {
+        rewrittenHtml = rewrittenHtml.replace(/<head\b[^>]*>/, `$&${guardScript}`);
+      }
       res.status(upstreamResponse.status).send(rewrittenHtml);
       return;
     }
@@ -192,7 +250,10 @@ async function handleProxy(req: express.Request, res: express.Response) {
       contentType.includes("application/json")
     ) {
       const text = await upstreamResponse.text();
-      const rewrittenText = rewriteContent(text);
+      let rewrittenText = rewriteContent(text);
+      if (contentType.includes("javascript")) {
+        rewrittenText = patchJavaScript(rewrittenText);
+      }
       res.status(upstreamResponse.status).send(rewrittenText);
       return;
     }

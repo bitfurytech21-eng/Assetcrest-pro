@@ -131,7 +131,7 @@ function patchJavaScript(content: string): string {
     // Tempus Dominus: date/month view disabled toggles
     .replaceAll(
       's.classList.remove(i.css.disabled):s.classList.add(i.css.disabled)',
-      '(s&&s.classList)?s.classList.remove(i.css.disabled):(s&&s.classList&&s.classList.add(i.css.disabled))'
+      '(s&&s.classList&&s.classList.remove(i.css.disabled)):(s&&s.classList&&s.classList.add(i.css.disabled))'
     )
     .replaceAll(
       's.setAttribute(i.css.monthsContainer,',

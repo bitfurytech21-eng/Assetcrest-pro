@@ -1,11 +1,187 @@
 import express from "express";
+import fs from "fs";
+import https from "https";
+import path from "path";
+import zlib from "zlib";
 import { requireAuth, AuthRequest } from "./src/middleware/auth.ts";
 import { getUsers, getOrCreateUser } from "./src/db/users.ts";
 import { createPool } from "./src/db/index.ts";
 import { renderTradingPage } from "./src/trading/tradingPage.ts";
+import { handleApkPackagePost } from "./src/api/apkPackage.ts";
+
+// Dedicated IPv4 keep-alive pool prevents burst TLS handshake exhaustion & 10s undici ConnectTimeoutError
+const upstreamHttpsAgent = new https.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 15000,
+  maxSockets: 6,
+  maxFreeSockets: 6,
+  timeout: 25000,
+});
+
+interface UpstreamResult {
+  status: number;
+  headers: Record<string, string | string[] | undefined>;
+  body: Buffer;
+}
+
+interface CachedAssetEntry {
+  result: UpstreamResult;
+  expiresAt: number;
+}
+
+const STATIC_ASSET_RE = /\.(?:js|mjs|css|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|eot|otf|map)(?:$|\?)/i;
+const proxyAssetCache = new Map<string, CachedAssetEntry>();
+const inFlightGetRequests = new Map<string, Promise<UpstreamResult>>();
+const MAX_CACHE_ENTRIES = 250;
+
+function decodeUpstreamBody(raw: Buffer, encoding?: string): Buffer {
+  if (!raw.length || !encoding) return raw;
+  const enc = encoding.toLowerCase();
+  try {
+    if (enc.includes("gzip")) return zlib.gunzipSync(raw);
+    if (enc.includes("br")) return zlib.brotliDecompressSync(raw);
+    if (enc.includes("deflate")) return zlib.inflateSync(raw);
+  } catch {
+    return raw;
+  }
+  return raw;
+}
+
+function requestUpstreamOnce(
+  targetUrl: string,
+  method: string,
+  headers: Record<string, string>,
+  body?: Buffer,
+  timeoutMs = 25000
+): Promise<UpstreamResult> {
+  return new Promise((resolve, reject) => {
+    const parsed = new URL(targetUrl);
+    const reqHeaders: Record<string, string> = {
+      ...headers,
+      "Accept-Encoding": "gzip, deflate, br",
+    };
+    if (body && body.length > 0) {
+      reqHeaders["Content-Length"] = String(body.length);
+    }
+
+    const upstreamReq = https.request(
+      {
+        protocol: parsed.protocol,
+        hostname: parsed.hostname,
+        port: parsed.port || 443,
+        path: parsed.pathname + parsed.search,
+        method,
+        headers: reqHeaders,
+        agent: upstreamHttpsAgent,
+        family: 4,
+        timeout: timeoutMs,
+      },
+      (upstreamRes) => {
+        const chunks: Buffer[] = [];
+        upstreamRes.on("data", (chunk: Buffer) => chunks.push(chunk));
+        upstreamRes.on("end", () => {
+          const rawBuffer = Buffer.concat(chunks);
+          const ce = upstreamRes.headers["content-encoding"];
+          const encodingStr = Array.isArray(ce) ? ce[0] : ce;
+          const decoded = decodeUpstreamBody(rawBuffer, encodingStr);
+          resolve({
+            status: upstreamRes.statusCode || 502,
+            headers: upstreamRes.headers,
+            body: decoded,
+          });
+        });
+        upstreamRes.on("error", reject);
+      }
+    );
+
+    upstreamReq.on("timeout", () => {
+      upstreamReq.destroy(new Error(`Upstream socket timed out after ${timeoutMs}ms (${parsed.host})`));
+    });
+    upstreamReq.on("error", reject);
+
+    if (body && body.length > 0) {
+      upstreamReq.write(body);
+    }
+    upstreamReq.end();
+  });
+}
+
+async function fetchUpstreamWithRetry(
+  targetUrl: string,
+  method: string,
+  headers: Record<string, string>,
+  body?: Buffer,
+  timeoutMs = 25000
+): Promise<UpstreamResult> {
+  const isIdempotent = method === "GET" || method === "HEAD";
+  const maxAttempts = isIdempotent ? 3 : 1;
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await requestUpstreamOnce(targetUrl, method, headers, body, timeoutMs);
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts) {
+        const backoff = 180 * attempt + Math.floor(Math.random() * 120);
+        await new Promise((r) => setTimeout(r, backoff));
+      }
+    }
+  }
+  throw lastError;
+}
+
+function getCachedOrFetch(
+  cacheKey: string,
+  targetUrl: string,
+  method: string,
+  headers: Record<string, string>,
+  isStaticAsset: boolean
+): Promise<UpstreamResult> {
+  const now = Date.now();
+  const cached = proxyAssetCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return Promise.resolve(cached.result);
+  }
+
+  const existing = inFlightGetRequests.get(cacheKey);
+  if (existing) {
+    return existing;
+  }
+
+  const pending = fetchUpstreamWithRetry(targetUrl, method, headers)
+    .then((result) => {
+      const hasSetCookie = Boolean(result.headers["set-cookie"]?.length);
+      if (result.status === 200 && !hasSetCookie && (isStaticAsset || cacheKey === "GET:https://assetcrest.co/")) {
+        if (proxyAssetCache.size >= MAX_CACHE_ENTRIES) {
+          const oldestKey = proxyAssetCache.keys().next().value;
+          if (oldestKey) proxyAssetCache.delete(oldestKey);
+        }
+        proxyAssetCache.set(cacheKey, {
+          result,
+          expiresAt: Date.now() + (isStaticAsset ? 5 * 60 * 1000 : 30 * 1000),
+        });
+      }
+      return result;
+    })
+    .catch((err) => {
+      // Serve stale cache entry on transient upstream timeout if available
+      if (cached) {
+        return cached.result;
+      }
+      throw err;
+    })
+    .finally(() => {
+      inFlightGetRequests.delete(cacheKey);
+    });
+
+  inFlightGetRequests.set(cacheKey, pending);
+  return pending;
+}
 
 const app = express();
 const PORT = process.env.APPLET_ID ? 3000 : (Number(process.env.PORT) || 3000);
+const isProduction = process.env.NODE_ENV === "production";
 
 
 // Parse raw bodies for POST/PUT requests (form submissions, JSON, uploads)
@@ -31,8 +207,14 @@ app.get("/api/health", async (_req, res) => {
 
   let upstreamStatus = "connected";
   try {
-    const upstream = await fetch("https://assetcrest.co/", { method: "HEAD" });
-    upstreamStatus = upstream.ok ? "connected" : `status ${upstream.status}`;
+    const upstream = await requestUpstreamOnce(
+      "https://assetcrest.co/",
+      "HEAD",
+      { "User-Agent": "Mozilla/5.0" },
+      undefined,
+      6000
+    );
+    upstreamStatus = upstream.status >= 200 && upstream.status < 400 ? "connected" : `status ${upstream.status}`;
   } catch (err: any) {
     upstreamStatus = "unreachable: " + (err.message || "error");
   }
@@ -72,6 +254,13 @@ app.get("/api/users", requireAuth, async (req: AuthRequest, res) => {
     res.status(500).json({ error: error.message || "Failed to fetch users" });
   }
 });
+
+// Android APK project packager endpoint
+app.post("/api/apk/package", handleApkPackagePost);
+
+// Serve PWA manifest, service worker, icons, and .well-known assets (without overriding GET /)
+app.use(express.static(path.resolve("public"), { index: false }));
+app.use("/app", express.static(path.resolve("public"), { index: false, redirect: false }));
 
 // Live Trading View routes
 app.get(["/trading", "/live-trading", "/app/trading", "/app/live-trading", "/markets"], (req, res) => {
@@ -271,18 +460,32 @@ async function handleProxy(req: express.Request, res: express.Response) {
       Buffer.isBuffer(req.body) &&
       req.body.length > 0;
 
-    const upstreamResponse = await fetch(targetUrl.toString(), {
-      method: req.method,
-      headers: forwardHeaders,
-      body: hasBody ? req.body : undefined,
-      redirect: "manual",
-    });
+    const isStaticAsset = STATIC_ASSET_RE.test(req.path);
+    const cacheableGet = req.method === "GET" && !req.headers["cookie"] && !req.headers["authorization"];
+
+    const upstreamResponse = cacheableGet
+      ? await getCachedOrFetch(
+          `GET:${targetUrl.toString()}`,
+          targetUrl.toString(),
+          "GET",
+          forwardHeaders,
+          isStaticAsset
+        )
+      : await fetchUpstreamWithRetry(
+          targetUrl.toString(),
+          req.method,
+          forwardHeaders,
+          hasBody ? (req.body as Buffer) : undefined
+        );
 
     // Forward and rewrite Set-Cookie headers
-    const rawCookies = upstreamResponse.headers.getSetCookie
-      ? upstreamResponse.headers.getSetCookie()
-      : [];
-    if (rawCookies && rawCookies.length > 0) {
+    const rawSetCookie = upstreamResponse.headers["set-cookie"];
+    const rawCookies = Array.isArray(rawSetCookie)
+      ? rawSetCookie
+      : rawSetCookie
+        ? [rawSetCookie]
+        : [];
+    if (rawCookies.length > 0) {
       const rewrittenCookies = rawCookies.map((cookie) =>
         cookie.replace(/Domain=[^;]+;?/gi, "").replace(/Secure;?/gi, "")
       );
@@ -291,7 +494,8 @@ async function handleProxy(req: express.Request, res: express.Response) {
 
     // Handle redirects (301, 302, 303, 307, 308)
     if (upstreamResponse.status >= 300 && upstreamResponse.status < 400) {
-      const location = upstreamResponse.headers.get("location");
+      const locHeader = upstreamResponse.headers["location"];
+      const location = Array.isArray(locHeader) ? locHeader[0] : locHeader;
       if (location) {
         let rewrittenLocation = location
           .replace(/^https?:\/\/assetcrest\.co\//, "/")
@@ -310,12 +514,14 @@ async function handleProxy(req: express.Request, res: express.Response) {
       return;
     }
 
-    const contentType = upstreamResponse.headers.get("content-type") || "";
+    const ctHeader = upstreamResponse.headers["content-type"];
+    const contentType = Array.isArray(ctHeader) ? ctHeader[0] : (ctHeader || "");
     if (contentType) {
       res.setHeader("Content-Type", contentType);
     }
 
-    const cacheControl = upstreamResponse.headers.get("cache-control");
+    const ccHeader = upstreamResponse.headers["cache-control"];
+    const cacheControl = Array.isArray(ccHeader) ? ccHeader[0] : ccHeader;
     if (cacheControl) {
       res.setHeader("Cache-Control", cacheControl);
     }
@@ -325,9 +531,27 @@ async function handleProxy(req: express.Request, res: express.Response) {
     res.removeHeader("Content-Security-Policy");
     res.removeHeader("Content-Security-Policy-Report-Only");
 
+    // Guard: never emit HTML to a <script src="...js"> tag (prevents SyntaxError: Unexpected token '<')
+    const isJsPath = /\.(?:js|mjs)$/i.test(req.path);
+    const isCssPath = /\.css$/i.test(req.path);
+    if (isJsPath && contentType.includes("text/html")) {
+      res
+        .status(upstreamResponse.status >= 400 ? upstreamResponse.status : 502)
+        .setHeader("Content-Type", "application/javascript; charset=utf-8")
+        .send(`/* AssetCrest Proxy: upstream returned HTML (${upstreamResponse.status}) for ${req.path} */`);
+      return;
+    }
+    if (isCssPath && contentType.includes("text/html")) {
+      res
+        .status(upstreamResponse.status >= 400 ? upstreamResponse.status : 502)
+        .setHeader("Content-Type", "text/css; charset=utf-8")
+        .send(`/* AssetCrest Proxy: upstream returned HTML (${upstreamResponse.status}) for ${req.path} */`);
+      return;
+    }
+
     // Rewrite HTML responses
     if (contentType.includes("text/html")) {
-      const html = await upstreamResponse.text();
+      const html = upstreamResponse.body.toString("utf8");
       let rewrittenHtml = rewriteContent(html);
       const guardScript = `<script>
 (function() {
@@ -424,7 +648,14 @@ async function handleProxy(req: express.Request, res: express.Response) {
       contentType.includes("javascript") ||
       contentType.includes("application/json")
     ) {
-      const text = await upstreamResponse.text();
+      const text = upstreamResponse.body.toString("utf8");
+      if (isJsPath && text.trimStart().startsWith("<")) {
+        res
+          .status(upstreamResponse.status >= 400 ? upstreamResponse.status : 502)
+          .setHeader("Content-Type", "application/javascript; charset=utf-8")
+          .send(`/* AssetCrest Proxy: invalid HTML payload suppressed for ${req.path} */`);
+        return;
+      }
       let rewrittenText = rewriteContent(text);
       if (contentType.includes("javascript")) {
         rewrittenText = patchJavaScript(rewrittenText);
@@ -434,10 +665,34 @@ async function handleProxy(req: express.Request, res: express.Response) {
     }
 
     // Binary assets (images, fonts, media, etc.)
-    const buffer = Buffer.from(await upstreamResponse.arrayBuffer());
-    res.status(upstreamResponse.status).send(buffer);
+    res.status(upstreamResponse.status).send(upstreamResponse.body);
   } catch (err: any) {
-    console.error("Proxy error:", err);
+    console.error("Proxy error:", err?.message || err);
+
+    // Return MIME-appropriate error payloads so subresources never throw SyntaxError: Unexpected token '<'
+    if (/\.(?:js|mjs)$/i.test(req.path)) {
+      res
+        .status(502)
+        .setHeader("Content-Type", "application/javascript; charset=utf-8")
+        .send(`/* AssetCrest Proxy: upstream script fetch failed (${err?.message || "timeout"}) */`);
+      return;
+    }
+    if (/\.css$/i.test(req.path)) {
+      res
+        .status(502)
+        .setHeader("Content-Type", "text/css; charset=utf-8")
+        .send(`/* AssetCrest Proxy: upstream stylesheet fetch failed */`);
+      return;
+    }
+    if (/\.json$/i.test(req.path) || (req.headers["accept"] || "").includes("application/json")) {
+      res.status(502).json({ error: "Upstream proxy unavailable", message: err?.message || "Connection timed out" });
+      return;
+    }
+    if (STATIC_ASSET_RE.test(req.path)) {
+      res.status(502).type("text/plain").send("Upstream asset unavailable");
+      return;
+    }
+
     res.status(502).send(`
       <!DOCTYPE html>
       <html lang="en">
@@ -467,18 +722,96 @@ async function handleProxy(req: express.Request, res: express.Response) {
   }
 }
 
-// Proxy all requests
-app.all("*", handleProxy);
+// Check if path belongs to the Auth & After-Auth Investor Dashboard SPA
+function isPortalAppRoute(reqPath: string): boolean {
+  return (
+    reqPath === "/app" ||
+    reqPath.startsWith("/app/") ||
+    reqPath === "/dashboard" ||
+    reqPath.startsWith("/dashboard/") ||
+    reqPath === "/login" ||
+    reqPath === "/register" ||
+    reqPath === "/logout" ||
+    reqPath === "/forgot-password" ||
+    reqPath === "/reset-password" ||
+    reqPath.startsWith("/password") ||
+    reqPath === "/user" ||
+    reqPath.startsWith("/user/") ||
+    reqPath === "/admin" ||
+    reqPath.startsWith("/admin/")
+  );
+}
 
-const server = app.listen(PORT, "0.0.0.0", () => {
-  console.log(`AssetCrest Proxy Server running on http://0.0.0.0:${PORT}`);
-});
-
-server.on("error", (err: any) => {
-  if (err.code === "EADDRINUSE") {
-    console.error(`Port ${PORT} is already in use.`);
+async function startServer() {
+  if (isProduction) {
+    // Serve Vite-built SPA assets and copied public files under /app
+    const distDir = path.resolve("dist");
+    if (fs.existsSync(distDir)) {
+      app.use("/app", express.static(distDir, { index: false, redirect: false }));
+    }
+    const distHtmlPath = path.resolve("dist/index.html");
+    app.get("*", (req, res, next) => {
+      if (isPortalAppRoute(req.path) && fs.existsSync(distHtmlPath)) {
+        res.sendFile(distHtmlPath);
+        return;
+      }
+      next();
+    });
   } else {
-    console.error("Server error:", err);
+    const { createServer: createViteServer } = await import("vite");
+    const vite = await createViteServer({
+      server: { middlewareMode: true, allowedHosts: true },
+      appType: "custom",
+    });
+
+    // Pass Vite module/HMR/asset requests under /app/ to vite.middlewares
+    app.use((req, res, next) => {
+      const p = req.path;
+      const isViteInternal =
+        p.startsWith("/app/@") ||
+        p.startsWith("/app/src/") ||
+        p.startsWith("/app/node_modules/") ||
+        (p.startsWith("/app/") && /\.[a-z0-9]+$/i.test(p) && !p.endsWith(".html"));
+      if (isViteInternal) {
+        vite.middlewares(req, res, next);
+        return;
+      }
+      next();
+    });
+
+    // Serve SPA HTML for Auth and After-Auth Investor Portal routes
+    app.get("*", async (req, res, next) => {
+      if (!isPortalAppRoute(req.path)) {
+        next();
+        return;
+      }
+      try {
+        const indexPath = path.resolve("index.html");
+        let template = fs.readFileSync(indexPath, "utf-8");
+        template = await vite.transformIndexHtml(req.originalUrl, template);
+        res.status(200).setHeader("Content-Type", "text/html; charset=utf-8").send(template);
+      } catch (err) {
+        vite.ssrFixStacktrace(err as Error);
+        next(err);
+      }
+    });
   }
-  process.exit(1);
-});
+
+  // Proxy all remaining public marketing routes to assetcrest.co
+  app.all("*", handleProxy);
+
+  const server = app.listen(PORT, "0.0.0.0", () => {
+    console.log(`AssetCrest Proxy & Investor Portal running on http://0.0.0.0:${PORT}`);
+  });
+
+  server.on("error", (err: any) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(`Port ${PORT} is already in use.`);
+    } else {
+      console.error("Server error:", err);
+    }
+    process.exit(1);
+  });
+}
+
+void startServer();

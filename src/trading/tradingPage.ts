@@ -252,10 +252,10 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       --border-sub: rgba(255, 255, 255, 0.06);
       --border-accent: rgba(233, 77, 101, 0.35);
 
-      /* Typography */
+      /* Typography (WCAG AA contrast >= 4.5:1) */
       --text-main: #ffffff;
-      --text-muted: #abb8c3;
-      --text-dim: #6d8194;
+      --text-muted: #b8c4cf;
+      --text-dim: #8da2b5;
 
       /* Bullish & Bearish */
       --green: #00d084;
@@ -267,6 +267,16 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       --red-dim: rgba(233, 77, 101, 0.12);
 
       --gold: #fcb900;
+
+      /* Shared Spacing, Radii & Elevation Tokens */
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --shadow-panel: 0 4px 16px rgba(0, 0, 0, 0.35);
+      --shadow-toast: 0 12px 28px rgba(0, 0, 0, 0.45);
     }
 
     * {

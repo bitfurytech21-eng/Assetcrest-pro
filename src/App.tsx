@@ -3,16 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect } from 'react';
+import { ServiceWorkerRegistrar } from '@/src/backend/components/ServiceWorkerRegistrar';
+import { OfflineIndicator } from '@/src/backend/components/OfflineIndicator';
+import { ErrorBoundary } from '@/src/backend/components/ErrorBoundary';
+import AssetCrestPortal from '@/src/backend/AssetCrestPortal';
 
 export default function App() {
-  useEffect(() => {
-    // If rendered in client-side SPA mode, redirect directly to root proxy
-    if (window.location.pathname === '/' || window.location.pathname === '') {
-      window.location.replace('/');
-    }
-  }, []);
-
-  return null;
+  return (
+    <>
+      <ServiceWorkerRegistrar />
+      <OfflineIndicator />
+      <ErrorBoundary>
+        <AssetCrestPortal />
+      </ErrorBoundary>
+    </>
+  );
 }
-

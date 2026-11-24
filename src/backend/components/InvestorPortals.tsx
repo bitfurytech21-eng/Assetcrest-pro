@@ -56,6 +56,7 @@ import {
   cloudAdminApproveWithdrawal,
   cloudAdminDeclineDeposit,
   cloudAdminDeclineWithdrawal,
+  cloudChangePassword,
   cloudExecuteSwap,
   cloudInvestPlan,
   cloudLogVisitorLocation,
@@ -67,9 +68,9 @@ import {
   cloudUpdateAvatar,
   cloudUpdateProfileAndJoint,
   queuePendingLocationLog,
-  signInWithGoogleCloud,
+  signOutCloud,
   type TransferDirectoryEntry,
-} from '@/src/backend/lib/firebase';
+} from '@/src/backend/lib/neon-client';
 import {
   applyRoiSettlementToStore,
   computeRoiSettlementPlan,
@@ -1463,18 +1464,32 @@ export function AccountProfileView({
     onNotify('Account details saved.', 'success');
   };
 
-  const handleChangePassword = (e: React.FormEvent) => {
+  const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentPassword !== user.password) {
-      onNotify('Current password is incorrect.', 'error');
-      return;
-    }
-    if (newPassword.length < 6) {
-      onNotify('New password must be at least 6 characters.', 'error');
+    if (newPassword.length < 8) {
+      onNotify('New password must be at least 8 characters.', 'error');
       return;
     }
     if (newPassword !== confirmPassword) {
       onNotify('New passwords do not match.', 'error');
+      return;
+    }
+
+    if (isCloudMode) {
+      try {
+        await cloudChangePassword(currentPassword, newPassword);
+        setCurrentPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+        onNotify('Password updated in Neon Cloud.', 'success');
+      } catch (err: any) {
+        onNotify(err?.message || 'Could not update password.', 'error');
+      }
+      return;
+    }
+
+    if (currentPassword !== user.password) {
+      onNotify('Current password is incorrect.', 'error');
       return;
     }
 
@@ -1640,26 +1655,27 @@ export function AccountProfileView({
           </button>
         </form>
 
-        {/* Change Password / Cloud Auth Security */}
-        {isCloudMode ? (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-5 space-y-4">
-            <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-              <Cloud className="h-4 w-4 text-emerald-600" />
-              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
-                Google Cloud Authentication Active
-              </h3>
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              Your Cloud session is secured via <strong>Google OAuth 2.0</strong> ({user.email}). Passwords, 2FA, and multi-device recovery are protected directly by your Google Account.
-            </p>
-            <div className="p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 space-y-1">
-              <p className="font-semibold">Cloud Transfer Referral ID: {user.referralCode}</p>
-              <p className="text-[11px]">
-                All deposits, KYC approvals, swaps, investments, and P2P transfers persist in Firestore across devices.
+        {/* Change Password & Neon Cloud Security */}
+        <div className="space-y-4">
+          {isCloudMode && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-5 space-y-3">
+              <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <Cloud className="h-4 w-4 text-emerald-600" />
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                  Neon Cloud Database Active
+                </h3>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Your session ({user.email}) is backed by <strong>Neon PostgreSQL</strong> with encrypted credentials and multi-device synchronization.
               </p>
+              <div className="p-3 rounded-md bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-200 space-y-1">
+                <p className="font-semibold">Cloud Transfer Referral ID: {user.referralCode}</p>
+                <p className="text-[11px]">
+                  All deposits, KYC approvals, swaps, investments, and P2P transfers persist in Neon PostgreSQL across devices.
+                </p>
+              </div>
             </div>
-          </div>
-        ) : (
+          )}
           <form
             onSubmit={handleChangePassword}
             className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-5 space-y-4"
@@ -1715,7 +1731,7 @@ export function AccountProfileView({
               Update Password
             </button>
           </form>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -2018,10 +2034,14 @@ export function AdminDashboardView({
               </p>
               <button
                 type="button"
-                onClick={() => void signInWithGoogleCloud()}
+                onClick={() => {
+                  void signOutCloud().then(() => {
+                    onNotify('Signed out. Sign in with the Admin account to continue.', 'info');
+                  });
+                }}
                 className="bg-[#2b4865] hover:bg-[#223a52] text-white text-xs font-medium px-4 py-2 rounded-md cursor-pointer"
               >
-                Switch Google Account
+                Sign Out to Switch Account
               </button>
             </>
           ) : (

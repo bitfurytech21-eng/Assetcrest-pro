@@ -1,11 +1,14 @@
+import "./src/lib/load-env.ts";
 import express from "express";
 import fs from "fs";
 import https from "https";
 import path from "path";
 import zlib from "zlib";
-import { requireAuth, AuthRequest } from "./src/middleware/auth.ts";
-import { getUsers, getOrCreateUser } from "./src/db/users.ts";
-import { createPool } from "./src/db/index.ts";
+import { requireAdmin, requireAuth, AuthRequest } from "./src/middleware/auth.ts";
+import { getUsers, getUserById } from "./src/db/users.ts";
+import { createPool, isDatabaseConfigured } from "./src/db/index.ts";
+import { getMemoryUserById } from "./src/db/neonRepo.ts";
+import { createNeonApiRouter } from "./src/api/neonRoutes.ts";
 import { renderTradingPage } from "./src/trading/tradingPage.ts";
 import { handleApkPackagePost } from "./src/api/apkPackage.ts";
 
@@ -187,22 +190,60 @@ const isProduction = process.env.NODE_ENV === "production";
 // Parse raw bodies for POST/PUT requests (form submissions, JSON, uploads)
 app.use(express.raw({ type: "*/*", limit: "50mb" }));
 
-// Enable CORS for all assets and endpoints
-app.use((_req, res, next) => {
+// Enable CORS safely (never expose wildcard Access-Control-Allow-Origin on authenticated API endpoints)
+app.use((req, res, next) => {
+  const isSensitiveApi =
+    req.path.startsWith("/api/auth") ||
+    req.path.startsWith("/api/neon") ||
+    req.path.startsWith("/api/user");
+
+  if (isSensitiveApi) {
+    const origin = req.headers.origin;
+    const expectedHost = String(req.headers["x-forwarded-host"] || req.headers.host || "")
+      .split(",")[0]
+      .trim()
+      .toLowerCase();
+    if (origin) {
+      try {
+        if (new URL(origin).host.toLowerCase() === expectedHost) {
+          res.setHeader("Access-Control-Allow-Origin", origin);
+          res.setHeader("Access-Control-Allow-Credentials", "true");
+          res.setHeader("Vary", "Origin");
+        }
+      } catch {
+        // ignore malformed origin
+      }
+    }
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+    next();
+    return;
+  }
+
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, HEAD");
   res.setHeader("Access-Control-Allow-Headers", "*");
+  if (req.method === "OPTIONS" && req.path.startsWith("/api/")) {
+    res.status(204).end();
+    return;
+  }
   next();
 });
 
-// Real functioning health check endpoint (checks Cloud SQL connection and upstream proxy)
+// Real functioning health check endpoint (checks Neon PostgreSQL connection and upstream proxy)
 app.get("/api/health", async (_req, res) => {
-  let dbStatus = "connected";
-  try {
-    const pool = createPool();
-    await pool.query("SELECT 1;");
-  } catch (err: any) {
-    dbStatus = "disconnected: " + (err.message || "error");
+  let dbStatus = isDatabaseConfigured ? "connected" : "fallback-memory (set DATABASE_URL for Neon)";
+  if (isDatabaseConfigured) {
+    try {
+      const pool = createPool();
+      await pool.query("SELECT 1;");
+    } catch (err: any) {
+      dbStatus = "disconnected: " + (err.message || "error");
+    }
   }
 
   let upstreamStatus = "connected";
@@ -220,9 +261,9 @@ app.get("/api/health", async (_req, res) => {
   }
 
   res.json({
-    status: dbStatus.startsWith("connected") ? "ok" : "degraded",
+    status: dbStatus.startsWith("disconnected") ? "degraded" : "ok",
+    engine: "neon-postgresql",
     database: dbStatus,
-    region: "europe-west3",
     target: "https://assetcrest.co",
     appTarget: "https://app.assetcrest.co",
     upstream: upstreamStatus,
@@ -230,30 +271,44 @@ app.get("/api/health", async (_req, res) => {
   });
 });
 
-// Protected user profile endpoint
+// Protected user profile endpoint (Neon session verified)
 app.get("/api/user/profile", requireAuth, async (req: AuthRequest, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-    const user = await getOrCreateUser(req.user.uid, req.user.email || "", req.user.name);
-    res.json(user);
+    if (!isDatabaseConfigured) {
+      const memUser = await getMemoryUserById(req.user.id);
+      if (!memUser) return res.status(404).json({ error: "User not found" });
+      return res.json(memUser);
+    }
+    const row = await getUserById(req.user.id);
+    if (!row) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    const { passwordHash: _hash, ...safeUser } = row;
+    res.json(safeUser);
   } catch (error: any) {
     console.error("Failed to fetch user profile:", error);
     res.status(500).json({ error: error.message || "Failed to fetch user profile" });
   }
 });
 
-// Protected database API route
-app.get("/api/users", requireAuth, async (req: AuthRequest, res) => {
+// Protected database users route (Admin only)
+app.get("/api/users", requireAuth, requireAdmin, async (_req: AuthRequest, res) => {
   try {
-    const users = await getUsers();
-    res.json(users);
+    const rows = await getUsers();
+    res.json(
+      rows.map(({ passwordHash: _hash, ...safeUser }) => safeUser)
+    );
   } catch (error: any) {
     console.error("Failed to fetch users:", error);
     res.status(500).json({ error: error.message || "Failed to fetch users" });
   }
 });
+
+// Mount Neon Auth & Portal API routes
+app.use("/api", createNeonApiRouter());
 
 // Android APK project packager endpoint
 app.post("/api/apk/package", handleApkPackagePost);
@@ -403,6 +458,7 @@ async function handleProxy(req: express.Request, res: express.Response) {
       req.path.startsWith("/dashboard") ||
       req.path === "/login" ||
       req.path === "/register" ||
+      req.path === "/signup" ||
       req.path === "/logout" ||
       req.path === "/forgot-password" ||
       req.path === "/reset-password";
@@ -731,6 +787,7 @@ function isPortalAppRoute(reqPath: string): boolean {
     reqPath.startsWith("/dashboard/") ||
     reqPath === "/login" ||
     reqPath === "/register" ||
+    reqPath === "/signup" ||
     reqPath === "/logout" ||
     reqPath === "/forgot-password" ||
     reqPath === "/reset-password" ||

@@ -24,6 +24,7 @@ import {
   Home,
   Lock,
   LogIn,
+  Mail,
   MapPin,
   Menu,
   Moon,
@@ -83,15 +84,15 @@ import {
   cloudSettleRoiPlan,
   cloudToggleInvestmentSettings,
   queuePendingLocationLog,
-  signInWithGoogleCloud,
   signOutCloud,
-} from '@/src/backend/lib/firebase';
+} from '@/src/backend/lib/neon-client';
 import {
   applyRoiSettlementToStore,
   computeRoiSettlementPlan,
   formatCountdown,
   getInvestmentRoiSnapshot,
 } from '@/src/backend/lib/roi-engine';
+import { AdminAutomationPanel } from '@/src/backend/components/AdminAutomationPanel';
 
 export type AdminSection =
   | 'dashboard'
@@ -107,6 +108,7 @@ export type AdminSection =
   | 'transactions'
   | 'kyc'
   | 'settings'
+  | 'automation'
   | 'platform';
 
 interface AdminConsoleShellProps {
@@ -1438,6 +1440,17 @@ export function AdminConsoleShell({
 
           <button
             type="button"
+            onClick={() => navigateSection('automation')}
+            className={navLinkCls(section === 'automation')}
+          >
+            <span className="flex items-center gap-2.5">
+              <Mail className="h-4 w-4 shrink-0" />
+              <span>Email &amp; Webhooks</span>
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => navigateSection('platform')}
             className={navLinkCls(section === 'platform')}
           >
@@ -1557,12 +1570,12 @@ export function AdminConsoleShell({
                     type="button"
                     onClick={() => {
                       setHeaderMenuOpen(false);
-                      void signInWithGoogleCloud().catch(() => onOpenAuthModal());
+                      onOpenAuthModal();
                     }}
                     className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold cursor-pointer"
                   >
                     <Cloud className="h-3.5 w-3.5" />
-                    Connect Google Cloud Sync
+                    Connect Neon Cloud Sync
                   </button>
                 ) : (
                   <button
@@ -1574,7 +1587,7 @@ export function AdminConsoleShell({
                     className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
                   >
                     <Cloud className="h-3.5 w-3.5" />
-                    Sign Out Cloud Sync
+                    Sign Out Neon Sync
                   </button>
                 )}
                 <a
@@ -3736,6 +3749,15 @@ export function AdminConsoleShell({
                 </div>
               </div>
             </div>
+          )}
+
+          {section === 'automation' && (
+            <AdminAutomationPanel
+              adminEmail={user.email}
+              isCloudMode={isCloudMode}
+              onOpenAuthModal={onOpenAuthModal}
+              onNotify={onNotify}
+            />
           )}
         </main>
       </div>

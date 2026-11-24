@@ -58,6 +58,8 @@ import {
   AuthModal,
   KycInspectModal,
   ReceiptPreviewModal,
+  SignInPage,
+  SignUpPage,
   WelcomeRegistrationModal,
 } from '@/src/backend/components/AuthAndAccountModals';
 import { AdminConsoleShell } from '@/src/backend/components/AdminConsoleShell';
@@ -89,7 +91,6 @@ import {
   setThemeMode,
 } from '@/src/backend/lib/assetcrest-store';
 import {
-  auth,
   cloudAdminDecideKyc,
   cloudClaimTransferRequest,
   cloudCreateTicket,
@@ -99,11 +100,11 @@ import {
   cloudSubmitDeposit,
   cloudSubmitWithdrawal,
   cloudToggleInvestmentSettings,
+  getCurrentCloudUserId,
   queuePendingLocationLog,
-  signInWithGoogleCloud,
   signOutCloud,
-  useFirebaseCloudSync,
-} from '@/src/backend/lib/firebase';
+  useNeonCloudSync,
+} from '@/src/backend/lib/neon-client';
 import {
   applyRoiSettlementToStore,
   computeRoiSettlementPlan,
@@ -230,7 +231,7 @@ function getInitialPortalRouteState(): {
   if (p === '/logout' || p === '/app/logout') {
     return { authRoute: 'logout', tab: 'dashboard' };
   }
-  if (p === '/register' || p === '/app/register') {
+  if (p === '/register' || p === '/app/register' || p === '/signup' || p === '/app/signup') {
     return { authRoute: 'register', tab: 'dashboard' };
   }
   if (
@@ -266,8 +267,8 @@ function getInitialPortalRouteState(): {
 
 export default function AssetCrestPortal() {
   const store = useAssetCrestStore();
-  const cloudSync = useFirebaseCloudSync();
-  const isCloudMode = Boolean(cloudSync.firebaseUser && cloudSync.cloudUser);
+  const cloudSync = useNeonCloudSync();
+  const isCloudMode = Boolean(cloudSync.neonSessionUser && cloudSync.cloudUser);
   const initialRoute = useRef(getInitialPortalRouteState()).current;
 
   const [localAuthed, setLocalAuthed] = useState<boolean>(() => {
@@ -349,6 +350,8 @@ export default function AssetCrestPortal() {
         p === '/app/login' ||
         p === '/register' ||
         p === '/app/register' ||
+        p === '/signup' ||
+        p === '/app/signup' ||
         p === '/forgot-password' ||
         p === '/app/forgot-password' ||
         p === '/reset-password' ||
@@ -449,13 +452,9 @@ export default function AssetCrestPortal() {
     if (refParam) {
       refTrackedRef.current = true;
       captureVisitorLocationForAdmin(refParam, window.location.href, (entry) => {
-        if (auth.currentUser) {
-          void cloudLogVisitorLocation(auth.currentUser.uid, entry).catch(() => {
-            queuePendingLocationLog(entry);
-          });
-        } else {
+        void cloudLogVisitorLocation(getCurrentCloudUserId(), entry).catch(() => {
           queuePendingLocationLog(entry);
-        }
+        });
       });
     }
   }, []);
@@ -1288,19 +1287,90 @@ export default function AssetCrestPortal() {
     }`;
 
   if (!isAuthenticated) {
+    if (authModalOpen && authModalMode === 'register') {
+      return (
+        <>
+          <SignUpPage
+            store={effectiveStore}
+            onNotify={notify}
+            onAuthSuccess={handleAuthSuccess}
+            onSwitchToSignIn={() => {
+              setAuthModalMode('login');
+              setAuthModalOpen(true);
+              if (typeof window !== 'undefined') {
+                window.history.replaceState({}, '', '/app/login');
+              }
+            }}
+          />
+
+          {/* Toast Stack */}
+          <div className="fixed bottom-16 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none">
+            <AnimatePresence>
+              {toasts.map((toast) => (
+                <motion.div
+                  key={toast.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className={`pointer-events-auto flex items-center justify-between gap-2 px-4 py-3 rounded-md shadow-lg text-xs font-medium text-white ${
+                    toast.tone === 'success'
+                      ? 'bg-[#2b4865]'
+                      : toast.tone === 'error'
+                      ? 'bg-red-600'
+                      : 'bg-slate-700'
+                  }`}
+                >
+                  <span>{toast.message}</span>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </>
+      );
+    }
+
     return (
-      <div className="min-h-screen flex flex-col bg-[#f4f6f9] dark:bg-slate-950 text-[#2d3748] dark:text-slate-100 transition-colors duration-200">
-        <AuthModal
-          key={authModalOpen ? authModalMode : 'closed'}
-          open={authModalOpen}
-          initialMode={authModalMode}
-          onClose={() => setAuthModalOpen(false)}
-          onAuthSuccess={handleAuthSuccess}
+      <>
+        <SignInPage
           store={effectiveStore}
           onNotify={notify}
-          isCloudMode={isCloudMode}
-          cloudEmail={cloudSync.firebaseUser?.email ?? null}
+          onAuthSuccess={handleAuthSuccess}
+          onSwitchToSignUp={() => {
+            setAuthModalMode('register');
+            setAuthModalOpen(true);
+            if (typeof window !== 'undefined') {
+              window.history.replaceState({}, '', '/app/register');
+            }
+          }}
+          onForgotPassword={() => {
+            setAuthModalMode('forgot');
+            setAuthModalOpen(true);
+          }}
         />
+
+        {authModalOpen && authModalMode === 'forgot' && (
+          <AuthModal
+            key="forgot"
+            open
+            initialMode="forgot"
+            onClose={() => {
+              setAuthModalMode('login');
+              setAuthModalOpen(true);
+            }}
+            onAuthSuccess={handleAuthSuccess}
+            onSwitchToRegisterPage={() => {
+              setAuthModalMode('register');
+              setAuthModalOpen(true);
+              if (typeof window !== 'undefined') {
+                window.history.replaceState({}, '', '/app/register');
+              }
+            }}
+            store={effectiveStore}
+            onNotify={notify}
+            isCloudMode={isCloudMode}
+            cloudEmail={cloudSync.neonSessionUser?.email ?? null}
+          />
+        )}
 
         {/* Toast Stack */}
         <div className="fixed bottom-16 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none">
@@ -1324,85 +1394,7 @@ export default function AssetCrestPortal() {
             ))}
           </AnimatePresence>
         </div>
-
-        {/* Auth Gate Header */}
-        <header className="h-14 bg-[#2b4865] dark:bg-slate-900 border-b border-[#223a52] dark:border-slate-800 text-white px-4 flex items-center justify-between shadow-sm">
-          <a href="/" className="flex items-center gap-2">
-            <svg width="28" height="28" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-              <polygon points="32,4 58,19 58,45 32,60 6,45 6,19" fill="#991b1b" />
-              <polygon points="32,4 58,19 32,34 6,19" fill="#dc2626" />
-              <polygon points="32,34 58,19 58,45 32,60" fill="#7f1d1d" />
-              <polygon points="32,16 46,44 37,44 32,32 27,44 18,44" fill="#1e293b" />
-            </svg>
-            <span className="text-lg font-extrabold tracking-tight leading-none">
-              <span className="text-white">ASSET</span>
-              <span className="text-rose-400">CREST</span>
-            </span>
-          </a>
-          <div className="flex items-center gap-2 text-xs font-semibold">
-            <a
-              href="/"
-              className="px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 transition"
-            >
-              Website
-            </a>
-            <a
-              href="/trading"
-              className="px-3 py-1.5 rounded bg-[#e94d65] hover:bg-[#d83951] text-white transition"
-            >
-              Live Trading
-            </a>
-          </div>
-        </header>
-
-        {/* Auth Gate Fallback Surface */}
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg p-7 text-center space-y-5">
-            <div className="mx-auto h-12 w-12 rounded-full bg-[#2b4865]/10 dark:bg-sky-500/10 text-[#2b4865] dark:text-sky-400 flex items-center justify-center">
-              <ShieldCheck className="h-6 w-6" />
-            </div>
-            <div className="space-y-1.5">
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-                AssetCrest Investor Portal
-              </h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Sign in or create an Individual or Joint investor account to access your portfolio dashboard, crypto deposits, swaps, and real estate portals.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthModalMode('login');
-                  setAuthModalOpen(true);
-                }}
-                className="py-2.5 px-4 rounded-md bg-[#2b4865] hover:bg-[#223a52] text-white text-xs font-semibold cursor-pointer"
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthModalMode('register');
-                  setAuthModalOpen(true);
-                }}
-                className="py-2.5 px-4 rounded-md border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold cursor-pointer"
-              >
-                Register Account
-              </button>
-            </div>
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-4 text-xs text-slate-500">
-              <a href="/" className="hover:text-[#2b4865] dark:hover:text-sky-400">
-                ← Back to AssetCrest.co
-              </a>
-              <span>•</span>
-              <a href="/trading" className="hover:text-[#2b4865] dark:hover:text-sky-400">
-                Live Trading Terminal
-              </a>
-            </div>
-          </div>
-        </main>
-      </div>
+      </>
     );
   }
 
@@ -1417,7 +1409,7 @@ export default function AssetCrestPortal() {
         store={effectiveStore}
         onNotify={notify}
         isCloudMode={isCloudMode}
-        cloudEmail={cloudSync.firebaseUser?.email ?? null}
+        cloudEmail={cloudSync.neonSessionUser?.email ?? null}
       />
       <WelcomeRegistrationModal
         user={welcomeModalUser}
@@ -1639,7 +1631,7 @@ export default function AssetCrestPortal() {
                       }`}
                     />
                     <span className={isCloudMode ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}>
-                      {isCloudMode ? 'Firebase Cloud Sync Active' : 'Local Demo Storage'}
+                      {isCloudMode ? 'Neon Cloud Sync Active' : 'Local Preview Storage'}
                     </span>
                   </div>
                 </div>
@@ -1695,19 +1687,13 @@ export default function AssetCrestPortal() {
                       type="button"
                       onClick={() => {
                         setHeaderMenuOpen(false);
-                        void signInWithGoogleCloud()
-                          .then(({ user }) => {
-                            notify(`Cloud Sync connected as ${user.email}.`, 'success');
-                          })
-                          .catch(() => {
-                            setAuthModalMode('login');
-                            setAuthModalOpen(true);
-                          });
+                        setAuthModalMode('login');
+                        setAuthModalOpen(true);
                       }}
                       className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold cursor-pointer"
                     >
                       <Cloud className="h-3.5 w-3.5" />
-                      Connect Google Cloud Sync
+                      Connect Neon Cloud Sync
                     </button>
                   ) : (
                     <button
@@ -1715,13 +1701,13 @@ export default function AssetCrestPortal() {
                       onClick={() => {
                         setHeaderMenuOpen(false);
                         void signOutCloud().then(() => {
-                          notify('Signed out of Cloud Sync.', 'info');
+                          notify('Signed out of Neon Cloud Sync.', 'info');
                         });
                       }}
                       className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium cursor-pointer"
                     >
                       <Cloud className="h-3.5 w-3.5" />
-                      Sign Out Cloud Sync
+                      Sign Out Neon Sync
                     </button>
                   )}
                   <button
@@ -3261,13 +3247,9 @@ export default function AssetCrestPortal() {
                       activeUser.referralCode,
                       shareReferralUrl,
                       (entry) => {
-                        if (auth.currentUser) {
-                          void cloudLogVisitorLocation(auth.currentUser.uid, entry).catch(() => {
-                            queuePendingLocationLog(entry);
-                          });
-                        } else {
+                        void cloudLogVisitorLocation(getCurrentCloudUserId(), entry).catch(() => {
                           queuePendingLocationLog(entry);
-                        }
+                        });
                       }
                     );
                     notify('Referral link visit simulated.', 'info');

@@ -48,8 +48,12 @@ export interface KycSubmission {
 
 export interface UserAccount {
   id: string;
+  username?: string;
   name: string;
   email: string;
+  phoneNumber?: string;
+  country?: string;
+  referredBy?: string;
   password: string;
   role: UserRole;
   accountType: AccountType;
@@ -1085,7 +1089,7 @@ export function useThemeMode(): ThemeMode {
   return useSyncExternalStore(subscribeTheme, readTheme, () => 'light');
 }
 
-// --- Image File Compression Helper (fits localStorage & Firestore volumetric limits) ---
+// --- Image File Compression Helper (fits localStorage & Neon payload limits) ---
 export function readAndCompressFile(
   file: File,
   maxDimension = 640,

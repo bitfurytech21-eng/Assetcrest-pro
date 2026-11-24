@@ -8,9 +8,6 @@ import {
   UserPlus,
   LogIn,
   KeyRound,
-  Users,
-  User,
-  Upload,
   CheckCircle2,
   ShieldCheck,
   ArrowRight,
@@ -20,29 +17,691 @@ import {
   Lock,
   Cloud,
   CloudOff,
+  Eye,
+  EyeOff,
+  ChevronDown,
 } from 'lucide-react';
 import {
-  AccountType,
   appendActivityLog,
   appendSessionLog,
   AssetCrestStore,
   EMPTY_CRYPTO_BALANCES,
   formatNowStamp,
   nextRecordId,
-  readAndCompressFile,
   TransactionRecord,
   updateAssetCrestStore,
   UserAccount,
   PageTab,
 } from '@/src/backend/lib/assetcrest-store';
-import { signOutCloud } from '@/src/backend/lib/firebase';
+import {
+  neonClaimAdmin,
+  neonForgotPassword,
+  neonLogin,
+  neonRegister,
+  neonResetPassword,
+  signOutCloud,
+} from '@/src/backend/lib/neon-client';
 import { EmptyState, ErrorAlertBanner } from '@/src/backend/components/UIStates';
+
+const SIGNUP_COUNTRIES = [
+  'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Antigua and Barbuda',
+  'Argentina', 'Armenia', 'Australia', 'Austria', 'Azerbaijan', 'Bahamas', 'Bahrain',
+  'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan',
+  'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria',
+  'Burkina Faso', 'Burundi', 'Cabo Verde', 'Cambodia', 'Cameroon', 'Canada',
+  'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros',
+  'Congo', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus', 'Czech Republic', 'Denmark',
+  'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador',
+  'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Fiji',
+  'Finland', 'France', 'Gabon', 'Gambia', 'Georgia', 'Germany', 'Ghana', 'Greece',
+  'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau', 'Guyana', 'Haiti', 'Honduras',
+  'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel',
+  'Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati',
+  'Kuwait', 'Kyrgyzstan', 'Laos', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia',
+  'Libya', 'Liechtenstein', 'Lithuania', 'Luxembourg', 'Madagascar', 'Malawi',
+  'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania',
+  'Mauritius', 'Mexico', 'Micronesia', 'Moldova', 'Monaco', 'Mongolia',
+  'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru', 'Nepal',
+  'Netherlands', 'New Zealand', 'Nicaragua', 'Niger', 'Nigeria', 'North Macedonia',
+  'Norway', 'Oman', 'Pakistan', 'Palau', 'Palestine', 'Panama', 'Papua New Guinea',
+  'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Romania',
+  'Russia', 'Rwanda', 'Saint Kitts and Nevis', 'Saint Lucia',
+  'Saint Vincent and the Grenadines', 'Samoa', 'San Marino', 'Sao Tome and Principe',
+  'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Singapore',
+  'Slovakia', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa', 'South Korea',
+  'South Sudan', 'Spain', 'Sri Lanka', 'Sudan', 'Suriname', 'Sweden', 'Switzerland',
+  'Syria', 'Taiwan', 'Tajikistan', 'Tanzania', 'Thailand', 'Timor-Leste', 'Togo',
+  'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkey', 'Turkmenistan', 'Tuvalu',
+  'Uganda', 'Ukraine', 'United Arab Emirates', 'United Kingdom', 'United States',
+  'Uruguay', 'Uzbekistan', 'Vanuatu', 'Vatican City', 'Venezuela', 'Vietnam',
+  'Yemen', 'Zambia', 'Zimbabwe',
+];
+
+function computePasswordStrength(password: string): number {
+  if (!password) return 0;
+  let score = 0;
+  if (password.length >= 8) score += 1;
+  if (/[a-z]/.test(password)) score += 1;
+  if (/[A-Z]/.test(password)) score += 1;
+  if (/[0-9]/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+  return score;
+}
+
+function getStrengthBarColor(score: number, index: number): string {
+  if (index >= score) return 'bg-[#d8dde6]';
+  if (score <= 1) return 'bg-red-500';
+  if (score === 2) return 'bg-orange-500';
+  if (score === 3) return 'bg-amber-500';
+  if (score === 4) return 'bg-[#345485]';
+  return 'bg-emerald-500';
+}
+
+function getInitialReferralParam(): string {
+  if (typeof window === 'undefined') return '';
+  const params = new URLSearchParams(window.location.search);
+  return params.get('ref') || params.get('track') || '';
+}
+
+interface SignUpFormProps {
+  store: AssetCrestStore;
+  onNotify: (msg: string, tone?: 'success' | 'info' | 'error') => void;
+  onAuthSuccess?: () => void;
+  onSwitchToSignIn: () => void;
+  onErrorChange?: (err: string) => void;
+  showInlineError?: boolean;
+}
+
+function SignUpFormFields({
+  store,
+  onNotify,
+  onAuthSuccess,
+  onSwitchToSignIn,
+  onErrorChange,
+  showInlineError = true,
+}: SignUpFormProps) {
+  const [username, setUsername] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [country, setCountry] = useState('');
+  const [referralId, setReferralId] = useState(getInitialReferralParam);
+  const [password, setPassword] = useState('');
+  const [repeatPassword, setRepeatPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const strengthScore = computePasswordStrength(password);
+
+  const reportError = (msg: string) => {
+    setFormError(msg);
+    onErrorChange?.(msg);
+    onNotify(msg, 'error');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setFormError('');
+    onErrorChange?.('');
+
+    if (!store.platformSettings.allowNewRegistrations) {
+      reportError('New investor registrations are currently paused by Platform Administration.');
+      return;
+    }
+
+    const cleanUsername = username.trim();
+    const cleanName = fullName.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = phoneNumber.trim();
+    const cleanCountry = country.trim();
+    const cleanReferral = referralId.trim();
+
+    if (!cleanUsername || !cleanName || !cleanEmail || !cleanPhone || !cleanCountry || !password) {
+      reportError('Please complete all required registration fields.');
+      return;
+    }
+
+    if (cleanUsername.length < 3) {
+      reportError('Username must be at least 3 characters long.');
+      return;
+    }
+
+    if (password.length < 8) {
+      reportError('Password must be 8 or more characters long.');
+      return;
+    }
+
+    if (password !== repeatPassword) {
+      reportError('Passwords do not match.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const created = await neonRegister({
+        username: cleanUsername,
+        name: cleanName,
+        email: cleanEmail,
+        phoneNumber: cleanPhone,
+        country: cleanCountry,
+        referredBy: cleanReferral || undefined,
+        password,
+      });
+
+      const localFallbackUser: UserAccount = {
+        ...created,
+        password: '',
+      };
+
+      updateAssetCrestStore((prev) => ({
+        ...prev,
+        users: prev.users.some((u) => u.id === localFallbackUser.id)
+          ? prev.users
+          : [...prev.users, localFallbackUser],
+        activeUserId: localFallbackUser.id,
+        welcomeModalUserId: localFallbackUser.id,
+        sessionLogs: appendSessionLog(prev, localFallbackUser),
+        activityLogs: appendActivityLog(prev, {
+          actorId: localFallbackUser.id,
+          actorName: localFallbackUser.name,
+          action: 'Registered new investor account',
+          category: 'user',
+          detail: `${localFallbackUser.email} (@${cleanUsername}, ${cleanCountry})`,
+        }),
+      }));
+
+      onNotify('Registration successful! Welcome to AssetCrest.', 'success');
+      onAuthSuccess?.();
+    } catch (err: any) {
+      reportError(err?.message || 'Unable to complete registration. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const inputClass =
+    'w-full h-12 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[15px] text-[#1e293b] placeholder:text-[#8b95a5] focus:outline-none focus:border-[#345485] focus:ring-2 focus:ring-[#345485]/15 transition-colors';
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {showInlineError && formError && (
+        <ErrorAlertBanner message={formError} onDismiss={() => setFormError('')} />
+      )}
+
+      <div>
+        <input
+          type="text"
+          required
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Enter Unique Username"
+          aria-label="Enter Unique Username"
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <input
+          type="text"
+          required
+          autoComplete="name"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="Fullname"
+          aria-label="Fullname"
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <input
+          type="email"
+          required
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email Address"
+          aria-label="Email Address"
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <input
+          type="tel"
+          required
+          autoComplete="tel"
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(e.target.value)}
+          placeholder="Phone Number"
+          aria-label="Phone Number"
+          className={inputClass}
+        />
+      </div>
+
+      <div className="relative">
+        <select
+          required
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+          aria-label="Choose Country"
+          className={`${inputClass} appearance-none pr-10 cursor-pointer ${
+            country ? 'text-[#1e293b]' : 'text-[#334155]'
+          }`}
+        >
+          <option value="">Choose Country</option>
+          {SIGNUP_COUNTRIES.map((countryName) => (
+            <option key={countryName} value={countryName}>
+              {countryName}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          className="h-4 w-4 text-[#64748b] pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2"
+          aria-hidden="true"
+        />
+      </div>
+
+      <div>
+        <input
+          type="text"
+          value={referralId}
+          onChange={(e) => setReferralId(e.target.value)}
+          placeholder="Referral ID optional"
+          aria-label="Referral ID optional"
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <div className="relative">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            required
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            aria-label="Password"
+            className={`${inputClass} pr-12`}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[#8b95a5] hover:text-[#334155] transition-colors cursor-pointer"
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {/* 5-segment password strength indicator */}
+        <div
+          className="grid grid-cols-5 gap-2 mt-2.5"
+          role="progressbar"
+          aria-valuenow={strengthScore}
+          aria-valuemin={0}
+          aria-valuemax={5}
+          aria-label="Password strength"
+        >
+          {[0, 1, 2, 3, 4].map((idx) => (
+            <div
+              key={idx}
+              className={`h-[3px] rounded-full transition-colors duration-200 ${getStrengthBarColor(
+                strengthScore,
+                idx
+              )}`}
+            />
+          ))}
+        </div>
+
+        <p className="text-[13px] leading-snug text-[#8b95a5] mt-2">
+          Use 8 or more characters with a mix of letters numbers and symbols
+        </p>
+      </div>
+
+      <div>
+        <input
+          type={showPassword ? 'text' : 'password'}
+          required
+          autoComplete="new-password"
+          value={repeatPassword}
+          onChange={(e) => setRepeatPassword(e.target.value)}
+          placeholder="Repeat Password"
+          aria-label="Repeat Password"
+          className={inputClass}
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full h-12 mt-2 rounded-lg bg-[#345485] hover:bg-[#2a4570] active:scale-[0.99] text-white text-[15px] font-medium transition cursor-pointer disabled:opacity-60"
+      >
+        {submitting ? 'Creating Account...' : 'Sign Up'}
+      </button>
+
+      <div className="pt-3 text-center text-[14px] text-[#8b95a5]">
+        <span>Already have an Account</span>{' '}
+        <button
+          type="button"
+          onClick={onSwitchToSignIn}
+          className="text-[#8b95a5] hover:text-[#345485] font-medium transition-colors cursor-pointer"
+        >
+          Sign in
+        </button>
+      </div>
+    </form>
+  );
+}
+
+interface SignUpPageProps {
+  store: AssetCrestStore;
+  onNotify: (msg: string, tone?: 'success' | 'info' | 'error') => void;
+  onAuthSuccess: () => void;
+  onSwitchToSignIn: () => void;
+}
+
+export function AssetCrestAuthBanner({ fullWidth = false }: { fullWidth?: boolean }) {
+  return (
+    <div
+      className={`w-full bg-[#e8f1f8] py-7 px-6 flex items-center justify-center ${
+        fullWidth ? '' : 'rounded-[2px]'
+      }`}
+    >
+      <a href="/" className="inline-flex items-center gap-2.5 select-none">
+        <svg width="38" height="34" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <polygon points="32,4 58,19 58,45 32,60 6,45 6,19" fill="#991b1b" />
+          <polygon points="32,4 58,19 32,34 6,19" fill="#dc2626" />
+          <polygon points="32,34 58,19 58,45 32,60" fill="#7f1d1d" />
+          <polygon points="6,19 32,34 32,60 6,45" fill="#b91c1c" />
+          <polygon points="32,15 48,45 38,45 32,31 26,45 16,45" fill="#ffffff" />
+        </svg>
+        <span className="text-[23px] tracking-[0.02em] leading-none inline-flex items-baseline">
+          <span className="font-normal text-[#4e383d]">ΛSSET</span>
+          <span className="font-bold text-[#942634]">CREST</span>
+        </span>
+      </a>
+    </div>
+  );
+}
+
+export function SignUpPage({
+  store,
+  onNotify,
+  onAuthSuccess,
+  onSwitchToSignIn,
+}: SignUpPageProps) {
+  return (
+    <div className="min-h-screen bg-white text-[#141824] flex flex-col">
+      <div className="w-full max-w-[460px] mx-auto px-5 py-5 sm:py-10 flex-1 flex flex-col justify-start">
+        <AssetCrestAuthBanner />
+
+        <h1 className="text-[22px] font-bold text-[#141824] text-center mt-8 mb-6 tracking-tight">
+          Sign Up
+        </h1>
+
+        <SignUpFormFields
+          store={store}
+          onNotify={onNotify}
+          onAuthSuccess={onAuthSuccess}
+          onSwitchToSignIn={onSwitchToSignIn}
+          showInlineError
+        />
+      </div>
+    </div>
+  );
+}
+
+const REMEMBER_IDENTIFIER_KEY = 'assetcrest_remember_login_v1';
+
+function readRememberedIdentifier(): { identifier: string; remember: boolean } {
+  if (typeof window === 'undefined') return { identifier: '', remember: false };
+  try {
+    const raw = window.localStorage.getItem(REMEMBER_IDENTIFIER_KEY);
+    if (!raw) return { identifier: '', remember: false };
+    const parsed = JSON.parse(raw) as { identifier?: string; remember?: boolean };
+    return {
+      identifier: typeof parsed.identifier === 'string' ? parsed.identifier : '',
+      remember: Boolean(parsed.remember),
+    };
+  } catch {
+    return { identifier: '', remember: false };
+  }
+}
+
+interface SignInPageProps {
+  store: AssetCrestStore;
+  onNotify: (msg: string, tone?: 'success' | 'info' | 'error') => void;
+  onAuthSuccess: () => void;
+  onSwitchToSignUp: () => void;
+  onForgotPassword: (prefillEmail?: string) => void;
+}
+
+export function SignInPage({
+  onNotify,
+  onAuthSuccess,
+  onSwitchToSignUp,
+  onForgotPassword,
+}: SignInPageProps) {
+  const initialRemember = readRememberedIdentifier();
+  const [identifier, setIdentifier] = useState(initialRemember.identifier);
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(initialRemember.remember);
+  const [loginError, setLoginError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [showClaimAdmin, setShowClaimAdmin] = useState(false);
+  const [claimPassword, setClaimPassword] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setLoginError('');
+    setSubmitting(true);
+
+    try {
+      const target = await neonLogin(identifier.trim(), password);
+
+      if (typeof window !== 'undefined') {
+        if (rememberMe) {
+          window.localStorage.setItem(
+            REMEMBER_IDENTIFIER_KEY,
+            JSON.stringify({ identifier: identifier.trim(), remember: true })
+          );
+        } else {
+          window.localStorage.removeItem(REMEMBER_IDENTIFIER_KEY);
+        }
+      }
+
+      const stamp = formatNowStamp();
+      updateAssetCrestStore((prev) => ({
+        ...prev,
+        activeUserId: target.id,
+        users: prev.users.some((u) => u.id === target.id)
+          ? prev.users.map((u) => (u.id === target.id ? { ...target, lastLoginAt: stamp } : u))
+          : [...prev.users, { ...target, lastLoginAt: stamp }],
+        sessionLogs: appendSessionLog(prev, target),
+        activityLogs: appendActivityLog(prev, {
+          actorId: target.id,
+          actorName: target.name,
+          action:
+            target.role === 'admin'
+              ? 'Admin dashboard logged in to account'
+              : 'Logged in to account',
+          category: 'auth',
+          detail: target.email,
+        }),
+      }));
+
+      onNotify(`Signed in as ${target.name}.`, 'success');
+      onAuthSuccess();
+    } catch (err: any) {
+      const errMsg = err?.message || 'Invalid email/username or password.';
+      setLoginError(errMsg);
+      if (errMsg.toLowerCase().includes('claimed')) {
+        setShowClaimAdmin(true);
+      }
+      onNotify(errMsg, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleClaimAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setLoginError('');
+    setSubmitting(true);
+    try {
+      const adminUser = await neonClaimAdmin(claimPassword);
+      setShowClaimAdmin(false);
+      setClaimPassword('');
+      onNotify(`Administrator account claimed and signed in (${adminUser.email}).`, 'success');
+      onAuthSuccess();
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to claim Admin password.';
+      setLoginError(msg);
+      onNotify(msg, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const inputClass =
+    'w-full h-12 px-4 rounded-lg border border-[#d1d9e4] bg-white text-[15px] text-[#1e293b] placeholder:text-[#8b95a5] focus:outline-none focus:border-[#345485] focus:ring-2 focus:ring-[#345485]/15 transition-colors';
+
+  return (
+    <div className="min-h-screen bg-white text-[#141824] flex flex-col">
+      {/* Full-Width Pale Ice-Blue Brand Header Banner */}
+      <AssetCrestAuthBanner fullWidth />
+
+      <div className="w-full max-w-[440px] mx-auto px-6 pt-10 pb-12 flex-1 flex flex-col justify-start">
+        <h1 className="text-[22px] font-bold text-[#141824] text-center mb-8 tracking-tight">
+          Sign In
+        </h1>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {loginError && (
+            <ErrorAlertBanner message={loginError} onDismiss={() => setLoginError('')} />
+          )}
+
+          <div>
+            <input
+              type="text"
+              required
+              autoComplete="username"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="Email or Username"
+              aria-label="Email or Username"
+              className={inputClass}
+            />
+          </div>
+
+          <div className="relative">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              required
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              aria-label="Password"
+              className={`${inputClass} pr-12`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[#8b95a5] hover:text-[#334155] transition-colors cursor-pointer"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+
+          <div className="pt-0.5">
+            <label className="inline-flex items-center gap-2.5 text-[14px] text-[#334155] cursor-pointer select-none min-h-[36px]">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-5 w-5 rounded border border-[#d1d9e4] text-[#345485] focus:ring-[#345485]/25 accent-[#345485] cursor-pointer"
+              />
+              <span>Remember me</span>
+            </label>
+          </div>
+
+          <div className="flex justify-end pt-1 pb-2">
+            <button
+              type="button"
+              onClick={() => onForgotPassword(identifier.includes('@') ? identifier.trim() : '')}
+              className="text-[14px] text-[#284577] hover:underline font-medium cursor-pointer"
+            >
+              Forgot Password ?
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full h-12 rounded-lg bg-[#345485] hover:bg-[#2a4570] active:scale-[0.99] text-white text-[15px] font-medium transition cursor-pointer disabled:opacity-60"
+          >
+            {submitting ? 'Signing In...' : 'Sign In'}
+          </button>
+
+          <div className="pt-5 text-center text-[14px]">
+            <span className="text-[#8b95a5]">Not a Member yet?</span>{' '}
+            <button
+              type="button"
+              onClick={onSwitchToSignUp}
+              className="text-[#284577] hover:underline font-medium transition-colors cursor-pointer"
+            >
+              Sign Up
+            </button>
+          </div>
+        </form>
+
+        {showClaimAdmin && (
+          <form
+            onSubmit={handleClaimAdmin}
+            className="mt-6 p-4 rounded-lg border border-amber-200 bg-amber-50 space-y-3"
+          >
+            <p className="text-xs font-semibold text-amber-900">
+              First-Run Administrator Setup: Set an initial password (min 8 chars) to claim the Admin account.
+            </p>
+            <input
+              type="password"
+              required
+              minLength={8}
+              value={claimPassword}
+              onChange={(e) => setClaimPassword(e.target.value)}
+              placeholder="New Admin Password (min 8 chars)"
+              className={inputClass}
+            />
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full h-11 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium transition cursor-pointer disabled:opacity-60"
+            >
+              {submitting ? 'Claiming Admin...' : 'Set Admin Password & Sign In'}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface AuthModalProps {
   open: boolean;
   initialMode?: 'login' | 'register' | 'forgot';
   onClose: () => void;
   onAuthSuccess?: () => void;
+  onSwitchToRegisterPage?: () => void;
   store: AssetCrestStore;
   onNotify: (msg: string, tone?: 'success' | 'info' | 'error') => void;
   isCloudMode?: boolean;
@@ -54,6 +713,7 @@ export function AuthModal({
   initialMode = 'login',
   onClose,
   onAuthSuccess,
+  onSwitchToRegisterPage,
   store,
   onNotify,
   isCloudMode = false,
@@ -67,34 +727,21 @@ export function AuthModal({
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
 
-  // Register state
-  const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regConfirmPassword, setRegConfirmPassword] = useState('');
-  const [regAccountType, setRegAccountType] = useState<AccountType>('Individual');
-  const [coOwnerName, setCoOwnerName] = useState('');
-  const [coOwnerEmail, setCoOwnerEmail] = useState('');
-  const [coOwnerRelationship, setCoOwnerRelationship] = useState('Spouse');
-  const [authMode, setAuthMode] = useState<'Either Owner' | 'Dual Notice'>('Either Owner');
-  const [regAvatar, setRegAvatar] = useState<string>('');
-
   // Forgot password state
   const [forgotStep, setForgotStep] = useState<'email' | 'verify'>('email');
   const [forgotEmail, setForgotEmail] = useState('');
-  const [generatedResetCode, setGeneratedResetCode] = useState('');
   const [enteredResetCode, setEnteredResetCode] = useState('');
   const [resetNewPassword, setResetNewPassword] = useState('');
   const [resetConfirmPassword, setResetConfirmPassword] = useState('');
 
   if (!open) return null;
 
-  const handleGoogleSignOut = async () => {
+  const handleNeonSignOut = async () => {
     setAuthError('');
     setCloudBusy(true);
     try {
       await signOutCloud();
-      onNotify('Signed out of Google Cloud Sync. Returned to Single-Device Demo mode.', 'info');
+      onNotify('Signed out of Neon Cloud Sync.', 'info');
       onClose();
     } catch {
       const errMsg = 'Failed to sign out cleanly.';
@@ -105,64 +752,42 @@ export function AuthModal({
     }
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      const errMsg = 'Please choose an image file for your profile photo.';
-      setAuthError(errMsg);
-      onNotify(errMsg, 'error');
-      return;
-    }
-    try {
-      const dataUrl = await readAndCompressFile(file, 180, 100000);
-      setRegAvatar(dataUrl);
-      setAuthError('');
-    } catch {
-      const errMsg = 'Could not process profile photo.';
-      setAuthError(errMsg);
-      onNotify(errMsg, 'error');
-    }
-  };
-
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cloudBusy) return;
     setAuthError('');
-    const target = store.users.find(
-      (u) => u.email.trim().toLowerCase() === loginEmail.trim().toLowerCase()
-    );
-    if (!target || target.password !== loginPassword) {
-      const errMsg = 'Invalid email or password. Please verify your credentials or select a demo account below.';
-      setAuthError(errMsg);
-      onNotify('Invalid email or password.', 'error');
-      return;
-    }
-    if (target.accountStatus === 'Blocked') {
-      const errMsg = 'This account has been blocked by Platform Administration. Contact support@assetcrest.co.';
+    setCloudBusy(true);
+    try {
+      const target = await neonLogin(loginEmail.trim(), loginPassword);
+      const stamp = formatNowStamp();
+      updateAssetCrestStore((prev) => ({
+        ...prev,
+        activeUserId: target.id,
+        users: prev.users.some((u) => u.id === target.id)
+          ? prev.users.map((u) => (u.id === target.id ? { ...target, lastLoginAt: stamp } : u))
+          : [...prev.users, { ...target, lastLoginAt: stamp }],
+        sessionLogs: appendSessionLog(prev, target),
+        activityLogs: appendActivityLog(prev, {
+          actorId: target.id,
+          actorName: target.name,
+          action:
+            target.role === 'admin'
+              ? 'Admin dashboard logged in to account'
+              : 'Logged in to account',
+          category: 'auth',
+          detail: target.email,
+        }),
+      }));
+      onNotify(`Signed in as ${target.name}.`, 'success');
+      onAuthSuccess?.();
+      onClose();
+    } catch (err: any) {
+      const errMsg = err?.message || 'Invalid email/username or password.';
       setAuthError(errMsg);
       onNotify(errMsg, 'error');
-      return;
+    } finally {
+      setCloudBusy(false);
     }
-    const stamp = formatNowStamp();
-    updateAssetCrestStore((prev) => ({
-      ...prev,
-      activeUserId: target.id,
-      users: prev.users.map((u) => (u.id === target.id ? { ...u, lastLoginAt: stamp } : u)),
-      sessionLogs: appendSessionLog(prev, target),
-      activityLogs: appendActivityLog(prev, {
-        actorId: target.id,
-        actorName: target.name,
-        action:
-          target.role === 'admin'
-            ? 'Admin dashboard logged in to account'
-            : 'Logged in to account',
-        category: 'auth',
-        detail: target.email,
-      }),
-    }));
-    onNotify(`Signed in as ${target.name}.`, 'success');
-    onAuthSuccess?.();
-    onClose();
   };
 
   const handleQuickSwitch = (user: UserAccount) => {
@@ -195,136 +820,30 @@ export function AuthModal({
     onClose();
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRequestResetCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cloudBusy) return;
     setAuthError('');
-    if (!store.platformSettings.allowNewRegistrations) {
-      const errMsg = 'New investor registrations are currently paused by Platform Administration.';
+    setCloudBusy(true);
+    try {
+      const res = await neonForgotPassword(forgotEmail.trim());
+      setForgotStep('verify');
+      onNotify(res.message || 'Verification code issued.', 'info');
+    } catch (err: any) {
+      const errMsg = err?.message || 'No AssetCrest account found with that email address.';
       setAuthError(errMsg);
       onNotify(errMsg, 'error');
-      return;
+    } finally {
+      setCloudBusy(false);
     }
-    if (!regName.trim() || !regEmail.trim() || !regPassword) {
-      const errMsg = 'Please complete all required registration fields.';
-      setAuthError(errMsg);
-      onNotify(errMsg, 'error');
-      return;
-    }
-    if (regPassword.length < 6) {
-      const errMsg = 'Password must be at least 6 characters long.';
-      setAuthError(errMsg);
-      onNotify(errMsg, 'error');
-      return;
-    }
-    if (regPassword !== regConfirmPassword) {
-      const errMsg = 'Passwords do not match.';
-      setAuthError(errMsg);
-      onNotify(errMsg, 'error');
-      return;
-    }
-    const exists = store.users.some(
-      (u) => u.email.trim().toLowerCase() === regEmail.trim().toLowerCase()
-    );
-    if (exists) {
-      const errMsg = 'An account with this email already exists.';
-      setAuthError(errMsg);
-      onNotify(errMsg, 'error');
-      return;
-    }
-    if (regAccountType === 'Joint' && (!coOwnerName.trim() || !coOwnerEmail.trim())) {
-      const errMsg = 'Please enter co-owner name and email for a Joint Account.';
-      setAuthError(errMsg);
-      onNotify(errMsg, 'error');
-      return;
-    }
-
-    const newId = nextRecordId('USR');
-    const cleanRefPrefix = regName
-      .trim()
-      .toUpperCase()
-      .replace(/[^A-Z0-9]/g, '')
-      .slice(0, 6);
-    const refSuffix = newId.split('-')[1] || '101';
-
-    const newUser: UserAccount = {
-      id: newId,
-      name: regName.trim(),
-      email: regEmail.trim().toLowerCase(),
-      password: regPassword,
-      role: 'investor',
-      accountType: regAccountType,
-      jointDetails:
-        regAccountType === 'Joint'
-          ? {
-              coOwnerName: coOwnerName.trim(),
-              coOwnerEmail: coOwnerEmail.trim().toLowerCase(),
-              relationship: coOwnerRelationship,
-              authorizationMode: authMode,
-            }
-          : undefined,
-      avatarDataUrl: regAvatar || undefined,
-      referralCode: `${cleanRefPrefix || 'INVESTOR'}${refSuffix}`,
-      accountBalance: 0,
-      totalProfit: 0,
-      bonus: 0,
-      referralBonus: 0,
-      totalDeposit: 0,
-      cryptoBalances: { ...EMPTY_CRYPTO_BALANCES },
-      kycStatus: 'Unverified',
-      createdAt: formatNowStamp().slice(0, 10),
-      accountStatus: 'Active',
-      lastLoginAt: formatNowStamp(),
-    };
-
-    updateAssetCrestStore((prev) => ({
-      ...prev,
-      users: [...prev.users, newUser],
-      activeUserId: newUser.id,
-      welcomeModalUserId: newUser.id,
-      sessionLogs: appendSessionLog(prev, newUser),
-      activityLogs: appendActivityLog(prev, {
-        actorId: newUser.id,
-        actorName: newUser.name,
-        action: 'Registered new investor account',
-        category: 'user',
-        detail: `${newUser.email} (${newUser.accountType})`,
-      }),
-    }));
-
-    onNotify('Registration successful! Welcome to AssetCrest.', 'success');
-    onAuthSuccess?.();
-    onClose();
   };
 
-  const handleRequestResetCode = (e: React.FormEvent) => {
+  const handleCompleteReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cloudBusy) return;
     setAuthError('');
-    const user = store.users.find(
-      (u) => u.email.trim().toLowerCase() === forgotEmail.trim().toLowerCase()
-    );
-    if (!user) {
-      const errMsg = 'No AssetCrest account found with that email address.';
-      setAuthError(errMsg);
-      onNotify(errMsg, 'error');
-      return;
-    }
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    setGeneratedResetCode(code);
-    setForgotStep('verify');
-    onNotify('Recovery verification code generated below.', 'info');
-  };
-
-  const handleCompleteReset = (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError('');
-    if (enteredResetCode.trim() !== generatedResetCode) {
-      const errMsg = 'Verification code does not match.';
-      setAuthError(errMsg);
-      onNotify(errMsg, 'error');
-      return;
-    }
-    if (resetNewPassword.length < 6) {
-      const errMsg = 'New password must be at least 6 characters.';
+    if (resetNewPassword.length < 8) {
+      const errMsg = 'New password must be at least 8 characters.';
       setAuthError(errMsg);
       onNotify(errMsg, 'error');
       return;
@@ -336,26 +855,27 @@ export function AuthModal({
       return;
     }
 
-    const emailKey = forgotEmail.trim().toLowerCase();
-    const matched = store.users.find((u) => u.email.toLowerCase() === emailKey);
-    if (!matched) {
-      const errMsg = 'Account could not be found.';
+    setCloudBusy(true);
+    try {
+      const updatedUser = await neonResetPassword(
+        forgotEmail.trim(),
+        enteredResetCode.trim(),
+        resetNewPassword
+      );
+      updateAssetCrestStore((prev) => ({
+        ...prev,
+        activeUserId: updatedUser.id,
+      }));
+      onNotify('Password updated and account unlocked.', 'success');
+      onAuthSuccess?.();
+      onClose();
+    } catch (err: any) {
+      const errMsg = err?.message || 'Verification code is invalid or expired.';
       setAuthError(errMsg);
       onNotify(errMsg, 'error');
-      return;
+    } finally {
+      setCloudBusy(false);
     }
-
-    updateAssetCrestStore((prev) => ({
-      ...prev,
-      activeUserId: matched.id,
-      users: prev.users.map((u) =>
-        u.id === matched.id ? { ...u, password: resetNewPassword } : u
-      ),
-    }));
-
-    onNotify('Password updated and account unlocked.', 'success');
-    onAuthSuccess?.();
-    onClose();
   };
 
   return (
@@ -400,6 +920,10 @@ export function AuthModal({
           <button
             type="button"
             onClick={() => {
+              if (onSwitchToRegisterPage) {
+                onSwitchToRegisterPage();
+                return;
+              }
               setMode('register');
               setAuthError('');
             }}
@@ -439,7 +963,7 @@ export function AuthModal({
                 </span>
                 <div>
                   <p className="font-bold text-[var(--ac-success-text)]">
-                    Firebase Cloud Sync Active
+                    Neon Cloud Sync Active
                   </p>
                   <p className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-[230px]">
                     {cloudEmail}
@@ -449,7 +973,7 @@ export function AuthModal({
               <button
                 type="button"
                 disabled={cloudBusy}
-                onClick={handleGoogleSignOut}
+                onClick={handleNeonSignOut}
                 className="ac-btn ac-btn-secondary ac-btn-sm"
               >
                 <CloudOff className="h-3.5 w-3.5" />
@@ -472,14 +996,14 @@ export function AuthModal({
               <form onSubmit={handleSignIn} className="space-y-3.5">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                    Email Address
+                    Email or Username
                   </label>
                   <input
-                    type="email"
+                    type="text"
                     required
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder="Email or Username"
                     className={`ac-input ${authError ? 'ac-input-error' : ''}`}
                   />
                 </div>
@@ -510,235 +1034,70 @@ export function AuthModal({
                     className={`ac-input ${authError ? 'ac-input-error' : ''}`}
                   />
                 </div>
-                <button type="submit" className="ac-btn ac-btn-primary ac-btn-md w-full">
-                  Sign In to Account
+                <button
+                  type="submit"
+                  disabled={cloudBusy}
+                  className="ac-btn ac-btn-primary ac-btn-md w-full"
+                >
+                  {cloudBusy ? 'Signing In...' : 'Sign In to Account'}
                 </button>
               </form>
 
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2.5">
-                <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  Quick Single-Device Demo Account Switcher
-                </p>
-                <div className="space-y-2">
-                  {store.users.map((u) => (
-                    <button
-                      key={u.id}
-                      type="button"
-                      onClick={() => handleQuickSwitch(u)}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-left text-xs transition cursor-pointer ${
-                        store.activeUserId === u.id
-                          ? 'border-[#2b4865] bg-[#2b4865]/5 dark:border-sky-400 dark:bg-sky-500/10'
-                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
-                          <span>{u.name}</span>
-                          {u.role === 'admin' && (
-                            <span className="ac-badge ac-badge-warning">ADMIN</span>
-                          )}
-                          {u.accountType === 'Joint' && (
-                            <span className="ac-badge ac-badge-info">JOINT</span>
-                          )}
+              {!isCloudMode && store.users.length > 0 && (
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2.5">
+                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    Quick Local Preview Account Switcher
+                  </p>
+                  <div className="space-y-2">
+                    {store.users.map((u) => (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => handleQuickSwitch(u)}
+                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-left text-xs transition cursor-pointer ${
+                          store.activeUserId === u.id
+                            ? 'border-[#2b4865] bg-[#2b4865]/5 dark:border-sky-400 dark:bg-sky-500/10'
+                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
+                            <span>{u.name}</span>
+                            {u.role === 'admin' && (
+                              <span className="ac-badge ac-badge-warning">ADMIN</span>
+                            )}
+                            {u.accountType === 'Joint' && (
+                              <span className="ac-badge ac-badge-info">JOINT</span>
+                            )}
+                          </div>
+                          <p className="text-slate-600 dark:text-slate-300">{u.email}</p>
                         </div>
-                        <p className="text-slate-600 dark:text-slate-300">{u.email}</p>
-                      </div>
-                      <span className="font-mono tabular-nums font-semibold text-[#2b4865] dark:text-sky-300">
-                        ${u.accountBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </span>
-                    </button>
-                  ))}
+                        <span className="font-mono tabular-nums font-semibold text-[#2b4865] dark:text-sky-300">
+                          ${u.accountBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
 
           {mode === 'register' && (
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
-                  Account Ownership Type
-                </label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setRegAccountType('Individual')}
-                    className={`p-3 rounded-lg border text-left transition cursor-pointer ${
-                      regAccountType === 'Individual'
-                        ? 'border-[#2b4865] bg-[#2b4865]/5 dark:border-sky-400 dark:bg-sky-500/10'
-                        : 'border-slate-200 dark:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 font-semibold text-xs text-slate-900 dark:text-slate-100">
-                      <User className="h-4 w-4 text-[#2b4865] dark:text-sky-400" />
-                      <span>Individual Account</span>
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-                      Single primary investor
-                    </p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRegAccountType('Joint')}
-                    className={`p-3 rounded-lg border text-left transition cursor-pointer ${
-                      regAccountType === 'Joint'
-                        ? 'border-[#2b4865] bg-[#2b4865]/5 dark:border-sky-400 dark:bg-sky-500/10'
-                        : 'border-slate-200 dark:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 font-semibold text-xs text-slate-900 dark:text-slate-100">
-                      <Users className="h-4 w-4 text-[#2b4865] dark:text-sky-400" />
-                      <span>Joint Account</span>
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-                      Shared with co-owner
-                    </p>
-                  </button>
-                </div>
-              </div>
-
-              {/* Optional Profile Picture */}
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
-                <div className="h-12 w-12 rounded-full bg-[#2b4865] text-white flex items-center justify-center font-bold overflow-hidden shrink-0">
-                  {regAvatar ? (
-                    <Image
-                      src={regAvatar}
-                      alt="Profile avatar preview"
-                      width={48}
-                      height={48}
-                      referrerPolicy="no-referrer"
-                      className="h-12 w-12 object-cover"
-                    />
-                  ) : (
-                    <span>{(regName.trim()[0] || 'A').toUpperCase()}</span>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-100">
-                    Profile Picture (Optional)
-                  </p>
-                  <label className="inline-flex items-center gap-1.5 mt-1 text-xs text-[#2b4865] dark:text-sky-300 font-medium cursor-pointer hover:underline">
-                    <Upload className="h-3.5 w-3.5" />
-                    <span>{regAvatar ? 'Change Photo' : 'Upload Avatar Image'}</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleAvatarUpload}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                    Primary Full Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
-                    placeholder="e.g. Sophia Carter"
-                    className="ac-input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="sophia@domain.com"
-                    className="ac-input"
-                  />
-                </div>
-              </div>
-
-              {regAccountType === 'Joint' && (
-                <div className="p-3.5 rounded-lg border border-[var(--ac-info-border)] bg-[var(--ac-info-bg)] space-y-3">
-                  <p className="text-xs font-bold text-[var(--ac-info-text)] flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5" />
-                    <span>Joint Co-Owner Details</span>
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <input
-                      type="text"
-                      required
-                      value={coOwnerName}
-                      onChange={(e) => setCoOwnerName(e.target.value)}
-                      placeholder="Co-owner Full Name"
-                      className="ac-input ac-input-sm"
-                    />
-                    <input
-                      type="email"
-                      required
-                      value={coOwnerEmail}
-                      onChange={(e) => setCoOwnerEmail(e.target.value)}
-                      placeholder="Co-owner Email"
-                      className="ac-input ac-input-sm"
-                    />
-                    <select
-                      value={coOwnerRelationship}
-                      onChange={(e) => setCoOwnerRelationship(e.target.value)}
-                      className="ac-select ac-input-sm"
-                    >
-                      <option value="Spouse">Spouse</option>
-                      <option value="Business Partner">Business Partner</option>
-                      <option value="Family Member">Family Member</option>
-                      <option value="Co-Trustee">Trust Co-Trustee</option>
-                    </select>
-                    <select
-                      value={authMode}
-                      onChange={(e) =>
-                        setAuthMode(e.target.value as 'Either Owner' | 'Dual Notice')
-                      }
-                      className="ac-select ac-input-sm"
-                    >
-                      <option value="Either Owner">Either Owner Can Transact</option>
-                      <option value="Dual Notice">Dual Owner Notification</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                    Password (min 6 chars)
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    placeholder="Create password"
-                    className="ac-input"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={regConfirmPassword}
-                    onChange={(e) => setRegConfirmPassword(e.target.value)}
-                    placeholder="Repeat password"
-                    className="ac-input"
-                  />
-                </div>
-              </div>
-
-              <button type="submit" className="ac-btn ac-btn-primary ac-btn-md w-full">
-                Create {regAccountType} Account
-              </button>
-            </form>
+            <SignUpFormFields
+              store={store}
+              onNotify={onNotify}
+              onAuthSuccess={() => {
+                onAuthSuccess?.();
+                onClose();
+              }}
+              onSwitchToSignIn={() => {
+                setMode('login');
+                setAuthError('');
+              }}
+              onErrorChange={setAuthError}
+              showInlineError={false}
+            />
           )}
 
           {mode === 'forgot' && (
@@ -767,12 +1126,9 @@ export function AuthModal({
                 </form>
               ) : (
                 <form onSubmit={handleCompleteReset} className="space-y-3.5">
-                  <div className="ac-alert ac-alert-success">
+                  <div className="ac-alert ac-alert-info">
                     <div>
-                      Single-Device Recovery Code for <strong>{forgotEmail}</strong>:{' '}
-                      <span className="font-mono font-bold text-sm tracking-widest ml-1">
-                        {generatedResetCode}
-                      </span>
+                      A 6-digit verification code was issued for <strong>{forgotEmail}</strong>. Enter the code below along with your new password (8+ characters).
                     </div>
                   </div>
                   <div>
@@ -796,6 +1152,7 @@ export function AuthModal({
                       <input
                         type="password"
                         required
+                        minLength={8}
                         value={resetNewPassword}
                         onChange={(e) => setResetNewPassword(e.target.value)}
                         className="ac-input"
@@ -808,14 +1165,19 @@ export function AuthModal({
                       <input
                         type="password"
                         required
+                        minLength={8}
                         value={resetConfirmPassword}
                         onChange={(e) => setResetConfirmPassword(e.target.value)}
                         className="ac-input"
                       />
                     </div>
                   </div>
-                  <button type="submit" className="ac-btn ac-btn-primary ac-btn-md w-full">
-                    Verify &amp; Reset Password
+                  <button
+                    type="submit"
+                    disabled={cloudBusy}
+                    className="ac-btn ac-btn-primary ac-btn-md w-full"
+                  >
+                    {cloudBusy ? 'Updating Password...' : 'Verify & Reset Password'}
                   </button>
                 </form>
               )}

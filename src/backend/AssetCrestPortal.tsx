@@ -60,7 +60,6 @@ import {
   ReceiptPreviewModal,
   SignInPage,
   SignUpPage,
-  WelcomeRegistrationModal,
 } from '@/src/backend/components/AuthAndAccountModals';
 import { AdminConsoleShell } from '@/src/backend/components/AdminConsoleShell';
 import {
@@ -120,7 +119,7 @@ function nextToastId(): number {
 
 const emptySubscribe = () => () => {};
 function getClientOrigin(): string {
-  return typeof window !== 'undefined' ? window.location.origin : 'https://assetcrest.co';
+  return typeof window !== 'undefined' ? window.location.origin : 'https://assetcrestonline.com';
 }
 
 interface ToastItem {
@@ -424,7 +423,7 @@ export default function AssetCrestPortal() {
   const detectedOrigin = useSyncExternalStore(
     emptySubscribe,
     getClientOrigin,
-    () => 'https://assetcrest.co'
+    () => 'https://assetcrestonline.com'
   );
   const [apkAppName, setApkAppName] = useState('AssetCrest');
   const [apkPackageName, setApkPackageName] = useState('com.assetcrest.investor');
@@ -654,10 +653,6 @@ export default function AssetCrestPortal() {
   };
 
   const userTickets = effectiveStore.tickets.filter((tk) => tk.userId === activeUser.id);
-  const welcomeModalUser = effectiveStore.welcomeModalUserId
-    ? effectiveStore.users.find((u) => u.id === effectiveStore.welcomeModalUserId) || null
-    : null;
-
   const navigateTo = (tab: PageTab) => {
     setActiveTab(tab);
     setSidebarOpen(false);
@@ -1411,15 +1406,6 @@ export default function AssetCrestPortal() {
         isCloudMode={isCloudMode}
         cloudEmail={cloudSync.neonSessionUser?.email ?? null}
       />
-      <WelcomeRegistrationModal
-        user={welcomeModalUser}
-        onDismiss={() =>
-          isCloudMode
-            ? cloudSync.dismissWelcome()
-            : updateAssetCrestStore((prev) => ({ ...prev, welcomeModalUserId: null }))
-        }
-        onNavigate={navigateTo}
-      />
       <ReceiptPreviewModal
         transaction={receiptModalTx}
         onClose={() => setReceiptModalTx(null)}
@@ -1478,7 +1464,7 @@ export default function AssetCrestPortal() {
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               The account <strong>{activeUser.email}</strong> has been blocked by Platform Administration. Contact compliance at{' '}
-              <span className="font-mono">desk@assetcrest.co</span> or sign in with another account.
+              <span className="font-mono">info@assetcrestonline.com</span> or sign in with another account.
             </p>
             <div className="flex flex-wrap justify-center gap-2 pt-2">
               <button
@@ -2112,7 +2098,7 @@ export default function AssetCrestPortal() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Account balance</p>
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-slate-800 dark:text-white mt-0.5">
+                  <p className="text-2xl font-semibold font-sans tabular-nums text-slate-800 dark:text-white mt-0.5">
                     ${activeUser.accountBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -2124,7 +2110,7 @@ export default function AssetCrestPortal() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Total Profit</p>
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-slate-800 dark:text-white mt-0.5">
+                  <p className="text-2xl font-semibold font-sans tabular-nums text-slate-800 dark:text-white mt-0.5">
                     ${activeUser.totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -2136,7 +2122,7 @@ export default function AssetCrestPortal() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Bonus</p>
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-slate-800 dark:text-white mt-0.5">
+                  <p className="text-2xl font-semibold font-sans tabular-nums text-slate-800 dark:text-white mt-0.5">
                     ${activeUser.bonus.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -2148,7 +2134,7 @@ export default function AssetCrestPortal() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Referral Bonus</p>
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-slate-800 dark:text-white mt-0.5">
+                  <p className="text-2xl font-semibold font-sans tabular-nums text-slate-800 dark:text-white mt-0.5">
                     ${activeUser.referralBonus.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -2160,7 +2146,7 @@ export default function AssetCrestPortal() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Total Deposit</p>
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-slate-800 dark:text-white mt-0.5">
+                  <p className="text-2xl font-semibold font-sans tabular-nums text-slate-800 dark:text-white mt-0.5">
                     ${activeUser.totalDeposit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>

@@ -112,7 +112,7 @@ export const PORTAL_AUTOMATION_EVENTS: Array<{
     eventKey: 'ticket.created',
     label: 'Support Concierge Ticket',
     category: 'Support',
-    description: 'Triggered when an investor submits a ticket to support@assetcrest.co or desk@assetcrest.co.',
+    description: 'Triggered when an investor submits a ticket to info@assetcrestonline.com or compliance&maintenance@assetcrestonline.com.',
   },
   {
     eventKey: 'roi.settled',
@@ -161,7 +161,7 @@ function wrapSection(title: string, badge: string, bodyHtml: string, ctaLabel: s
           <tr>
             <td style="background-color:#f8fafc;border-top:1px solid #e2e8f0;padding:18px 28px;font-size:12px;line-height:1.6;color:#64748b;">
               <p style="margin:0;">AssetCrest Institutional Investor Portal &middot; Automated Notice</p>
-              <p style="margin:4px 0 0 0;">Concierge Support: <a href="mailto:support@assetcrest.co" style="color:#23446c;text-decoration:none;">support@assetcrest.co</a> &middot; Compliance Desk: <a href="mailto:desk@assetcrest.co" style="color:#23446c;text-decoration:none;">desk@assetcrest.co</a></p>
+              <p style="margin:4px 0 0 0;">Concierge Support: <a href="mailto:info@assetcrestonline.com" style="color:#23446c;text-decoration:none;">info@assetcrestonline.com</a> &middot; Compliance Desk: <a href="mailto:compliance&maintenance@assetcrestonline.com" style="color:#23446c;text-decoration:none;">compliance&maintenance@assetcrestonline.com</a></p>
             </td>
           </tr>
         </table>
@@ -214,7 +214,7 @@ export const DEFAULT_EMAIL_TEMPLATES: EmailTemplateDefinition[] = [
       <div style="margin:18px 0;padding:18px;background:#f8fafc;border:1px dashed #23446c;border-radius:8px;text-align:center;">
         <span style="font-family:monospace;font-size:30px;font-weight:700;letter-spacing:8px;color:#23446c;">{{code}}</span>
       </div>
-      <p style="margin:0;font-size:13px;line-height:1.6;color:#64748b;">This code expires in <strong>15 minutes</strong>. If you did not initiate this request, contact support@assetcrest.co immediately.</p>`,
+      <p style="margin:0;font-size:13px;line-height:1.6;color:#64748b;">This code expires in <strong>15 minutes</strong>. If you did not initiate this request, contact info@assetcrestonline.com immediately.</p>`,
       'Reset Password',
       '{{resetUrl}}'
     ),
@@ -305,12 +305,12 @@ export const DEFAULT_EMAIL_TEMPLATES: EmailTemplateDefinition[] = [
       'Deposit Submission Cancelled',
       'Treasury Notice',
       `<p style="margin:0 0 12px 0;font-size:14px;line-height:1.6;color:#334155;">Hello {{name}}, deposit reference <strong style="font-family:monospace;">{{txId}}</strong> for <strong>\${{amount}} USD</strong> ({{method}}) was declined/cancelled during settlement review.</p>
-      <p style="margin:0;font-size:13px;line-height:1.6;color:#64748b;">Please verify your transaction hash and upload a clear receipt or reach out to support@assetcrest.co.</p>`,
+      <p style="margin:0;font-size:13px;line-height:1.6;color:#64748b;">Please verify your transaction hash and upload a clear receipt or reach out to info@assetcrestonline.com.</p>`,
       'Contact Support Desk',
       '{{dashboardUrl}}'
     ),
     textBody:
-      'Deposit Update: {{txId}} (${{amount}} USD, {{method}}) was declined/cancelled. Contact support@assetcrest.co if you need assistance.',
+      'Deposit Update: {{txId}} (${{amount}} USD, {{method}}) was declined/cancelled. Contact info@assetcrestonline.com if you need assistance.',
     variables: ['name', 'email', 'txId', 'amount', 'method', 'dashboardUrl'],
   },
   {

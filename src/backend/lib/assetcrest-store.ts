@@ -687,14 +687,19 @@ export const REAL_ESTATE_PLANS: InvestmentPlanConfig[] = [
 
 export const SUPPORT_EMAILS = [
   {
-    label: 'Primary Investor Concierge',
-    email: 'support@assetcrest.co',
-    hours: '24/7 Account, Deposits & Transfers',
+    label: 'Assetcrest Support',
+    email: 'info@assetcrestonline.com',
+    hours: 'General enquiries and investor support',
   },
   {
-    label: 'Compliance & Account Escalation Desk',
-    email: 'desk@assetcrest.co',
-    hours: 'KYC Review, Joint Accounts & Institutional',
+    label: 'Compliance & Maintenance',
+    email: 'compliance&maintenance@assetcrestonline.com',
+    hours: 'Compliance, account and maintenance enquiries',
+  },
+  {
+    label: 'Customer Support',
+    email: 'customersupport@assetcrestonline.com',
+    hours: 'Customer assistance',
   },
 ];
 

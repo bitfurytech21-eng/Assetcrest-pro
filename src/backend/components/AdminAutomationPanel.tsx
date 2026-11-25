@@ -121,7 +121,7 @@ export function AdminAutomationPanel({
   // SMTP / Mail relay settings state
   const [mailMode, setMailMode] = useState<'auto' | 'smtp' | 'webhook'>('auto');
   const [fromName, setFromName] = useState('AssetCrest');
-  const [fromEmail, setFromEmail] = useState('noreply@assetcrest.co');
+  const [fromEmail, setFromEmail] = useState('info@assetcrestonline.com');
   const [replyTo, setReplyTo] = useState('support@assetcrest.co');
   const [smtpHost, setSmtpHost] = useState('');
   const [smtpPort, setSmtpPort] = useState('587');

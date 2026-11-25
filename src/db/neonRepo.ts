@@ -166,149 +166,7 @@ export function formatStamp(): string {
   return new Date().toISOString().slice(0, 16).replace('T', ' ');
 }
 
-const DEFAULT_WALLETS: RepoCryptoWallet[] = [
-  {
-    id: 'wal-btc',
-    cryptocurrency: 'Bitcoin',
-    symbol: 'BTC',
-    network: 'BTC Mainnet',
-    address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-    label: 'Bitcoin Treasury Vault',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 250000,
-    instructions:
-      'Send only native BTC over Bitcoin Mainnet. Minimum 2 network confirmations before uploading receipt.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: BOOTSTRAPPED_ADMIN_EMAIL,
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-eth',
-    cryptocurrency: 'Ethereum',
-    symbol: 'ETH',
-    network: 'ERC20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    label: 'Ethereum Custody Desk',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 250000,
-    instructions:
-      'Transfer ETH exclusively via Ethereum Mainnet (ERC20). Retain transaction hash or screenshot for verification.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: BOOTSTRAPPED_ADMIN_EMAIL,
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-usdt-trc20',
-    cryptocurrency: 'USDT',
-    symbol: 'USDT',
-    network: 'TRC20',
-    address: 'TX9aK3vPq8L2mN5xR7cW4yH1zF6dB8sQ3p',
-    label: 'USDT (TRC20) Settlement',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 500000,
-    instructions:
-      'Send Tether USD strictly on the TRON (TRC20) network. Sending via other chains may result in permanent loss.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: BOOTSTRAPPED_ADMIN_EMAIL,
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-usdt-bep20',
-    cryptocurrency: 'USDT',
-    symbol: 'USDT',
-    network: 'BEP20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    label: 'USDT (BEP20) Settlement',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 500000,
-    instructions:
-      'Send USDT over BNB Smart Chain (BEP20) only and upload your payment confirmation screenshot.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: BOOTSTRAPPED_ADMIN_EMAIL,
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-usdc-bep20',
-    cryptocurrency: 'USDC',
-    symbol: 'USDC',
-    network: 'BEP20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    label: 'USDC (BEP20) Primary',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 500000,
-    instructions:
-      'Send USDC via BNB Smart Chain (BEP20). Include TxID or receipt screenshot in the confirmation step.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: BOOTSTRAPPED_ADMIN_EMAIL,
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-bnb',
-    cryptocurrency: 'BNB',
-    symbol: 'BNB',
-    network: 'BEP20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    label: 'BNB Smart Chain Desk',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 150000,
-    instructions: 'Send BNB via BNB Smart Chain (BEP20) only.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: BOOTSTRAPPED_ADMIN_EMAIL,
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-sol',
-    cryptocurrency: 'Solana',
-    symbol: 'SOL',
-    network: 'SOL',
-    address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
-    label: 'Solana Institutional Wallet',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 150000,
-    instructions: 'Transfer SOL on the native Solana network.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: BOOTSTRAPPED_ADMIN_EMAIL,
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-xrp',
-    cryptocurrency: 'Ripple',
-    symbol: 'XRP',
-    network: 'XRP Ledger',
-    address: 'rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh',
-    label: 'Ripple (XRP) Ledger Vault',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 150000,
-    instructions: 'Send XRP over the XRP Ledger. Attach your transaction hash screenshot.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: BOOTSTRAPPED_ADMIN_EMAIL,
-    assignedUserIds: [],
-  },
-];
+const DEFAULT_WALLETS: RepoCryptoWallet[] = [];
 
 // ============================================================================
 // IN-MEMORY FALLBACK STORE (USED ONLY WHEN DATABASE_URL IS NOT CONFIGURED)
@@ -343,89 +201,15 @@ const memoryState: {
   investments: [],
   tickets: [],
   locationLogs: [],
-  cryptoWallets: [...DEFAULT_WALLETS],
+  cryptoWallets: [],
   transferRequests: [],
   passwordResets: [],
 };
 
 function ensureMemorySeeded() {
+  // Start empty: only genuine registration and verified admin provisioning create accounts.
   if (memoryState.initialized) return;
   memoryState.initialized = true;
-  const envAdminPass = process.env.ADMIN_PASSWORD?.trim();
-  memoryState.users = [
-    {
-      id: 'usr-admin',
-      username: 'admin',
-      name: 'AssetCrest Admin',
-      email: BOOTSTRAPPED_ADMIN_EMAIL,
-      password: '',
-      passwordHash: envAdminPass ? hashPassword(envAdminPass) : '',
-      role: 'admin',
-      accountType: 'Individual',
-      referralCode: 'ADMIN',
-      accountBalance: 25000,
-      totalProfit: 0,
-      bonus: 0,
-      referralBonus: 0,
-      totalDeposit: 25000,
-      cryptoBalances: { USDC: 5000, ETH: 2, BTC: 0.1, USDT: 5000, BNB: 5, SOL: 10, XRP: 1000 },
-      kycStatus: 'Approved',
-      accountStatus: 'Active',
-      createdAt: '2026-10-01',
-    },
-    {
-      id: 'usr-marcus',
-      username: 'marcusvance',
-      name: 'Marcus Vance',
-      email: 'marcus.vance@assetcrest.co',
-      country: 'United Kingdom',
-      password: '',
-      passwordHash: hashPassword('Password123!'),
-      role: 'investor',
-      accountType: 'Joint',
-      jointDetails: {
-        coOwnerName: 'Elena Vance',
-        coOwnerEmail: 'elena.vance@assetcrest.co',
-        relationship: 'Spouse',
-        authorizationMode: 'Either Owner',
-      },
-      referralCode: 'MARCUS',
-      accountBalance: 6450,
-      totalProfit: 840,
-      bonus: 150,
-      referralBonus: 120,
-      totalDeposit: 6000,
-      cryptoBalances: { USDC: 1200, ETH: 0.45, BTC: 0.025, USDT: 800, BNB: 1.5, SOL: 4.2, XRP: 350 },
-      kycStatus: 'Approved',
-      kycSubmission: {
-        legalName: 'Marcus & Elena Vance',
-        country: 'United Kingdom',
-        documentType: 'Passport',
-        documentNumber: 'UK-88342019',
-        idFrontDataUrl: '',
-        idFrontName: 'passport_vance_verified.png',
-        selfieDataUrl: '',
-        selfieName: 'selfie_vance_verified.png',
-        submittedAt: '2026-11-05 10:14',
-        reviewedAt: '2026-11-05 11:02',
-        adminNote: 'Verified joint holders.',
-      },
-      accountStatus: 'Active',
-      createdAt: '2026-10-15',
-    },
-  ];
-  memoryState.transactions = [
-    {
-      id: 'TX-SEED-001',
-      userId: 'usr-marcus',
-      type: 'Deposit',
-      method: 'USDC (BEP20)',
-      amount: 6000,
-      status: 'Completed',
-      date: '2026-11-05 09:30',
-      note: 'Initial joint deposit confirmed',
-    },
-  ];
 }
 
 // ============================================================================
@@ -644,62 +428,6 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
       }
     }
 
-    // Demo wallets and funded demo admin accounts are development-only.
-    // Production must use administrator-configured wallet addresses and an explicitly claimed admin.
-    if (process.env.NODE_ENV !== 'production') {
-      const existingWallets = await db.select({ id: cryptoWallets.id }).from(cryptoWallets).limit(1);
-      if (existingWallets.length === 0) {
-        for (const w of DEFAULT_WALLETS) {
-          await db
-            .insert(cryptoWallets)
-            .values({
-              id: w.id,
-              cryptocurrency: w.cryptocurrency,
-              symbol: w.symbol,
-              network: w.network,
-              address: w.address,
-              label: w.label,
-              status: w.status,
-              minDeposit: w.minDeposit,
-              maxDeposit: w.maxDeposit,
-              instructions: w.instructions,
-              createdAt: w.createdAt,
-              updatedAt: w.updatedAt,
-              updatedByAdminName: w.updatedByAdminName,
-              updatedByAdminEmail: w.updatedByAdminEmail,
-              assignedUserIds: w.assignedUserIds || [],
-            })
-            .onConflictDoNothing();
-        }
-      }
-  
-      const existingUsers = await db.select({ id: users.id }).from(users).limit(1);
-      if (existingUsers.length === 0) {
-        const envAdminPass = process.env.ADMIN_PASSWORD?.trim();
-        await db
-          .insert(users)
-          .values({
-            id: 'usr-admin',
-            username: 'admin',
-            name: 'AssetCrest Admin',
-            email: BOOTSTRAPPED_ADMIN_EMAIL,
-            passwordHash: envAdminPass ? hashPassword(envAdminPass) : '',
-            role: 'admin',
-            accountType: 'Individual',
-            referralCode: 'ADMIN',
-            accountBalance: 25000,
-            totalProfit: 0,
-            bonus: 0,
-            referralBonus: 0,
-            totalDeposit: 25000,
-            cryptoBalances: { USDC: 5000, ETH: 2, BTC: 0.1, USDT: 5000, BNB: 5, SOL: 10, XRP: 1000 },
-            kycStatus: 'Approved',
-            accountStatus: 'Active',
-            createdAt: '2026-10-01',
-          })
-          .onConflictDoNothing();
-      }
-    }
   })().catch((err) => {
     schemaInitPromise = null;
     throw err;

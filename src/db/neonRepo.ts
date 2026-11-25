@@ -604,6 +604,46 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
       END $assetcrest_migration$;
     `);
 
+    // If an administrator password is explicitly configured in production, create only
+    // the admin identity with zero funds. Never provision demo balances or wallet addresses.
+    if (process.env.NODE_ENV === 'production' && process.env.ADMIN_PASSWORD?.trim()) {
+      const configuredAdmins = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.role, 'admin'))
+        .limit(1);
+      if (configuredAdmins.length === 0) {
+        await db.insert(users).values({
+          id: 'usr-admin',
+          username: 'admin',
+          name: 'AssetCrest Admin',
+          email: BOOTSTRAPPED_ADMIN_EMAIL,
+          passwordHash: hashPassword(process.env.ADMIN_PASSWORD.trim()),
+          role: 'admin',
+          accountType: 'Individual',
+          referralCode: 'ADMIN',
+          accountBalance: 0,
+          totalProfit: 0,
+          bonus: 0,
+          referralBonus: 0,
+          totalDeposit: 0,
+          cryptoBalances: EMPTY_BALANCES,
+          kycStatus: 'Approved',
+          accountStatus: 'Active',
+          createdAt: formatStamp().slice(0, 10),
+        }).onConflictDoNothing();
+
+        const verifiedAdmin = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.role, 'admin'))
+          .limit(1);
+        if (verifiedAdmin.length === 0) {
+          throw new Error('ADMIN_PASSWORD is set but the admin account could not be created. Check ADMIN_EMAIL and unique user fields.');
+        }
+      }
+    }
+
     // Demo wallets and funded demo admin accounts are development-only.
     // Production must use administrator-configured wallet addresses and an explicitly claimed admin.
     if (process.env.NODE_ENV !== 'production') {
@@ -832,8 +872,11 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
       lastLoginAt: formatStamp(),
       updatedAt: new Date(),
     })
-    .where(eq(users.id, existing.id))
+    .where(and(eq(users.id, existing.id), eq(users.passwordHash, '')))
     .returning();
+  if (!updated[0]) {
+    throw new Error('Administrator account has already been claimed.');
+  }
   return mapDbUser(updated[0]);
 }
 

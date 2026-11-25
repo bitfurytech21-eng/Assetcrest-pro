@@ -1283,7 +1283,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         <div class="panel-title">
           <span>Place Order</span>
           <div class="account-balance-pill">
-            Avail: <span id="availableBalanceDisplay" class="account-balance-val mono">$0.00</span>
+            Avail: <span id="availableBalanceDisplay" class="account-balance-val mono" title="Your account balance is managed in the authenticated investor portal">—</span>
           </div>
         </div>
 
@@ -1953,7 +1953,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
 
     function updateBalanceUI() {
-      document.getElementById('availableBalanceDisplay').innerText = '$' + balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('availableBalanceDisplay').innerText = '—';
     }
 
     function toggleMarketModal() {

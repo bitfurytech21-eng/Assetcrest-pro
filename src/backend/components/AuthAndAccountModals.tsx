@@ -225,7 +225,7 @@ function SignUpFormFields({
     'w-full h-14 sm:h-[76px] px-5 sm:px-7 rounded-xl border border-[#e2e8f0] bg-white text-[17px] sm:text-[24px] text-[#1e293b] placeholder:text-[#8b95a5] focus:outline-none focus:border-[#345485] focus:ring-2 focus:ring-[#345485]/15 transition-colors';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8 sm:space-y-10">
       {showInlineError && formError && (
         <ErrorAlertBanner message={formError} onDismiss={() => setFormError('')} />
       )}
@@ -334,7 +334,7 @@ function SignUpFormFields({
             aria-label={showPassword ? 'Hide password' : 'Show password'}
             className="absolute right-1 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] flex items-center justify-center text-[#8b95a5] hover:text-[#334155] transition-colors cursor-pointer"
           >
-            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            {showPassword ? <EyeOff className="h-6 w-6 sm:h-7 sm:w-7" /> : <Eye className="h-6 w-6 sm:h-7 sm:w-7" />}
           </button>
         </div>
 
@@ -358,7 +358,7 @@ function SignUpFormFields({
           ))}
         </div>
 
-        <p className="text-[13px] leading-snug text-[#8b95a5] mt-2">
+        <p className="text-[15px] sm:text-[22px] leading-snug text-[#8b95a5] mt-3">
           Use 8 or more characters with a mix of letters numbers and symbols
         </p>
       </div>

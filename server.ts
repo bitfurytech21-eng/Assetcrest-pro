@@ -319,6 +319,59 @@ app.post("/api/apk/package", handleApkPackagePost);
 app.use(express.static(path.resolve("public"), { index: false }));
 app.use("/app", express.static(path.resolve("public"), { index: false, redirect: false }));
 
+// Public Binance market data. This provides genuine quotes, order-book depth and
+// recent exchange trades. Order execution remains disabled until a broker is connected.
+const BINANCE_MARKET_SYMBOLS = new Set([
+  "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT",
+]);
+const marketDataCache = new Map<string, { expiresAt: number; payload: unknown }>();
+
+app.get("/api/market-data/:kind/:symbol", async (req, res) => {
+  const kind = String(req.params.kind || "").toLowerCase();
+  const symbol = String(req.params.symbol || "").toUpperCase();
+  if (!BINANCE_MARKET_SYMBOLS.has(symbol) || !["quote", "depth", "trades"].includes(kind)) {
+    res.status(400).json({ error: "Unsupported market data request." });
+    return;
+  }
+
+  const cacheKey = kind + ":" + symbol;
+  const cached = marketDataCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    res.setHeader("Cache-Control", "public, max-age=2");
+    res.json(cached.payload);
+    return;
+  }
+
+  const resource = kind === "quote"
+    ? "ticker/24hr?symbol=" + symbol
+    : kind === "depth"
+      ? "depth?symbol=" + symbol + "&limit=10"
+      : "trades?symbol=" + symbol + "&limit=10";
+
+  try {
+    const upstream = await requestUpstreamOnce(
+      "https://api.binance.com/api/v3/" + resource,
+      "GET",
+      { Accept: "application/json", "User-Agent": "AssetCrest-MarketData/1.0" },
+      undefined,
+      8000
+    );
+    if (upstream.status !== 200) {
+      res.status(502).json({ error: "The exchange market-data provider is temporarily unavailable." });
+      return;
+    }
+    const payload = JSON.parse(upstream.body.toString("utf8"));
+    marketDataCache.set(cacheKey, {
+      payload,
+      expiresAt: Date.now() + (kind === "quote" ? 5000 : 2000),
+    });
+    res.setHeader("Cache-Control", "public, max-age=2");
+    res.json(payload);
+  } catch {
+    res.status(502).json({ error: "Unable to retrieve live exchange market data." });
+  }
+});
+
 // Live Trading View routes
 app.get(["/trading", "/live-trading", "/app/trading", "/app/live-trading", "/markets"], (req, res) => {
   const symbol = (req.query.symbol as string) || "BTCUSDT";

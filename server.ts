@@ -882,4 +882,7 @@ async function startServer() {
   });
 }
 
-void startServer();
+void startServer().catch((err) => {
+  console.error("[AssetCrest] Startup failed:", err);
+  process.exit(1);
+});

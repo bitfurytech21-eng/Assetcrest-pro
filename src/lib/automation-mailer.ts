@@ -25,6 +25,8 @@ function escapeHtml(value: unknown): string {
 export function getAppBaseUrl(): string {
   const configured = process.env.APP_BASE_URL?.trim();
   if (configured) return configured.replace(/\/+$/, '');
+  const hostedUrl = process.env.RENDER_EXTERNAL_URL?.trim() || process.env.VITE_SITE_URL?.trim();
+  if (hostedUrl) return hostedUrl.replace(/\/+$/, '');
   const port = process.env.APPLET_ID ? 3000 : Number(process.env.PORT) || 3000;
   return `http://127.0.0.1:${port}`;
 }
@@ -244,6 +246,7 @@ export async function dispatchEmailWithSettings(params: {
   const tryWebhook =
     settings.mode === 'webhook' || (settings.mode === 'auto' && !canSmtp && canWebhook);
 
+  let smtpFailed = false;
   if (trySmtp) {
     try {
       const res = await deliverViaSmtp(settings, params.toEmail, params.subject, params.html, params.text);
@@ -252,12 +255,17 @@ export async function dispatchEmailWithSettings(params: {
       } else {
         status = 'Failed';
         errorMessage = res.error;
+        smtpFailed = true;
       }
     } catch (err: any) {
       status = 'Failed';
       errorMessage = err?.message || 'SMTP send error';
+      smtpFailed = true;
     }
-  } else if (tryWebhook && settings.emailWebhookUrl) {
+  }
+
+  // In auto mode only, use the configured relay if SMTP delivery fails.
+  if ((!trySmtp || (settings.mode === 'auto' && smtpFailed)) && tryWebhook && settings.emailWebhookUrl) {
     const res = await deliverViaEmailWebhook(
       settings.emailWebhookUrl,
       settings.emailWebhookSecret,
@@ -267,11 +275,12 @@ export async function dispatchEmailWithSettings(params: {
     httpStatus = res.httpStatus;
     if (res.ok) {
       status = 'Sent';
+      errorMessage = undefined;
     } else {
       status = 'Failed';
-      errorMessage = res.error;
+      errorMessage = res.error || errorMessage;
     }
-  } else {
+  } else if (!trySmtp && !tryWebhook) {
     // Also check if any active webhook endpoint has deliveryMode === 'email_relay'
     const webhooks = await listRawWebhookEndpoints();
     const relayHook = webhooks.find(

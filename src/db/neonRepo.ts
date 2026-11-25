@@ -2145,6 +2145,12 @@ export async function declineWithdrawalInNeon(txId: string): Promise<void> {
   });
 }
 
+function yieldPayoutTransactionId(inv: RepoInvestment): string {
+  const cycleKey = `${inv.payoutCyclesCompleted ?? 0}:${inv.lastAccrualMs ?? inv.startedAtMs ?? inv.startedAt}`;
+  const digest = crypto.createHash('sha256').update(`${inv.id}:${cycleKey}`).digest('hex');
+  return `YLD-${digest}`;
+}
+
 export async function distributeYieldsInNeon(
   payouts: { inv: RepoInvestment; yieldAmt: number }[]
 ): Promise<number> {
@@ -2153,14 +2159,18 @@ export async function distributeYieldsInNeon(
   const stamp = formatStamp();
 
   if (!isDatabaseConfigured) {
+    let creditedCount = 0;
     for (const item of payouts) {
+      const payoutId = yieldPayoutTransactionId(item.inv);
+      if (memoryState.transactions.some((t) => t.id === payoutId)) continue;
       const owner = memoryState.users.find((u) => u.id === item.inv.userId);
       if (!owner) continue;
       const amt = Number(item.yieldAmt.toFixed(2));
+      if (!Number.isFinite(amt) || amt <= 0) continue;
       owner.totalProfit = Number((owner.totalProfit + amt).toFixed(2));
       owner.accountBalance = Number((owner.accountBalance + amt).toFixed(2));
       memoryState.transactions.unshift({
-        id: nextNeonId('YLD'),
+        id: payoutId,
         userId: owner.id,
         type: 'Bonus',
         method: `Daily Yield — ${item.inv.planName}`.slice(0, 180),
@@ -2169,16 +2179,19 @@ export async function distributeYieldsInNeon(
         date: stamp,
         note: `${item.inv.dailyRate} yield payout`.slice(0, 280),
       });
+      creditedCount += 1;
     }
-    return payouts.length;
+    return creditedCount;
   }
 
+  let creditedCount = 0;
   await db.transaction(async (trx) => {
     const creditsByUser = new Map<string, number>();
     for (const item of payouts) {
       const amt = Number(item.yieldAmt.toFixed(2));
-      await trx.insert(transactions).values({
-        id: nextNeonId('YLD'),
+      if (!Number.isFinite(amt) || amt <= 0) continue;
+      const inserted = await trx.insert(transactions).values({
+        id: yieldPayoutTransactionId(item.inv),
         userId: item.inv.userId,
         type: 'Bonus',
         method: `Daily Yield — ${item.inv.planName}`.slice(0, 180),
@@ -2186,8 +2199,10 @@ export async function distributeYieldsInNeon(
         status: 'Completed',
         date: stamp,
         note: `${item.inv.dailyRate} yield payout`.slice(0, 280),
-      });
+      }).onConflictDoNothing().returning({ id: transactions.id });
+      if (inserted.length === 0) continue;
       creditsByUser.set(item.inv.userId, (creditsByUser.get(item.inv.userId) ?? 0) + amt);
+      creditedCount += 1;
     }
 
     for (const [uid, credit] of creditsByUser.entries()) {
@@ -2202,7 +2217,7 @@ export async function distributeYieldsInNeon(
     }
   });
 
-  return payouts.length;
+  return creditedCount;
 }
 
 export async function toggleInvestmentSettingsInNeon(params: {

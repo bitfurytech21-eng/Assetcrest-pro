@@ -577,7 +577,7 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
     // One-time in-place conversion from floating-point money columns to exact cents.
     // Existing values are rounded to the platform's two-decimal currency precision.
     await pool.query(`
-      DO $
+      DO $assetcrest_migration$
       DECLARE
         col RECORD;
       BEGIN
@@ -601,7 +601,7 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
             col.column_name
           );
         END LOOP;
-      END $;
+      END $assetcrest_migration$;
     `);
 
     // Demo wallets and funded demo admin accounts are development-only.

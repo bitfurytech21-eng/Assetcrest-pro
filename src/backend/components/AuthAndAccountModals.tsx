@@ -225,7 +225,7 @@ function SignUpFormFields({
     'w-full h-12 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[15px] text-[#1e293b] placeholder:text-[#8b95a5] focus:outline-none focus:border-[#345485] focus:ring-2 focus:ring-[#345485]/15 transition-colors';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {showInlineError && formError && (
         <ErrorAlertBanner message={formError} onDismiss={() => setFormError('')} />
       )}
@@ -584,7 +584,7 @@ export function SignInPage({
           Sign In
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
           {loginError && (
             <ErrorAlertBanner message={loginError} onDismiss={() => setLoginError('')} />
           )}

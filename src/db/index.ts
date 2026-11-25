@@ -41,7 +41,7 @@ export const createPool = () => {
     try {
       global._postgresPool = new Pool({
         connectionString,
-        ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: false } : false,
+        ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: true } : false,
         max: 10,
         connectionTimeoutMillis: 15000,
       });

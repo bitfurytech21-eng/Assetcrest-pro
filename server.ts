@@ -7,7 +7,8 @@ import zlib from "zlib";
 import { requireAdmin, requireAuth, AuthRequest } from "./src/middleware/auth.ts";
 import { getUsers, getUserById } from "./src/db/users.ts";
 import { createPool, isDatabaseConfigured } from "./src/db/index.ts";
-import { getMemoryUserById } from "./src/db/neonRepo.ts";
+import { getMemoryUserById, ensureNeonSchemaAndSeed } from "./src/db/neonRepo.ts";
+import { ensureAutomationSchemaAndSeed } from "./src/db/automationRepo.ts";
 import { createNeonApiRouter } from "./src/api/neonRoutes.ts";
 import { renderTradingPage } from "./src/trading/tradingPage.ts";
 import { handleApkPackagePost } from "./src/api/apkPackage.ts";
@@ -260,8 +261,9 @@ app.get("/api/health", async (_req, res) => {
     upstreamStatus = "unreachable: " + (err.message || "error");
   }
 
-  res.json({
-    status: dbStatus.startsWith("disconnected") ? "degraded" : "ok",
+  const healthy = isDatabaseConfigured && dbStatus === "connected";
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? "ok" : "degraded",
     engine: "neon-postgresql",
     database: dbStatus,
     target: "https://assetcrest.co",
@@ -801,6 +803,15 @@ function isPortalAppRoute(reqPath: string): boolean {
 
 async function startServer() {
   if (isProduction) {
+    if (!isDatabaseConfigured) {
+      throw new Error("DATABASE_URL is required in production. Refusing to start without persistent storage.");
+    }
+    const pool = createPool();
+    await pool.query("SELECT 1;");
+    await ensureNeonSchemaAndSeed();
+    await ensureAutomationSchemaAndSeed();
+    console.log("[AssetCrest] Neon PostgreSQL connection and required schema checks passed.");
+
     // Serve Vite-built SPA assets and copied public files under /app
     const distDir = path.resolve("dist");
     if (fs.existsSync(distDir)) {

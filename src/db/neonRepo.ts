@@ -743,12 +743,12 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
         role: 'admin',
         accountType: 'Individual',
         referralCode: 'ADMIN',
-        accountBalance: 25000,
+        accountBalance: 0,
         totalProfit: 0,
         bonus: 0,
         referralBonus: 0,
-        totalDeposit: 25000,
-        cryptoBalances: { USDC: 5000, ETH: 2, BTC: 0.1, USDT: 5000, BNB: 5, SOL: 10, XRP: 1000 },
+        totalDeposit: 0,
+        cryptoBalances: EMPTY_BALANCES,
         kycStatus: 'Approved',
         accountStatus: 'Active',
         createdAt: formatStamp().slice(0, 10),
@@ -780,12 +780,12 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
         role: 'admin',
         accountType: 'Individual',
         referralCode: 'ADMIN',
-        accountBalance: 25000,
+        accountBalance: 0,
         totalProfit: 0,
         bonus: 0,
         referralBonus: 0,
-        totalDeposit: 25000,
-        cryptoBalances: { USDC: 5000, ETH: 2, BTC: 0.1, USDT: 5000, BNB: 5, SOL: 10, XRP: 1000 },
+        totalDeposit: 0,
+        cryptoBalances: EMPTY_BALANCES,
         kycStatus: 'Approved',
         accountStatus: 'Active',
         lastLoginAt: formatStamp(),
@@ -1977,7 +1977,7 @@ export async function approveDepositInNeon(txId: string): Promise<void> {
 
   if (!isDatabaseConfigured) {
     const tx = memoryState.transactions.find((t) => t.id === txId);
-    if (!tx || tx.status === 'Completed') return;
+    if (!tx || tx.type !== 'Deposit' || tx.status !== 'Pending') return;
     const owner = memoryState.users.find((u) => u.id === tx.userId);
     if (!owner) return;
     tx.status = 'Completed';
@@ -2014,20 +2014,24 @@ export async function declineDepositInNeon(txId: string): Promise<void> {
   await ensureNeonSchemaAndSeed();
   if (!isDatabaseConfigured) {
     const tx = memoryState.transactions.find((t) => t.id === txId);
-    if (tx) tx.status = 'Cancelled';
+    if (tx?.type === 'Deposit' && tx.status === 'Pending') tx.status = 'Cancelled';
     return;
   }
-  await db.update(transactions).set({ status: 'Cancelled' }).where(eq(transactions.id, txId));
+  await db.update(transactions)
+    .set({ status: 'Cancelled' })
+    .where(and(eq(transactions.id, txId), eq(transactions.type, 'Deposit'), eq(transactions.status, 'Pending')));
 }
 
 export async function approveWithdrawalInNeon(txId: string): Promise<void> {
   await ensureNeonSchemaAndSeed();
   if (!isDatabaseConfigured) {
     const tx = memoryState.transactions.find((t) => t.id === txId);
-    if (tx) tx.status = 'Completed';
+    if (tx?.type === 'Withdrawal' && tx.status === 'Pending') tx.status = 'Completed';
     return;
   }
-  await db.update(transactions).set({ status: 'Completed' }).where(eq(transactions.id, txId));
+  await db.update(transactions)
+    .set({ status: 'Completed' })
+    .where(and(eq(transactions.id, txId), eq(transactions.type, 'Withdrawal'), eq(transactions.status, 'Pending')));
 }
 
 export async function declineWithdrawalInNeon(txId: string): Promise<void> {
@@ -2035,7 +2039,7 @@ export async function declineWithdrawalInNeon(txId: string): Promise<void> {
 
   if (!isDatabaseConfigured) {
     const tx = memoryState.transactions.find((t) => t.id === txId);
-    if (!tx || tx.status === 'Cancelled') return;
+    if (!tx || tx.type !== 'Withdrawal' || tx.status !== 'Pending') return;
     const owner = memoryState.users.find((u) => u.id === tx.userId);
     if (!owner) return;
     tx.status = 'Cancelled';
@@ -2044,22 +2048,25 @@ export async function declineWithdrawalInNeon(txId: string): Promise<void> {
   }
 
   await db.transaction(async (trx) => {
-    const txRows = await trx.select().from(transactions).where(eq(transactions.id, txId)).limit(1);
-    const tx = txRows[0];
-    if (!tx || tx.status === 'Cancelled') return;
+    const cancelledRows = await trx
+      .update(transactions)
+      .set({ status: 'Cancelled' })
+      .where(and(
+        eq(transactions.id, txId),
+        eq(transactions.type, 'Withdrawal'),
+        eq(transactions.status, 'Pending')
+      ))
+      .returning({ userId: transactions.userId, amount: transactions.amount });
+    const cancelled = cancelledRows[0];
+    if (!cancelled) return;
 
-    const userRows = await trx.select().from(users).where(eq(users.id, tx.userId)).limit(1);
-    const owner = userRows[0];
-    if (!owner) return;
-
-    await trx.update(transactions).set({ status: 'Cancelled' }).where(eq(transactions.id, tx.id));
     await trx
       .update(users)
       .set({
-        accountBalance: Number((Number(owner.accountBalance) + Number(tx.amount)).toFixed(2)),
+        accountBalance: sql`${users.accountBalance} + ${Number(cancelled.amount)}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, owner.id));
+      .where(eq(users.id, cancelled.userId));
   });
 }
 

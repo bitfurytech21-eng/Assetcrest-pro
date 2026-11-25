@@ -574,6 +574,36 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
       );
     `);
 
+    // One-time in-place conversion from floating-point money columns to exact cents.
+    // Existing values are rounded to the platform's two-decimal currency precision.
+    await pool.query(`
+      DO $
+      DECLARE
+        col RECORD;
+      BEGIN
+        FOR col IN
+          SELECT table_name, column_name
+          FROM information_schema.columns
+          WHERE table_schema = current_schema()
+            AND data_type = 'double precision'
+            AND (
+              (table_name = 'users' AND column_name IN ('account_balance', 'total_profit', 'bonus', 'referral_bonus', 'total_deposit'))
+              OR (table_name = 'transactions' AND column_name = 'amount')
+              OR (table_name = 'investments' AND column_name IN ('amount', 'accrued_profit'))
+              OR (table_name = 'crypto_wallets' AND column_name IN ('min_deposit', 'max_deposit'))
+              OR (table_name = 'transfer_requests' AND column_name = 'amount')
+            )
+        LOOP
+          EXECUTE format(
+            'ALTER TABLE %I ALTER COLUMN %I TYPE NUMERIC(20,2) USING ROUND(%I::numeric, 2)',
+            col.table_name,
+            col.column_name,
+            col.column_name
+          );
+        END LOOP;
+      END $;
+    `);
+
     // Demo wallets and funded demo admin accounts are development-only.
     // Production must use administrator-configured wallet addresses and an explicitly claimed admin.
     if (process.env.NODE_ENV !== 'production') {

@@ -7,7 +7,7 @@ import zlib from "zlib";
 import { requireAdmin, requireAuth, AuthRequest } from "./src/middleware/auth.ts";
 import { getUsers, getUserById } from "./src/db/users.ts";
 import { createPool, isDatabaseConfigured } from "./src/db/index.ts";
-import { getMemoryUserById, ensureNeonSchemaAndSeed } from "./src/db/neonRepo.ts";
+import { getMemoryUserById, ensureNeonSchemaAndSeed, getAdminSetupStatus } from "./src/db/neonRepo.ts";
 import { ensureAutomationSchemaAndSeed } from "./src/db/automationRepo.ts";
 import { createNeonApiRouter } from "./src/api/neonRoutes.ts";
 import { renderTradingPage } from "./src/trading/tradingPage.ts";
@@ -810,7 +810,11 @@ async function startServer() {
     await pool.query("SELECT 1;");
     await ensureNeonSchemaAndSeed();
     await ensureAutomationSchemaAndSeed();
-    console.log("[AssetCrest] Neon PostgreSQL connection and required schema checks passed.");
+    const adminSetup = await getAdminSetupStatus();
+    if (!adminSetup.adminClaimed) {
+      throw new Error("No administrator account is securely configured. Set ADMIN_PASSWORD for first-time bootstrap, or complete the admin claim before production deployment.");
+    }
+    console.log("[AssetCrest] Neon PostgreSQL, required schemas, and administrator setup checks passed.");
 
     // Serve Vite-built SPA assets and copied public files under /app
     const distDir = path.resolve("dist");

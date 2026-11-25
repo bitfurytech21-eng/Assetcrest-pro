@@ -886,22 +886,37 @@ function readStoreFromStorage(): AssetCrestStore {
       return cachedStore;
     }
     const parsed = JSON.parse(raw) as Partial<AssetCrestStore>;
-    if (!parsed || !Array.isArray(parsed.users) || parsed.users.length === 0) {
+    if (!parsed || !Array.isArray(parsed.users)) {
       cachedStore = DEFAULT_SEED_STORE;
       return cachedStore;
     }
+
+    // Remove known legacy sample investors from this browser-only cache.
+    // Persistent Neon database users are intentionally not modified.
+    const legacyDemoIds = new Set(['usr-annabella', 'usr-marcus', 'usr-elena']);
+    const legacyDemoNames = new Set(['annabella menor', 'marcus vance', 'elena vance']);
+    const retainedUsers = parsed.users
+      .filter((user) =>
+        !legacyDemoIds.has(String(user.id || '').toLowerCase()) &&
+        !legacyDemoNames.has(String(user.name || '').trim().toLowerCase())
+      )
+      .map((user) => ({ ...user, password: '' }));
+    const retainedUserIds = new Set(retainedUsers.map((user) => user.id));
+    const keepOwnedRecords = <T extends { userId?: string }>(items: T[] | undefined): T[] =>
+      Array.isArray(items) ? items.filter((item) => Boolean(item.userId && retainedUserIds.has(item.userId))) : [];
+
     const migratedPlans = migrateInvestmentPlans(parsed.investmentPlans);
     cachedStore = normalizeStoreRecordIds({
-      activeUserId: parsed.activeUserId === undefined ? 'usr-annabella' : parsed.activeUserId,
-      welcomeModalUserId: parsed.welcomeModalUserId ?? null,
-      users: parsed.users,
-      transactions: Array.isArray(parsed.transactions) ? parsed.transactions : [],
-      investments: Array.isArray(parsed.investments) ? parsed.investments : [],
+      activeUserId: parsed.activeUserId && retainedUserIds.has(parsed.activeUserId) ? parsed.activeUserId : null,
+      welcomeModalUserId: parsed.welcomeModalUserId && retainedUserIds.has(parsed.welcomeModalUserId) ? parsed.welcomeModalUserId : null,
+      users: retainedUsers,
+      transactions: keepOwnedRecords(parsed.transactions),
+      investments: keepOwnedRecords(parsed.investments),
       locationLogs: Array.isArray(parsed.locationLogs) ? parsed.locationLogs : [],
-      tickets: Array.isArray(parsed.tickets) ? parsed.tickets : [],
+      tickets: keepOwnedRecords(parsed.tickets),
       investmentPlans: migratedPlans,
-      sessionLogs: Array.isArray(parsed.sessionLogs) ? parsed.sessionLogs : [],
-      activityLogs: Array.isArray(parsed.activityLogs) ? parsed.activityLogs : [],
+      sessionLogs: keepOwnedRecords(parsed.sessionLogs),
+      activityLogs: Array.isArray(parsed.activityLogs) ? parsed.activityLogs.filter((item) => retainedUserIds.has(item.actorId)) : [],
       platformSettings: parsed.platformSettings
         ? { ...DEFAULT_PLATFORM_SETTINGS, ...parsed.platformSettings }
         : DEFAULT_PLATFORM_SETTINGS,

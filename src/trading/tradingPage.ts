@@ -19,188 +19,20 @@ export interface MarketSymbol {
 }
 
 export const SUPPORTED_MARKETS: MarketSymbol[] = [
-  {
-    id: 'BTCUSDT',
-    symbol: 'BTC/USDT',
-    tvSymbol: 'BINANCE:BTCUSDT',
-    name: 'Bitcoin',
-    category: 'crypto',
-    price: 64850.25,
-    change24h: 3.42,
-    high24h: 65920.00,
-    low24h: 63140.50,
-    volume24h: '28.45B',
-    precision: 2,
-  },
-  {
-    id: 'ETHUSDT',
-    symbol: 'ETH/USDT',
-    tvSymbol: 'BINANCE:ETHUSDT',
-    name: 'Ethereum',
-    category: 'crypto',
-    price: 3480.80,
-    change24h: 4.15,
-    high24h: 3560.00,
-    low24h: 3320.10,
-    volume24h: '14.20B',
-    precision: 2,
-  },
-  {
-    id: 'SOLUSDT',
-    symbol: 'SOL/USDT',
-    tvSymbol: 'BINANCE:SOLUSDT',
-    name: 'Solana',
-    category: 'crypto',
-    price: 152.65,
-    change24h: 6.84,
-    high24h: 158.40,
-    low24h: 142.20,
-    volume24h: '4.82B',
-    precision: 2,
-  },
-  {
-    id: 'BNBUSDT',
-    symbol: 'BNB/USDT',
-    tvSymbol: 'BINANCE:BNBUSDT',
-    name: 'BNB',
-    category: 'crypto',
-    price: 574.30,
-    change24h: 1.95,
-    high24h: 585.00,
-    low24h: 562.50,
-    volume24h: '1.65B',
-    precision: 2,
-  },
-  {
-    id: 'XRPUSDT',
-    symbol: 'XRP/USDT',
-    tvSymbol: 'BINANCE:XRPUSDT',
-    name: 'XRP',
-    category: 'crypto',
-    price: 0.5840,
-    change24h: -0.85,
-    high24h: 0.6020,
-    low24h: 0.5710,
-    volume24h: '1.12B',
-    precision: 4,
-  },
-  {
-    id: 'DOGEUSDT',
-    symbol: 'DOGE/USDT',
-    tvSymbol: 'BINANCE:DOGEUSDT',
-    name: 'Dogecoin',
-    category: 'crypto',
-    price: 0.1285,
-    change24h: 5.12,
-    high24h: 0.1340,
-    low24h: 0.1210,
-    volume24h: '890M',
-    precision: 4,
-  },
-  {
-    id: 'EURUSD',
-    symbol: 'EUR/USD',
-    tvSymbol: 'FX:EURUSD',
-    name: 'Euro / US Dollar',
-    category: 'forex',
-    price: 1.0865,
-    change24h: 0.22,
-    high24h: 1.0895,
-    low24h: 1.0835,
-    volume24h: '98.5B',
-    precision: 4,
-  },
-  {
-    id: 'GBPUSD',
-    symbol: 'GBP/USD',
-    tvSymbol: 'FX:GBPUSD',
-    name: 'British Pound / US Dollar',
-    category: 'forex',
-    price: 1.2940,
-    change24h: 0.38,
-    high24h: 1.2985,
-    low24h: 1.2890,
-    volume24h: '64.2B',
-    precision: 4,
-  },
-  {
-    id: 'USDJPY',
-    symbol: 'USD/JPY',
-    tvSymbol: 'FX:USDJPY',
-    name: 'US Dollar / Japanese Yen',
-    category: 'forex',
-    price: 155.80,
-    change24h: -0.45,
-    high24h: 156.40,
-    low24h: 155.20,
-    volume24h: '82.0B',
-    precision: 2,
-  },
-  {
-    id: 'XAUUSD',
-    symbol: 'Gold (XAU)',
-    tvSymbol: 'OANDA:XAUUSD',
-    name: 'Gold / US Dollar',
-    category: 'commodities',
-    price: 2415.60,
-    change24h: 1.15,
-    high24h: 2428.00,
-    low24h: 2398.50,
-    volume24h: '42.1B',
-    precision: 2,
-  },
-  {
-    id: 'USOIL',
-    symbol: 'WTI Crude',
-    tvSymbol: 'TVC:USOIL',
-    name: 'Crude Oil WTI',
-    category: 'commodities',
-    price: 78.40,
-    change24h: -1.25,
-    high24h: 80.10,
-    low24h: 77.80,
-    volume24h: '25.6B',
-    precision: 2,
-  },
-  {
-    id: 'SPX500',
-    symbol: 'S&P 500',
-    tvSymbol: 'FOREXCOM:SPXUSD',
-    name: 'S&P 500 Index',
-    category: 'stocks',
-    price: 5580.50,
-    change24h: 0.65,
-    high24h: 5610.20,
-    low24h: 5550.00,
-    volume24h: '38.9B',
-    precision: 2,
-  },
-  {
-    id: 'NVDA',
-    symbol: 'NVDA',
-    tvSymbol: 'NASDAQ:NVDA',
-    name: 'NVIDIA Corporation',
-    category: 'stocks',
-    price: 128.90,
-    change24h: 4.80,
-    high24h: 132.50,
-    low24h: 124.30,
-    volume24h: '18.4B',
-    precision: 2,
-  },
-  {
-    id: 'AAPL',
-    symbol: 'AAPL',
-    tvSymbol: 'NASDAQ:AAPL',
-    name: 'Apple Inc.',
-    category: 'stocks',
-    price: 224.50,
-    change24h: 1.05,
-    high24h: 226.80,
-    low24h: 222.10,
-    volume24h: '12.3B',
-    precision: 2,
-  },
+  { id: 'BTCUSDT', symbol: 'BTC/USDT', tvSymbol: 'BINANCE:BTCUSDT', name: 'Bitcoin', category: 'crypto', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 2 },
+  { id: 'ETHUSDT', symbol: 'ETH/USDT', tvSymbol: 'BINANCE:ETHUSDT', name: 'Ethereum', category: 'crypto', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 2 },
+  { id: 'SOLUSDT', symbol: 'SOL/USDT', tvSymbol: 'BINANCE:SOLUSDT', name: 'Solana', category: 'crypto', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 2 },
+  { id: 'BNBUSDT', symbol: 'BNB/USDT', tvSymbol: 'BINANCE:BNBUSDT', name: 'BNB', category: 'crypto', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 2 },
+  { id: 'XRPUSDT', symbol: 'XRP/USDT', tvSymbol: 'BINANCE:XRPUSDT', name: 'XRP', category: 'crypto', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 4 },
+  { id: 'DOGEUSDT', symbol: 'DOGE/USDT', tvSymbol: 'BINANCE:DOGEUSDT', name: 'Dogecoin', category: 'crypto', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 4 },
+  { id: 'EURUSD', symbol: 'EUR/USD', tvSymbol: 'FX:EURUSD', name: 'Euro / US Dollar', category: 'forex', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 4 },
+  { id: 'GBPUSD', symbol: 'GBP/USD', tvSymbol: 'FX:GBPUSD', name: 'British Pound / US Dollar', category: 'forex', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 4 },
+  { id: 'USDJPY', symbol: 'USD/JPY', tvSymbol: 'FX:USDJPY', name: 'US Dollar / Japanese Yen', category: 'forex', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 2 },
+  { id: 'XAUUSD', symbol: 'Gold (XAU)', tvSymbol: 'OANDA:XAUUSD', name: 'Gold / US Dollar', category: 'commodities', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 2 },
+  { id: 'USOIL', symbol: 'WTI Crude', tvSymbol: 'TVC:USOIL', name: 'Crude Oil WTI', category: 'commodities', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 2 },
+  { id: 'SPX500', symbol: 'S&P 500', tvSymbol: 'FOREXCOM:SPXUSD', name: 'S&P 500 Index', category: 'stocks', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 2 },
+  { id: 'NVDA', symbol: 'NVDA', tvSymbol: 'NASDAQ:NVDA', name: 'NVIDIA Corporation', category: 'stocks', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 2 },
+  { id: 'AAPL', symbol: 'AAPL', tvSymbol: 'NASDAQ:AAPL', name: 'Apple Inc.', category: 'stocks', price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: '', precision: 2 },
 ];
 
 export function renderTradingPage(selectedSymbolId?: string): string {
@@ -1201,23 +1033,23 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     <div class="header-stats">
       <div class="stat-item">
         <span class="stat-label">Price</span>
-        <span id="headerLastPrice" class="stat-value price-large mono text-green">$${currentSymbol.price.toLocaleString(undefined, { minimumFractionDigits: currentSymbol.precision, maximumFractionDigits: currentSymbol.precision })}</span>
+        <span id="headerLastPrice" class="stat-value price-large mono text-green">—</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">24h Change</span>
-        <span id="header24hChange" class="stat-value mono text-green">+${currentSymbol.change24h}%</span>
+        <span id="header24hChange" class="stat-value mono">—</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">24h High</span>
-        <span id="header24hHigh" class="stat-value mono">$${currentSymbol.high24h.toLocaleString(undefined, { minimumFractionDigits: currentSymbol.precision })}</span>
+        <span id="header24hHigh" class="stat-value mono">—</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">24h Low</span>
-        <span id="header24hLow" class="stat-value mono">$${currentSymbol.low24h.toLocaleString(undefined, { minimumFractionDigits: currentSymbol.precision })}</span>
+        <span id="header24hLow" class="stat-value mono">—</span>
       </div>
       <div class="stat-item">
         <span class="stat-label">24h Vol</span>
-        <span id="header24hVol" class="stat-value mono">$${currentSymbol.volume24h}</span>
+        <span id="header24hVol" class="stat-value mono">—</span>
       </div>
     </div>
 
@@ -1335,7 +1167,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
               <tbody id="positionsTableBody">
                 <tr>
                   <td colspan="10" style="text-align:center; padding: 28px; color: var(--text-dim);">
-                    No open positions yet. Use the order ticket to place a trade.
+                    No open positions are reported by a connected broker account.
                   </td>
                 </tr>
               </tbody>
@@ -1451,7 +1283,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         <div class="panel-title">
           <span>Place Order</span>
           <div class="account-balance-pill">
-            Avail: <span id="availableBalanceDisplay" class="account-balance-val mono">$10,000.00</span>
+            Avail: <span id="availableBalanceDisplay" class="account-balance-val mono">$0.00</span>
           </div>
         </div>
 
@@ -1544,26 +1376,24 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         <div class="summary-box">
           <div class="summary-row">
             <span>Position Size:</span>
-            <span class="summary-val mono" id="sumPositionSize">$20,000.00</span>
+            <span class="summary-val mono" id="sumPositionSize">—</span>
           </div>
           <div class="summary-row">
             <span>Required Margin:</span>
-            <span class="summary-val mono" id="sumMarginRequired">$1,000.00</span>
+            <span class="summary-val mono" id="sumMarginRequired">—</span>
           </div>
           <div class="summary-row">
             <span>Est. Liq. Price:</span>
-            <span class="summary-val mono text-red" id="sumEstLiqPrice">$61,607.50</span>
+            <span class="summary-val mono text-red" id="sumEstLiqPrice">—</span>
           </div>
           <div class="summary-row">
             <span>Trading Fee (0.04%):</span>
-            <span class="summary-val mono" id="sumTradingFee">$8.00</span>
+            <span class="summary-val mono" id="sumTradingFee">—</span>
           </div>
         </div>
 
         <!-- Execute Button -->
-        <button id="executeOrderBtn" class="execute-btn execute-btn-buy" onclick="handleExecuteOrder()">
-          Open Long Position (${currentSymbol.symbol})
-        </button>
+        <button id="executeOrderBtn" class="execute-btn execute-btn-buy" type="button" disabled title="Broker execution is not connected">Broker connection required — orders disabled</button>
 
       </div>
 
@@ -1571,7 +1401,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       <div class="panel-box" id="taPanelBox">
         <div class="panel-title">
           <span>Technical Rating</span>
-          <span style="font-size:10px; color:var(--text-dim); font-weight:600;">STATIC</span>
+          <span style="font-size:10px; color:var(--text-dim); font-weight:600;">LIVE CHART DATA</span>
         </div>
 
         <div class="ta-gauge-container" id="taGaugeContainer">
@@ -1634,18 +1464,8 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       </div>
       <div class="modal-body">
         <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">
-          Top up your practice balance instantly or access your investor client account.
+          Trading funds and account balances are managed by your authenticated AssetCrest account. Demo funding is unavailable.
         </p>
-
-        <div style="background:var(--bg-panel-sub); padding:14px; border-radius:6px; border:1px solid var(--border-main); margin-bottom:14px;">
-          <div style="font-weight:800; margin-bottom:4px; font-size:12.5px; color:var(--text-main);">🎮 Instant Demo Balance</div>
-          <p style="font-size:11.5px; color:var(--text-dim); margin-bottom:10px;">Practice trading with zero risk and static margin.</p>
-          <div style="display:flex; gap:6px;">
-            <button class="btn btn-coral" style="flex:1; justify-content:center;" onclick="addBalance(5000)">+$5k</button>
-            <button class="btn btn-coral" style="flex:1; justify-content:center;" onclick="addBalance(10000)">+$10k</button>
-            <button class="btn btn-secondary" style="flex:1; justify-content:center;" onclick="resetBalance(10000)">Reset $10k</button>
-          </div>
-        </div>
 
         <div style="background:var(--bg-panel-sub); padding:14px; border-radius:6px; border:1px solid var(--border-main);">
           <div style="font-weight:800; margin-bottom:4px; font-size:12.5px; color:var(--text-main);">💼 AssetCrest Portal</div>
@@ -1675,6 +1495,54 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     let balance = 0;
     let positions = [];
     let tradeHistory = [];
+    const CRYPTO_MARKET_IDS = new Set(['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT']);
+    function formatMarketPrice(market) {
+      return market && market.price > 0 ? '$' + market.price.toLocaleString(undefined, { minimumFractionDigits: market.precision, maximumFractionDigits: market.precision }) : '—';
+    }
+    function formatMarketPercent(market) {
+      if (!market || !(market.price > 0)) return '—';
+      return (market.change24h >= 0 ? '+' : '') + market.change24h.toFixed(2) + '%';
+    }
+    function updateMarketHeader(market) {
+      if (!market || activeSymbol.id !== market.id) return;
+      document.getElementById('activePairDisplay').innerText = market.symbol;
+      document.getElementById('headerLastPrice').innerText = formatMarketPrice(market);
+      const changeEl = document.getElementById('header24hChange');
+      changeEl.innerText = formatMarketPercent(market);
+      changeEl.className = 'stat-value mono ' + (market.price > 0 && market.change24h >= 0 ? 'text-green' : market.price > 0 ? 'text-red' : '');
+      document.getElementById('header24hHigh').innerText = market.price > 0 ? '$' + market.high24h.toLocaleString(undefined, { minimumFractionDigits: market.precision }) : '—';
+      document.getElementById('header24hLow').innerText = market.price > 0 ? '$' + market.low24h.toLocaleString(undefined, { minimumFractionDigits: market.precision }) : '—';
+      document.getElementById('header24hVol').innerText = market.price > 0 ? market.volume24h : '—';
+    }
+    async function refreshMarketQuote(marketId) {
+      const market = MARKETS.find(item => item.id === marketId);
+      if (!market || !CRYPTO_MARKET_IDS.has(market.id)) return;
+      try {
+        const response = await fetch('/api/market-data/quote/' + encodeURIComponent(market.id));
+        if (!response.ok) throw new Error('Market quote unavailable');
+        const quote = await response.json();
+        market.price = Number(quote.lastPrice);
+        market.change24h = Number(quote.priceChangePercent);
+        market.high24h = Number(quote.highPrice);
+        market.low24h = Number(quote.lowPrice);
+        market.volume24h = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(Number(quote.quoteVolume));
+        updateMarketHeader(market);
+        renderAllMarketsTable();
+        renderQuickAssetChips();
+        filterMarkets(document.getElementById('marketSearchInput')?.value || '');
+      } catch {
+        if (activeSymbol.id === market.id) {
+          document.getElementById('headerLastPrice').innerText = 'Feed unavailable';
+          document.getElementById('header24hChange').innerText = '—';
+          document.getElementById('header24hHigh').innerText = '—';
+          document.getElementById('header24hLow').innerText = '—';
+          document.getElementById('header24hVol').innerText = '—';
+        }
+      }
+    }
+    async function refreshAllMarketQuotes() {
+      await Promise.all(MARKETS.filter(market => CRYPTO_MARKET_IDS.has(market.id)).map(market => refreshMarketQuote(market.id)));
+    }
 
     // Audio chime
     function playChime(type) {
@@ -1833,32 +1701,17 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       const market = MARKETS.find(m => m.id === marketId);
       if (!market) return;
       activeSymbol = market;
-
       const newUrl = new URL(window.location);
       newUrl.searchParams.set('symbol', market.id);
       window.history.pushState({}, '', newUrl);
-
-      document.getElementById('activePairDisplay').innerText = market.symbol;
-      document.getElementById('headerLastPrice').innerText = '$' + market.price.toLocaleString(undefined, { minimumFractionDigits: market.precision, maximumFractionDigits: market.precision });
-      
-      const changeEl = document.getElementById('header24hChange');
-      changeEl.innerText = (market.change24h >= 0 ? '+' : '') + market.change24h + '%';
-      changeEl.className = 'stat-value mono ' + (market.change24h >= 0 ? 'text-green' : 'text-red');
-
-      document.getElementById('header24hHigh').innerText = '$' + market.high24h.toLocaleString(undefined, { minimumFractionDigits: market.precision });
-      document.getElementById('header24hLow').innerText = '$' + market.low24h.toLocaleString(undefined, { minimumFractionDigits: market.precision });
-      document.getElementById('header24hVol').innerText = '$' + market.volume24h;
-
-      document.querySelectorAll('.asset-chip').forEach(c => {
-        c.classList.toggle('active', c.getAttribute('data-id') === market.id);
-      });
-
+      updateMarketHeader(market);
+      document.querySelectorAll('.asset-chip').forEach(c => c.classList.toggle('active', c.getAttribute('data-id') === market.id));
       initTradingViewChart(market.tvSymbol);
       reloadTechnicalAnalysis(market.tvSymbol);
+      void refreshMarketQuote(market.id);
+      void generateOrderBook();
+      void generateRecentTrades();
       calculateOrder();
-      generateOrderBook();
-      generateRecentTrades();
-
       closeMarketModal();
       showToast('Switched to ' + market.symbol, 'success');
     }
@@ -1941,6 +1794,14 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         ? (parseFloat(document.getElementById('inputLimitPrice').value) || activeSymbol.price)
         : activeSymbol.price;
 
+      if (!(effectivePrice > 0)) {
+        document.getElementById('amountUnitsDisplay').innerText = '—';
+        document.getElementById('sumPositionSize').innerText = '—';
+        document.getElementById('sumMarginRequired').innerText = '—';
+        document.getElementById('sumEstLiqPrice').innerText = '—';
+        document.getElementById('sumTradingFee').innerText = '—';
+        return;
+      }
       const positionSize = amountUsd * leverage;
       const units = effectivePrice > 0 ? (positionSize / effectivePrice) : 0;
       const fee = positionSize * 0.0004;
@@ -2046,52 +1907,53 @@ export function renderTradingPage(selectedSymbolId?: string): string {
 
     function renderAllMarketsTable() {
       const tbody = document.getElementById('allMarketsTableBody');
-      tbody.innerHTML = MARKETS.map(m => \`
-        <tr>
-          <td class="mono" style="font-weight:700; color:var(--text-main);">\${m.symbol}</td>
-          <td>\${m.name}</td>
-          <td><span style="text-transform:uppercase; font-size:10px; color:var(--text-muted); background:var(--bg-panel-sub); padding:2px 6px; border-radius:4px; font-weight:600;">\${m.category}</span></td>
-          <td class="mono">$\${m.price.toLocaleString(undefined, { minimumFractionDigits: m.precision })}</td>
-          <td class="mono \${m.change24h >= 0 ? 'text-green' : 'text-red'}" style="font-weight:700;">\${m.change24h >= 0 ? '+' : ''}\${m.change24h}%</td>
-          <td class="mono">$\${m.high24h.toLocaleString(undefined, { minimumFractionDigits: m.precision })}</td>
-          <td class="mono">$\${m.low24h.toLocaleString(undefined, { minimumFractionDigits: m.precision })}</td>
-          <td>
-            <button class="btn btn-secondary" style="padding:3px 8px; font-size:11px; height:24px;" onclick="selectMarket('\${m.id}')">
-              Trade
-            </button>
-          </td>
-        </tr>
-      \`).join('');
+      tbody.innerHTML = MARKETS.map(m => {
+        const price = m.price > 0 ? formatMarketPrice(m) : (m.category === 'crypto' ? '—' : 'Live chart');
+        const change = formatMarketPercent(m);
+        const high = m.price > 0 ? '$' + m.high24h.toLocaleString(undefined, { minimumFractionDigits: m.precision }) : '—';
+        const low = m.price > 0 ? '$' + m.low24h.toLocaleString(undefined, { minimumFractionDigits: m.precision }) : '—';
+        const cls = m.price > 0 && m.change24h >= 0 ? 'text-green' : m.price > 0 ? 'text-red' : '';
+        return '<tr><td>' + m.symbol + '</td><td>' + m.name + '</td><td>' + m.category + '</td><td>' + price + '</td><td class="' + cls + '">' + change + '</td><td>' + high + '</td><td>' + low + '</td><td><button class="btn btn-secondary" onclick="selectMarket(\'' + m.id + '\')">View</button></td></tr>';
+      }).join('');
     }
 
     function renderQuickAssetChips() {
       const container = document.getElementById('quickAssetsContainer');
-      const filtered = selectedCategory === 'all' 
-        ? MARKETS 
-        : MARKETS.filter(m => m.category === selectedCategory);
-
-      container.innerHTML = filtered.map(m => \`
-        <div class="asset-chip \${m.id === activeSymbol.id ? 'active' : ''}" data-id="\${m.id}" onclick="selectMarket('\${m.id}')">
-          <span class="asset-chip-symbol">\${m.symbol}</span>
-          <span class="mono \${m.change24h >= 0 ? 'text-green' : 'text-red'}">\${m.change24h >= 0 ? '+' : ''}\${m.change24h}%</span>
-        </div>
-      \`).join('');
+      const filtered = selectedCategory === 'all' ? MARKETS : MARKETS.filter(m => m.category === selectedCategory);
+      container.innerHTML = filtered.map(m => '<div class="asset-chip ' + (m.id === activeSymbol.id ? 'active' : '') + '" data-id="' + m.id + '" onclick="selectMarket(\'' + m.id + '\')"><span class="asset-chip-symbol">' + m.symbol + '</span><span class="mono">' + formatMarketPercent(m) + '</span></div>').join('');
     }
 
-    // Recent exchange executions are not fabricated. Connect an exchange trades endpoint to populate this table.
-    function generateRecentTrades() {
+    async function generateOrderBook() {
+      const tbody = document.getElementById('orderBookBody');
+      if (!tbody) return;
+      if (!CRYPTO_MARKET_IDS.has(activeSymbol.id)) { tbody.innerHTML = '<tr><td colspan="3">Depth feed is unavailable for this market.</td></tr>'; return; }
+      tbody.innerHTML = '<tr><td colspan="3">Loading live order book…</td></tr>';
+      try {
+        const response = await fetch('/api/market-data/depth/' + encodeURIComponent(activeSymbol.id));
+        if (!response.ok) throw new Error('Unavailable');
+        const book = await response.json();
+        const asks = (book.asks || []).slice(0, 8).reverse();
+        const bids = (book.bids || []).slice(0, 8);
+        const rows = asks.map(level => ({ side: 'sell', price: Number(level[0]), qty: Number(level[1]) })).concat(bids.map(level => ({ side: 'buy', price: Number(level[0]), qty: Number(level[1]) })));
+        tbody.innerHTML = rows.map(level => '<tr><td class="' + (level.side === 'buy' ? 'text-green' : 'text-red') + '">' + level.price.toLocaleString(undefined, { minimumFractionDigits: activeSymbol.precision, maximumFractionDigits: activeSymbol.precision }) + '</td><td>' + level.qty.toFixed(4) + '</td><td>' + (level.price * level.qty).toFixed(2) + '</td></tr>').join('');
+      } catch { tbody.innerHTML = '<tr><td colspan="3">Live order book feed unavailable.</td></tr>'; }
+    }
+
+    async function generateRecentTrades() {
       const tbody = document.getElementById('recentTradesBody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-dim);">Live trades feed unavailable.</td></tr>';
+      if (!tbody) return;
+      if (!CRYPTO_MARKET_IDS.has(activeSymbol.id)) { tbody.innerHTML = '<tr><td colspan="4">Trade prints are unavailable for this market.</td></tr>'; return; }
+      tbody.innerHTML = '<tr><td colspan="4">Loading live trades…</td></tr>';
+      try {
+        const response = await fetch('/api/market-data/trades/' + encodeURIComponent(activeSymbol.id));
+        if (!response.ok) throw new Error('Unavailable');
+        const trades = await response.json();
+        tbody.innerHTML = trades.slice(0, 10).map(trade => '<tr><td>' + new Date(Number(trade.time)).toLocaleTimeString() + '</td><td>' + Number(trade.price).toFixed(activeSymbol.precision) + '</td><td>' + Number(trade.qty).toFixed(4) + '</td><td>' + (trade.isBuyerMaker ? 'SELL' : 'BUY') + '</td></tr>').join('');
+      } catch { tbody.innerHTML = '<tr><td colspan="4">Live trades feed unavailable.</td></tr>'; }
     }
 
     function updateBalanceUI() {
       document.getElementById('availableBalanceDisplay').innerText = '$' + balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-    function addBalance() {
-      showToast('Balances are managed by your authenticated AssetCrest account.', 'error');
-    }
-    function resetBalance() {
-      showToast('Balances cannot be reset from the trading terminal.', 'error');
     }
 
     function toggleMarketModal() {
@@ -2109,18 +1971,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       const q = query.toLowerCase().trim();
       const filtered = MARKETS.filter(m => m.symbol.toLowerCase().includes(q) || m.name.toLowerCase().includes(q) || m.category.includes(q));
       const list = document.getElementById('marketModalList');
-      list.innerHTML = filtered.map(m => \`
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:6px; cursor:pointer; margin-bottom:4px; background:var(--bg-panel-sub); border:1px solid var(--border-sub);" onclick="selectMarket('\${m.id}')">
-          <div>
-            <div class="mono" style="font-weight:700;">\${m.symbol}</div>
-            <div style="font-size:11.5px; color:var(--text-dim);">\${m.name} · \${m.category.toUpperCase()}</div>
-          </div>
-          <div style="text-align:right;">
-            <div class="mono" style="font-weight:700;">$\${m.price.toLocaleString(undefined, { minimumFractionDigits: m.precision })}</div>
-            <div class="mono \${m.change24h >= 0 ? 'text-green' : 'text-red'}" style="font-size:11.5px; font-weight:700;">\${m.change24h >= 0 ? '+' : ''}\${m.change24h}%</div>
-          </div>
-        </div>
-      \`).join('');
+      list.innerHTML = filtered.map(m => '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;" onclick="selectMarket(\'' + m.id + '\')"><div><strong>' + m.symbol + '</strong><div>' + m.name + '</div></div><div>' + (m.price > 0 ? formatMarketPrice(m) : '—') + '<div>' + formatMarketPercent(m) + '</div></div></div>').join('');
     }
 
     function openDepositModal() {
@@ -2166,9 +2017,15 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       renderPositions();
       renderHistory();
       renderAllMarketsTable();
-      generateOrderBook();
-      generateRecentTrades();
+      void refreshAllMarketQuotes();
+      void generateOrderBook();
+      void generateRecentTrades();
       calculateOrder();
+      window.setInterval(() => { void refreshAllMarketQuotes(); }, 30000);
+      window.setInterval(() => {
+        void generateOrderBook();
+        void generateRecentTrades();
+      }, 5000);
 
       // On mobile initial load, show Chart tab
       if (window.innerWidth <= 768) {

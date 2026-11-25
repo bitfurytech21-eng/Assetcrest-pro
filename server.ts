@@ -812,7 +812,7 @@ async function startServer() {
     await ensureAutomationSchemaAndSeed();
     const adminSetup = await getAdminSetupStatus();
     if (!adminSetup.adminClaimed) {
-      throw new Error("No administrator account is securely configured. Set ADMIN_PASSWORD for first-time bootstrap, or complete the admin claim before production deployment.");
+      throw new Error("No administrator account is securely configured. Set ADMIN_PASSWORD to bootstrap the first administrator, then restart the service.");
     }
     console.log("[AssetCrest] Neon PostgreSQL, required schemas, and administrator setup checks passed.");
 

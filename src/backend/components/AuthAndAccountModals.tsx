@@ -222,10 +222,10 @@ function SignUpFormFields({
   };
 
   const inputClass =
-    'w-full h-12 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[15px] text-[#1e293b] placeholder:text-[#8b95a5] focus:outline-none focus:border-[#345485] focus:ring-2 focus:ring-[#345485]/15 transition-colors';
+    'w-full h-14 sm:h-[76px] px-5 sm:px-7 rounded-xl border border-[#e2e8f0] bg-white text-[17px] sm:text-[24px] text-[#1e293b] placeholder:text-[#8b95a5] focus:outline-none focus:border-[#345485] focus:ring-2 focus:ring-[#345485]/15 transition-colors';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
       {showInlineError && formError && (
         <ErrorAlertBanner message={formError} onDismiss={() => setFormError('')} />
       )}
@@ -379,12 +379,12 @@ function SignUpFormFields({
       <button
         type="submit"
         disabled={submitting}
-        className="w-full h-12 mt-2 rounded-lg bg-[#345485] hover:bg-[#2a4570] active:scale-[0.99] text-white text-[15px] font-medium transition cursor-pointer disabled:opacity-60"
+        className="w-full h-14 sm:h-[76px] mt-2 rounded-xl bg-[#345485] hover:bg-[#2a4570] active:scale-[0.99] text-white text-[18px] sm:text-[26px] font-medium transition cursor-pointer disabled:opacity-60"
       >
         {submitting ? 'Creating Account...' : 'Sign Up'}
       </button>
 
-      <div className="pt-3 text-center text-[14px] text-[#8b95a5]">
+      <div className="pt-5 sm:pt-8 text-center text-[16px] sm:text-[24px] text-[#8b95a5]">
         <span>Already have an Account</span>{' '}
         <button
           type="button"
@@ -405,10 +405,10 @@ interface SignUpPageProps {
   onSwitchToSignIn: () => void;
 }
 
-export function AssetCrestAuthBanner({ fullWidth = false }: { fullWidth?: boolean }) {
+export function AssetCrestAuthBanner({ fullWidth = false, large = false }: { fullWidth?: boolean; large?: boolean }) {
   return (
     <div
-      className={`w-full bg-[#e8f1f8] py-8 sm:py-16 px-6 flex items-center justify-center ${
+      className={`w-full bg-[#e8f1f8] ${large ? 'py-14 sm:py-20' : 'py-8 sm:py-16'} px-6 flex items-center justify-center ${
         fullWidth ? '' : 'rounded-[2px]'
       }`}
     >
@@ -437,10 +437,10 @@ export function SignUpPage({
 }: SignUpPageProps) {
   return (
     <div className="min-h-screen bg-white text-[#141824] flex flex-col">
-      <div className="w-full max-w-[460px] mx-auto px-5 py-5 sm:py-10 flex-1 flex flex-col justify-start">
-        <AssetCrestAuthBanner />
+      <div className="w-full max-w-[860px] mx-auto px-6 sm:px-10 pt-7 sm:pt-10 pb-12 flex-1 flex flex-col justify-start">
+        <AssetCrestAuthBanner large />
 
-        <h1 className="text-[22px] font-bold text-[#141824] text-center mt-8 mb-6 tracking-tight">
+        <h1 className="text-[28px] sm:text-[40px] font-bold text-[#141824] text-center mt-10 sm:mt-14 mb-10 sm:mb-14 tracking-tight">
           Sign Up
         </h1>
 

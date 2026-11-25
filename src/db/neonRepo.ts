@@ -457,11 +457,11 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
         joint_details JSONB,
         avatar_data_url TEXT,
         referral_code TEXT NOT NULL UNIQUE,
-        account_balance DOUBLE PRECISION NOT NULL DEFAULT 0,
-        total_profit DOUBLE PRECISION NOT NULL DEFAULT 0,
-        bonus DOUBLE PRECISION NOT NULL DEFAULT 0,
-        referral_bonus DOUBLE PRECISION NOT NULL DEFAULT 0,
-        total_deposit DOUBLE PRECISION NOT NULL DEFAULT 0,
+        account_balance NUMERIC(20,2) NOT NULL DEFAULT 0,
+        total_profit NUMERIC(20,2) NOT NULL DEFAULT 0,
+        bonus NUMERIC(20,2) NOT NULL DEFAULT 0,
+        referral_bonus NUMERIC(20,2) NOT NULL DEFAULT 0,
+        total_deposit NUMERIC(20,2) NOT NULL DEFAULT 0,
         crypto_balances JSONB NOT NULL,
         kyc_status TEXT NOT NULL DEFAULT 'Unverified',
         kyc_submission JSONB,
@@ -481,7 +481,7 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         type TEXT NOT NULL,
         method TEXT NOT NULL,
-        amount DOUBLE PRECISION NOT NULL,
+        amount NUMERIC(20,2) NOT NULL,
         status TEXT NOT NULL,
         date TEXT NOT NULL,
         note TEXT,
@@ -494,7 +494,7 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
         user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         category TEXT NOT NULL,
         plan_name TEXT NOT NULL,
-        amount DOUBLE PRECISION NOT NULL,
+        amount NUMERIC(20,2) NOT NULL,
         daily_rate TEXT NOT NULL,
         duration_days INTEGER NOT NULL,
         status TEXT NOT NULL DEFAULT 'Active',
@@ -504,7 +504,7 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
         last_accrual_ms BIGINT,
         last_payout_at TEXT,
         payout_cycles_completed INTEGER NOT NULL DEFAULT 0,
-        accrued_profit DOUBLE PRECISION NOT NULL DEFAULT 0,
+        accrued_profit NUMERIC(20,2) NOT NULL DEFAULT 0,
         principal_returned BOOLEAN NOT NULL DEFAULT FALSE,
         auto_compound BOOLEAN NOT NULL DEFAULT FALSE,
         auto_roi_enabled BOOLEAN NOT NULL DEFAULT TRUE,
@@ -542,8 +542,8 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
         address TEXT NOT NULL,
         label TEXT NOT NULL,
         status TEXT NOT NULL DEFAULT 'Active',
-        min_deposit DOUBLE PRECISION NOT NULL DEFAULT 50,
-        max_deposit DOUBLE PRECISION NOT NULL DEFAULT 250000,
+        min_deposit NUMERIC(20,2) NOT NULL DEFAULT 50,
+        max_deposit NUMERIC(20,2) NOT NULL DEFAULT 250000,
         instructions TEXT NOT NULL DEFAULT '',
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
@@ -558,7 +558,7 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
         to_uid TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         to_name TEXT NOT NULL,
         to_ref_code TEXT NOT NULL,
-        amount DOUBLE PRECISION NOT NULL,
+        amount NUMERIC(20,2) NOT NULL,
         status TEXT NOT NULL DEFAULT 'PendingClaim',
         note TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -574,57 +574,131 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
       );
     `);
 
-    const existingWallets = await db.select({ id: cryptoWallets.id }).from(cryptoWallets).limit(1);
-    if (existingWallets.length === 0) {
-      for (const w of DEFAULT_WALLETS) {
-        await db
-          .insert(cryptoWallets)
-          .values({
-            id: w.id,
-            cryptocurrency: w.cryptocurrency,
-            symbol: w.symbol,
-            network: w.network,
-            address: w.address,
-            label: w.label,
-            status: w.status,
-            minDeposit: w.minDeposit,
-            maxDeposit: w.maxDeposit,
-            instructions: w.instructions,
-            createdAt: w.createdAt,
-            updatedAt: w.updatedAt,
-            updatedByAdminName: w.updatedByAdminName,
-            updatedByAdminEmail: w.updatedByAdminEmail,
-            assignedUserIds: w.assignedUserIds || [],
-          })
-          .onConflictDoNothing();
-      }
-    }
+    // One-time in-place conversion from floating-point money columns to exact cents.
+    // Existing values are rounded to the platform's two-decimal currency precision.
+    await pool.query(`
+      DO $assetcrest_migration$
+      DECLARE
+        col RECORD;
+      BEGIN
+        FOR col IN
+          SELECT table_name, column_name
+          FROM information_schema.columns
+          WHERE table_schema = current_schema()
+            AND data_type = 'double precision'
+            AND (
+              (table_name = 'users' AND column_name IN ('account_balance', 'total_profit', 'bonus', 'referral_bonus', 'total_deposit'))
+              OR (table_name = 'transactions' AND column_name = 'amount')
+              OR (table_name = 'investments' AND column_name IN ('amount', 'accrued_profit'))
+              OR (table_name = 'crypto_wallets' AND column_name IN ('min_deposit', 'max_deposit'))
+              OR (table_name = 'transfer_requests' AND column_name = 'amount')
+            )
+        LOOP
+          EXECUTE format(
+            'ALTER TABLE %I ALTER COLUMN %I TYPE NUMERIC(20,2) USING ROUND(%I::numeric, 2)',
+            col.table_name,
+            col.column_name,
+            col.column_name
+          );
+        END LOOP;
+      END $assetcrest_migration$;
+    `);
 
-    const existingUsers = await db.select({ id: users.id }).from(users).limit(1);
-    if (existingUsers.length === 0) {
-      const envAdminPass = process.env.ADMIN_PASSWORD?.trim();
-      await db
-        .insert(users)
-        .values({
+    // If an administrator password is explicitly configured in production, create only
+    // the admin identity with zero funds. Never provision demo balances or wallet addresses.
+    if (process.env.NODE_ENV === 'production' && process.env.ADMIN_PASSWORD?.trim()) {
+      const configuredAdmins = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.role, 'admin'))
+        .limit(1);
+      if (configuredAdmins.length === 0) {
+        await db.insert(users).values({
           id: 'usr-admin',
           username: 'admin',
           name: 'AssetCrest Admin',
           email: BOOTSTRAPPED_ADMIN_EMAIL,
-          passwordHash: envAdminPass ? hashPassword(envAdminPass) : '',
+          passwordHash: hashPassword(process.env.ADMIN_PASSWORD.trim()),
           role: 'admin',
           accountType: 'Individual',
           referralCode: 'ADMIN',
-          accountBalance: 25000,
+          accountBalance: 0,
           totalProfit: 0,
           bonus: 0,
           referralBonus: 0,
-          totalDeposit: 25000,
-          cryptoBalances: { USDC: 5000, ETH: 2, BTC: 0.1, USDT: 5000, BNB: 5, SOL: 10, XRP: 1000 },
+          totalDeposit: 0,
+          cryptoBalances: EMPTY_BALANCES,
           kycStatus: 'Approved',
           accountStatus: 'Active',
-          createdAt: '2026-10-01',
-        })
-        .onConflictDoNothing();
+          createdAt: formatStamp().slice(0, 10),
+        }).onConflictDoNothing();
+
+        const verifiedAdmin = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(eq(users.role, 'admin'))
+          .limit(1);
+        if (verifiedAdmin.length === 0) {
+          throw new Error('ADMIN_PASSWORD is set but the admin account could not be created. Check ADMIN_EMAIL and unique user fields.');
+        }
+      }
+    }
+
+    // Demo wallets and funded demo admin accounts are development-only.
+    // Production must use administrator-configured wallet addresses and an explicitly claimed admin.
+    if (process.env.NODE_ENV !== 'production') {
+      const existingWallets = await db.select({ id: cryptoWallets.id }).from(cryptoWallets).limit(1);
+      if (existingWallets.length === 0) {
+        for (const w of DEFAULT_WALLETS) {
+          await db
+            .insert(cryptoWallets)
+            .values({
+              id: w.id,
+              cryptocurrency: w.cryptocurrency,
+              symbol: w.symbol,
+              network: w.network,
+              address: w.address,
+              label: w.label,
+              status: w.status,
+              minDeposit: w.minDeposit,
+              maxDeposit: w.maxDeposit,
+              instructions: w.instructions,
+              createdAt: w.createdAt,
+              updatedAt: w.updatedAt,
+              updatedByAdminName: w.updatedByAdminName,
+              updatedByAdminEmail: w.updatedByAdminEmail,
+              assignedUserIds: w.assignedUserIds || [],
+            })
+            .onConflictDoNothing();
+        }
+      }
+  
+      const existingUsers = await db.select({ id: users.id }).from(users).limit(1);
+      if (existingUsers.length === 0) {
+        const envAdminPass = process.env.ADMIN_PASSWORD?.trim();
+        await db
+          .insert(users)
+          .values({
+            id: 'usr-admin',
+            username: 'admin',
+            name: 'AssetCrest Admin',
+            email: BOOTSTRAPPED_ADMIN_EMAIL,
+            passwordHash: envAdminPass ? hashPassword(envAdminPass) : '',
+            role: 'admin',
+            accountType: 'Individual',
+            referralCode: 'ADMIN',
+            accountBalance: 25000,
+            totalProfit: 0,
+            bonus: 0,
+            referralBonus: 0,
+            totalDeposit: 25000,
+            cryptoBalances: { USDC: 5000, ETH: 2, BTC: 0.1, USDT: 5000, BNB: 5, SOL: 10, XRP: 1000 },
+            kycStatus: 'Approved',
+            accountStatus: 'Active',
+            createdAt: '2026-10-01',
+          })
+          .onConflictDoNothing();
+      }
     }
   })().catch((err) => {
     schemaInitPromise = null;
@@ -739,12 +813,12 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
         role: 'admin',
         accountType: 'Individual',
         referralCode: 'ADMIN',
-        accountBalance: 25000,
+        accountBalance: 0,
         totalProfit: 0,
         bonus: 0,
         referralBonus: 0,
-        totalDeposit: 25000,
-        cryptoBalances: { USDC: 5000, ETH: 2, BTC: 0.1, USDT: 5000, BNB: 5, SOL: 10, XRP: 1000 },
+        totalDeposit: 0,
+        cryptoBalances: EMPTY_BALANCES,
         kycStatus: 'Approved',
         accountStatus: 'Active',
         createdAt: formatStamp().slice(0, 10),
@@ -776,12 +850,12 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
         role: 'admin',
         accountType: 'Individual',
         referralCode: 'ADMIN',
-        accountBalance: 25000,
+        accountBalance: 0,
         totalProfit: 0,
         bonus: 0,
         referralBonus: 0,
-        totalDeposit: 25000,
-        cryptoBalances: { USDC: 5000, ETH: 2, BTC: 0.1, USDT: 5000, BNB: 5, SOL: 10, XRP: 1000 },
+        totalDeposit: 0,
+        cryptoBalances: EMPTY_BALANCES,
         kycStatus: 'Approved',
         accountStatus: 'Active',
         lastLoginAt: formatStamp(),
@@ -798,8 +872,11 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
       lastLoginAt: formatStamp(),
       updatedAt: new Date(),
     })
-    .where(eq(users.id, existing.id))
+    .where(and(eq(users.id, existing.id), eq(users.passwordHash, '')))
     .returning();
+  if (!updated[0]) {
+    throw new Error('Administrator account has already been claimed.');
+  }
   return mapDbUser(updated[0]);
 }
 
@@ -1386,11 +1463,18 @@ export async function submitWithdrawalInNeon(params: {
     if (user.kycStatus !== 'Approved') throw new Error('KYC approval is required before withdrawing.');
     if (amt > Number(user.accountBalance)) throw new Error('Insufficient account balance.');
 
-    const nextBalance = Number((Number(user.accountBalance) - amt).toFixed(2));
-    await tx
+    const debited = await tx
       .update(users)
-      .set({ accountBalance: nextBalance, updatedAt: new Date() })
-      .where(eq(users.id, params.userId));
+      .set({ accountBalance: sql`${users.accountBalance} - ${amt}`, updatedAt: new Date() })
+      .where(and(
+        eq(users.id, params.userId),
+        eq(users.kycStatus, 'Approved'),
+        sql`${users.accountBalance} >= ${amt}`
+      ))
+      .returning({ id: users.id });
+    if (debited.length === 0) {
+      throw new Error('Withdrawal could not be reserved. Check KYC approval and available balance.');
+    }
 
     await tx.insert(transactions).values({
       id,
@@ -1510,13 +1594,15 @@ export async function sendTransferInNeon(params: {
     if (sender.id === recipient.id) throw new Error('Cannot transfer to your own account.');
     if (amt > Number(sender.accountBalance)) throw new Error('Insufficient account balance.');
 
-    await tx
+    const debited = await tx
       .update(users)
       .set({
-        accountBalance: Number((Number(sender.accountBalance) - amt).toFixed(2)),
+        accountBalance: sql`${users.accountBalance} - ${amt}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, sender.id));
+      .where(and(eq(users.id, sender.id), sql`${users.accountBalance} >= ${amt}`))
+      .returning({ id: users.id });
+    if (debited.length === 0) throw new Error('Insufficient balance; refresh and try again.');
 
     await tx.insert(transferRequests).values({
       id: transferId,
@@ -1574,30 +1660,32 @@ export async function claimTransferRequestInNeon(params: {
   }
 
   await db.transaction(async (tx) => {
-    const reqRows = await tx
-      .select()
-      .from(transferRequests)
-      .where(eq(transferRequests.id, params.transferId))
-      .limit(1);
-    const req = reqRows[0];
-    if (!req || req.toUid !== params.claimingUserId || req.status !== 'PendingClaim') return;
-
-    const userRows = await tx.select().from(users).where(eq(users.id, req.toUid)).limit(1);
-    const recipient = userRows[0];
-    if (!recipient) return;
-
-    await tx
+    const claimedRows = await tx
       .update(transferRequests)
       .set({ status: 'Completed' })
-      .where(eq(transferRequests.id, req.id));
+      .where(and(
+        eq(transferRequests.id, params.transferId),
+        eq(transferRequests.toUid, params.claimingUserId),
+        eq(transferRequests.status, 'PendingClaim')
+      ))
+      .returning({
+        toUid: transferRequests.toUid,
+        fromName: transferRequests.fromName,
+        amount: transferRequests.amount,
+        note: transferRequests.note,
+      });
+    const claimed = claimedRows[0];
+    if (!claimed) return;
 
     await tx
       .update(users)
       .set({
-        accountBalance: Number((Number(recipient.accountBalance) + Number(req.amount)).toFixed(2)),
+        accountBalance: sql`${users.accountBalance} + ${Number(claimed.amount)}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, recipient.id));
+      .where(eq(users.id, claimed.toUid));
+
+    const req = claimed;
 
     await tx.insert(transactions).values({
       id: txId,
@@ -1734,13 +1822,15 @@ export async function investPlanInNeon(params: {
     if (!user) throw new Error('User not found.');
     if (amt > Number(user.accountBalance)) throw new Error('Insufficient account balance.');
 
-    await tx
+    const debited = await tx
       .update(users)
       .set({
-        accountBalance: Number((Number(user.accountBalance) - amt).toFixed(2)),
+        accountBalance: sql`${users.accountBalance} - ${amt}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, params.userId));
+      .where(and(eq(users.id, params.userId), sql`${users.accountBalance} >= ${amt}`))
+      .returning({ id: users.id });
+    if (debited.length === 0) throw new Error('Insufficient balance; refresh and try again.');
 
     await tx.insert(investments).values({
       id: invId,
@@ -1962,7 +2052,7 @@ export async function approveDepositInNeon(txId: string): Promise<void> {
 
   if (!isDatabaseConfigured) {
     const tx = memoryState.transactions.find((t) => t.id === txId);
-    if (!tx || tx.status === 'Completed') return;
+    if (!tx || tx.type !== 'Deposit' || tx.status !== 'Pending') return;
     const owner = memoryState.users.find((u) => u.id === tx.userId);
     if (!owner) return;
     tx.status = 'Completed';
@@ -1972,23 +2062,26 @@ export async function approveDepositInNeon(txId: string): Promise<void> {
   }
 
   await db.transaction(async (trx) => {
-    const txRows = await trx.select().from(transactions).where(eq(transactions.id, txId)).limit(1);
-    const tx = txRows[0];
-    if (!tx || tx.status === 'Completed') return;
+    const approvedRows = await trx
+      .update(transactions)
+      .set({ status: 'Completed' })
+      .where(and(
+        eq(transactions.id, txId),
+        eq(transactions.type, 'Deposit'),
+        eq(transactions.status, 'Pending')
+      ))
+      .returning({ userId: transactions.userId, amount: transactions.amount });
+    const approved = approvedRows[0];
+    if (!approved) return;
 
-    const userRows = await trx.select().from(users).where(eq(users.id, tx.userId)).limit(1);
-    const owner = userRows[0];
-    if (!owner) return;
-
-    await trx.update(transactions).set({ status: 'Completed' }).where(eq(transactions.id, tx.id));
     await trx
       .update(users)
       .set({
-        accountBalance: Number((Number(owner.accountBalance) + Number(tx.amount)).toFixed(2)),
-        totalDeposit: Number((Number(owner.totalDeposit) + Number(tx.amount)).toFixed(2)),
+        accountBalance: sql`${users.accountBalance} + ${Number(approved.amount)}`,
+        totalDeposit: sql`${users.totalDeposit} + ${Number(approved.amount)}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, owner.id));
+      .where(eq(users.id, approved.userId));
   });
 }
 
@@ -1996,20 +2089,24 @@ export async function declineDepositInNeon(txId: string): Promise<void> {
   await ensureNeonSchemaAndSeed();
   if (!isDatabaseConfigured) {
     const tx = memoryState.transactions.find((t) => t.id === txId);
-    if (tx) tx.status = 'Cancelled';
+    if (tx?.type === 'Deposit' && tx.status === 'Pending') tx.status = 'Cancelled';
     return;
   }
-  await db.update(transactions).set({ status: 'Cancelled' }).where(eq(transactions.id, txId));
+  await db.update(transactions)
+    .set({ status: 'Cancelled' })
+    .where(and(eq(transactions.id, txId), eq(transactions.type, 'Deposit'), eq(transactions.status, 'Pending')));
 }
 
 export async function approveWithdrawalInNeon(txId: string): Promise<void> {
   await ensureNeonSchemaAndSeed();
   if (!isDatabaseConfigured) {
     const tx = memoryState.transactions.find((t) => t.id === txId);
-    if (tx) tx.status = 'Completed';
+    if (tx?.type === 'Withdrawal' && tx.status === 'Pending') tx.status = 'Completed';
     return;
   }
-  await db.update(transactions).set({ status: 'Completed' }).where(eq(transactions.id, txId));
+  await db.update(transactions)
+    .set({ status: 'Completed' })
+    .where(and(eq(transactions.id, txId), eq(transactions.type, 'Withdrawal'), eq(transactions.status, 'Pending')));
 }
 
 export async function declineWithdrawalInNeon(txId: string): Promise<void> {
@@ -2017,7 +2114,7 @@ export async function declineWithdrawalInNeon(txId: string): Promise<void> {
 
   if (!isDatabaseConfigured) {
     const tx = memoryState.transactions.find((t) => t.id === txId);
-    if (!tx || tx.status === 'Cancelled') return;
+    if (!tx || tx.type !== 'Withdrawal' || tx.status !== 'Pending') return;
     const owner = memoryState.users.find((u) => u.id === tx.userId);
     if (!owner) return;
     tx.status = 'Cancelled';
@@ -2026,23 +2123,32 @@ export async function declineWithdrawalInNeon(txId: string): Promise<void> {
   }
 
   await db.transaction(async (trx) => {
-    const txRows = await trx.select().from(transactions).where(eq(transactions.id, txId)).limit(1);
-    const tx = txRows[0];
-    if (!tx || tx.status === 'Cancelled') return;
+    const cancelledRows = await trx
+      .update(transactions)
+      .set({ status: 'Cancelled' })
+      .where(and(
+        eq(transactions.id, txId),
+        eq(transactions.type, 'Withdrawal'),
+        eq(transactions.status, 'Pending')
+      ))
+      .returning({ userId: transactions.userId, amount: transactions.amount });
+    const cancelled = cancelledRows[0];
+    if (!cancelled) return;
 
-    const userRows = await trx.select().from(users).where(eq(users.id, tx.userId)).limit(1);
-    const owner = userRows[0];
-    if (!owner) return;
-
-    await trx.update(transactions).set({ status: 'Cancelled' }).where(eq(transactions.id, tx.id));
     await trx
       .update(users)
       .set({
-        accountBalance: Number((Number(owner.accountBalance) + Number(tx.amount)).toFixed(2)),
+        accountBalance: sql`${users.accountBalance} + ${Number(cancelled.amount)}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, owner.id));
+      .where(eq(users.id, cancelled.userId));
   });
+}
+
+function yieldPayoutTransactionId(inv: RepoInvestment): string {
+  const cycleKey = `${inv.payoutCyclesCompleted ?? 0}:${inv.lastAccrualMs ?? inv.startedAtMs ?? inv.startedAt}`;
+  const digest = crypto.createHash('sha256').update(`${inv.id}:${cycleKey}`).digest('hex');
+  return `YLD-${digest}`;
 }
 
 export async function distributeYieldsInNeon(
@@ -2053,14 +2159,18 @@ export async function distributeYieldsInNeon(
   const stamp = formatStamp();
 
   if (!isDatabaseConfigured) {
+    let creditedCount = 0;
     for (const item of payouts) {
+      const payoutId = yieldPayoutTransactionId(item.inv);
+      if (memoryState.transactions.some((t) => t.id === payoutId)) continue;
       const owner = memoryState.users.find((u) => u.id === item.inv.userId);
       if (!owner) continue;
       const amt = Number(item.yieldAmt.toFixed(2));
+      if (!Number.isFinite(amt) || amt <= 0) continue;
       owner.totalProfit = Number((owner.totalProfit + amt).toFixed(2));
       owner.accountBalance = Number((owner.accountBalance + amt).toFixed(2));
       memoryState.transactions.unshift({
-        id: nextNeonId('YLD'),
+        id: payoutId,
         userId: owner.id,
         type: 'Bonus',
         method: `Daily Yield — ${item.inv.planName}`.slice(0, 180),
@@ -2069,16 +2179,19 @@ export async function distributeYieldsInNeon(
         date: stamp,
         note: `${item.inv.dailyRate} yield payout`.slice(0, 280),
       });
+      creditedCount += 1;
     }
-    return payouts.length;
+    return creditedCount;
   }
 
+  let creditedCount = 0;
   await db.transaction(async (trx) => {
     const creditsByUser = new Map<string, number>();
     for (const item of payouts) {
       const amt = Number(item.yieldAmt.toFixed(2));
-      await trx.insert(transactions).values({
-        id: nextNeonId('YLD'),
+      if (!Number.isFinite(amt) || amt <= 0) continue;
+      const inserted = await trx.insert(transactions).values({
+        id: yieldPayoutTransactionId(item.inv),
         userId: item.inv.userId,
         type: 'Bonus',
         method: `Daily Yield — ${item.inv.planName}`.slice(0, 180),
@@ -2086,8 +2199,10 @@ export async function distributeYieldsInNeon(
         status: 'Completed',
         date: stamp,
         note: `${item.inv.dailyRate} yield payout`.slice(0, 280),
-      });
+      }).onConflictDoNothing().returning({ id: transactions.id });
+      if (inserted.length === 0) continue;
       creditsByUser.set(item.inv.userId, (creditsByUser.get(item.inv.userId) ?? 0) + amt);
+      creditedCount += 1;
     }
 
     for (const [uid, credit] of creditsByUser.entries()) {
@@ -2102,7 +2217,7 @@ export async function distributeYieldsInNeon(
     }
   });
 
-  return payouts.length;
+  return creditedCount;
 }
 
 export async function toggleInvestmentSettingsInNeon(params: {

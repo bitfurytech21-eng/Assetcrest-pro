@@ -500,6 +500,13 @@ export function createNeonApiRouter(): Router {
   router.post('/neon/swap', requireAuth, async (req: AuthRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      // The current client submits resulting balances, which are not a trusted source of pricing.
+      // Keep this endpoint unavailable in production until a server-verified quote provider is wired in.
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(503).json({
+          error: 'Crypto swaps are temporarily unavailable while server-side quote verification is being configured.',
+        });
+      }
       const body = parseJsonBody<{
         nextUsdBalance?: number;
         nextCryptoBalances?: Record<string, number>;
@@ -626,6 +633,13 @@ export function createNeonApiRouter(): Router {
   router.post('/neon/roi/settle', requireAuth, async (req: AuthRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      // Client-submitted balances, profit deltas and transaction rows are not authoritative.
+      // Disable this legacy settlement endpoint in production until ROI is calculated server-side.
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(503).json({
+          error: 'Investment yield settlement is temporarily unavailable while server-side calculation is being implemented.',
+        });
+      }
       const body = parseJsonBody<{
         investmentUpdates?: Array<{ investment: RepoInvestment }>;
         transactions?: RepoTransaction[];

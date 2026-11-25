@@ -1779,13 +1779,15 @@ export async function investPlanInNeon(params: {
     if (!user) throw new Error('User not found.');
     if (amt > Number(user.accountBalance)) throw new Error('Insufficient account balance.');
 
-    await tx
+    const debited = await tx
       .update(users)
       .set({
-        accountBalance: Number((Number(user.accountBalance) - amt).toFixed(2)),
+        accountBalance: sql`${users.accountBalance} - ${amt}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, params.userId));
+      .where(and(eq(users.id, params.userId), sql`${users.accountBalance} >= ${amt}`))
+      .returning({ id: users.id });
+    if (debited.length === 0) throw new Error('Insufficient balance; refresh and try again.');
 
     await tx.insert(investments).values({
       id: invId,

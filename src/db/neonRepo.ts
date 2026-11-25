@@ -142,7 +142,7 @@ export interface TransferDirectoryEntry {
 }
 
 export const BOOTSTRAPPED_ADMIN_EMAIL =
-  (process.env.ADMIN_EMAIL || 'admin@assetcrest.co').trim().toLowerCase();
+  (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
 
 const EMPTY_BALANCES: DbCryptoBalances = {
   USDC: 0,
@@ -397,6 +397,9 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
         .where(eq(users.role, 'admin'))
         .limit(1);
       if (configuredAdmins.length === 0) {
+        if (!BOOTSTRAPPED_ADMIN_EMAIL) {
+          throw new Error('ADMIN_EMAIL is required when bootstrapping the first production administrator.');
+        }
         await db.insert(users).values({
           id: 'usr-admin',
           username: 'admin',
@@ -491,7 +494,7 @@ export async function getAdminSetupStatus(): Promise<{
   envPasswordConfigured: boolean;
 }> {
   await ensureNeonSchemaAndSeed();
-  const envPasswordConfigured = Boolean(process.env.ADMIN_PASSWORD?.trim());
+  const envPasswordConfigured = Boolean(process.env.ADMIN_PASSWORD?.trim() && process.env.ADMIN_EMAIL?.trim());
   if (!isDatabaseConfigured) {
     const adminRow = memoryState.users.find((u) => u.role === 'admin');
     return {
@@ -523,6 +526,9 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
     throw new Error('Administrator password must be at least 8 characters long.');
   }
 
+  if (!BOOTSTRAPPED_ADMIN_EMAIL) {
+    throw new Error('ADMIN_EMAIL must be configured before an administrator account can be claimed.');
+  }
   const nextHash = hashPassword(password);
 
   if (!isDatabaseConfigured) {

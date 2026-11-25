@@ -1671,10 +1671,10 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     let leverage = 20;
     let selectedCategory = 'all';
 
-    // Local Storage State
-    let balance = parseFloat(localStorage.getItem('assetcrest_balance') || '10000.00');
-    let positions = JSON.parse(localStorage.getItem('assetcrest_positions') || '[]');
-    let tradeHistory = JSON.parse(localStorage.getItem('assetcrest_history') || '[]');
+    // No client-side simulated funds or trades. Execution requires a connected broker API.
+    let balance = 0;
+    let positions = [];
+    let tradeHistory = [];
 
     // Audio chime
     function playChime(type) {
@@ -1960,89 +1960,11 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
 
     function handleExecuteOrder() {
-      const amountUsd = parseFloat(document.getElementById('inputAmountUsd').value) || 0;
-      if (amountUsd <= 0) {
-        showToast('Please specify an order amount', 'error');
-        return;
-      }
-      if (amountUsd > balance) {
-        showToast('Insufficient margin ($' + balance.toFixed(2) + '). Please deposit funds.', 'error');
-        return;
-      }
-
-      const entryPrice = (orderType === 'limit' || orderType === 'stop')
-        ? (parseFloat(document.getElementById('inputLimitPrice').value) || activeSymbol.price)
-        : activeSymbol.price;
-
-      const positionSize = amountUsd * leverage;
-      const fee = positionSize * 0.0004;
-
-      balance -= (amountUsd + fee);
-      localStorage.setItem('assetcrest_balance', balance.toString());
-      updateBalanceUI();
-
-      let liqPrice = 0;
-      if (orderSide === 'buy') {
-        liqPrice = entryPrice * (1 - (1 / leverage) * 0.90);
-      } else {
-        liqPrice = entryPrice * (1 + (1 / leverage) * 0.90);
-      }
-
-      const newPosition = {
-        id: 'pos_' + Date.now(),
-        symbol: activeSymbol.symbol,
-        symbolId: activeSymbol.id,
-        side: orderSide,
-        leverage: leverage,
-        margin: amountUsd,
-        sizeUsd: positionSize,
-        entryPrice: entryPrice,
-        markPrice: entryPrice,
-        liqPrice: liqPrice,
-        createdAt: new Date().toISOString()
-      };
-
-      positions.unshift(newPosition);
-      localStorage.setItem('assetcrest_positions', JSON.stringify(positions));
-      renderPositions();
-
-      playChime(orderSide);
-      showToast(
-        'Executed ' + orderSide.toUpperCase() + ' ' + activeSymbol.symbol + ' @ $' + entryPrice.toLocaleString() + ' (' + leverage + 'x)',
-        'success'
-      );
+      showToast('Live order execution is not connected. No order was placed.', 'error');
     }
 
-    function closePosition(positionId) {
-      const idx = positions.findIndex(p => p.id === positionId);
-      if (idx === -1) return;
-
-      const pos = positions[idx];
-      const pnl = calculatePositionPnL(pos);
-
-      balance += (pos.margin + pnl);
-      localStorage.setItem('assetcrest_balance', balance.toString());
-      updateBalanceUI();
-
-      tradeHistory.unshift({
-        id: 'trade_' + Date.now(),
-        symbol: pos.symbol,
-        side: pos.side,
-        entryPrice: pos.entryPrice,
-        exitPrice: pos.markPrice,
-        sizeUsd: pos.sizeUsd,
-        pnl: pnl,
-        closedAt: new Date().toISOString()
-      });
-      localStorage.setItem('assetcrest_history', JSON.stringify(tradeHistory));
-
-      positions.splice(idx, 1);
-      localStorage.setItem('assetcrest_positions', JSON.stringify(positions));
-
-      renderPositions();
-      renderHistory();
-      playChime('close');
-      showToast('Closed ' + pos.symbol + ' (PnL: ' + (pnl >= 0 ? '+' : '') + '$' + pnl.toFixed(2) + ')', pnl >= 0 ? 'success' : 'error');
+    function closePosition() {
+      showToast('Position management requires a connected broker account.', 'error');
     }
 
     function calculatePositionPnL(pos) {
@@ -2156,87 +2078,20 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       \`).join('');
     }
 
-    // Static Order Book generation (stable, no erratic jumping)
-    function generateOrderBook() {
-      const tbody = document.getElementById('orderBookBody');
-      const p = activeSymbol.price;
-      const prec = activeSymbol.precision;
-      let rows = '';
-
-      for (let i = 5; i >= 1; i--) {
-        const askP = p + (i * p * 0.0004);
-        const sz = (0.45 + i * 0.28).toFixed(3);
-        rows += \`
-          <tr>
-            <td class="mono text-red">$\${askP.toFixed(prec)}</td>
-            <td class="mono">\${sz}</td>
-            <td class="mono">$\${(askP * sz).toFixed(2)}</td>
-          </tr>
-        \`;
-      }
-      rows += \`
-        <tr style="background:rgba(27,73,98,0.3);">
-          <td colspan="3" class="mono text-green" style="font-weight:700; text-align:center; padding:5px; letter-spacing:0.3px; font-size:11px;">
-            SPREAD $\${(p * 0.0002).toFixed(2)} (MARK $\${p.toFixed(prec)})
-          </td>
-        </tr>
-      \`;
-      for (let i = 1; i <= 5; i++) {
-        const bidP = p - (i * p * 0.0004);
-        const sz = (0.52 + i * 0.24).toFixed(3);
-        rows += \`
-          <tr>
-            <td class="mono text-green">$\${bidP.toFixed(prec)}</td>
-            <td class="mono">\${sz}</td>
-            <td class="mono">$\${(bidP * sz).toFixed(2)}</td>
-          </tr>
-        \`;
-      }
-      tbody.innerHTML = rows;
-    }
-
-    // Static Recent Trades feed (clean, professional)
+    // Recent exchange executions are not fabricated. Connect an exchange trades endpoint to populate this table.
     function generateRecentTrades() {
       const tbody = document.getElementById('recentTradesBody');
-      let rows = '';
-      const now = new Date();
-      const tradeSizes = [0.42, 1.15, 0.08, 0.65, 2.10, 0.33, 0.94, 0.18];
-      const tradeSides = ['buy', 'buy', 'sell', 'buy', 'sell', 'sell', 'buy', 'sell'];
-
-      for (let i = 0; i < tradeSizes.length; i++) {
-        const side = tradeSides[i];
-        const offset = (i % 2 === 0 ? 1 : -1) * (i * 0.0002 * activeSymbol.price);
-        const p = activeSymbol.price + offset;
-        const amt = tradeSizes[i].toFixed(3);
-        const time = new Date(now.getTime() - i * 65000).toLocaleTimeString();
-        rows += \`
-          <tr>
-            <td style="color:var(--text-dim);">\${time}</td>
-            <td class="mono \${side === 'buy' ? 'text-green' : 'text-red'}">$\${p.toFixed(activeSymbol.precision)}</td>
-            <td class="mono">\${amt}</td>
-            <td><span class="side-pill \${side === 'buy' ? 'side-long' : 'side-short'}">\${side.toUpperCase()}</span></td>
-          </tr>
-        \`;
-      }
-      tbody.innerHTML = rows;
+      if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-dim);">Live trades feed unavailable.</td></tr>';
     }
 
     function updateBalanceUI() {
       document.getElementById('availableBalanceDisplay').innerText = '$' + balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
-    function addBalance(amt) {
-      balance += amt;
-      localStorage.setItem('assetcrest_balance', balance.toString());
-      updateBalanceUI();
-      closeDepositModal();
-      showToast('Credited +$' + amt.toLocaleString() + ' demo margin!', 'success');
+    function addBalance() {
+      showToast('Balances are managed by your authenticated AssetCrest account.', 'error');
     }
-    function resetBalance(amt) {
-      balance = amt;
-      localStorage.setItem('assetcrest_balance', balance.toString());
-      updateBalanceUI();
-      closeDepositModal();
-      showToast('Reset balance to $' + amt.toLocaleString(), 'success');
+    function resetBalance() {
+      showToast('Balances cannot be reset from the trading terminal.', 'error');
     }
 
     function toggleMarketModal() {

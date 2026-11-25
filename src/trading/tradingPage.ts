@@ -1167,7 +1167,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
               <tbody id="positionsTableBody">
                 <tr>
                   <td colspan="10" style="text-align:center; padding: 28px; color: var(--text-dim);">
-                    No open positions yet. Use the order ticket to place a trade.
+                    No open positions are reported by a connected broker account.
                   </td>
                 </tr>
               </tbody>
@@ -1749,6 +1749,14 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         ? (parseFloat(document.getElementById('inputLimitPrice').value) || activeSymbol.price)
         : activeSymbol.price;
 
+      if (!(effectivePrice > 0)) {
+        document.getElementById('amountUnitsDisplay').innerText = '—';
+        document.getElementById('sumPositionSize').innerText = '—';
+        document.getElementById('sumMarginRequired').innerText = '—';
+        document.getElementById('sumEstLiqPrice').innerText = '—';
+        document.getElementById('sumTradingFee').innerText = '—';
+        return;
+      }
       const positionSize = amountUsd * leverage;
       const units = effectivePrice > 0 ? (positionSize / effectivePrice) : 0;
       const fee = positionSize * 0.0004;
@@ -1874,22 +1882,48 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       }).join('');
     }
 
-    // Recent exchange executions are not fabricated. Connect an exchange trades endpoint to populate this table.
-    function generateRecentTrades() {
+    async function generateOrderBook() {
+      const tbody = document.getElementById('orderBookBody');
+      if (!tbody) return;
+      if (!CRYPTO_MARKET_IDS.has(activeSymbol.id)) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-dim);">Exchange depth is unavailable for this market. Use the live TradingView chart.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-dim);">Loading live order book…</td></tr>';
+      try {
+        const response = await fetch('/api/market-data/depth/' + encodeURIComponent(activeSymbol.id));
+        if (!response.ok) throw new Error('Order book unavailable');
+        const book = await response.json();
+        const asks = (book.asks || []).slice(0, 8).reverse();
+        const bids = (book.bids || []).slice(0, 8);
+        const rows = asks.map(level => ({ side: 'sell', price: Number(level[0]), amount: Number(level[1]) })).concat(bids.map(level => ({ side: 'buy', price: Number(level[0]), amount: Number(level[1]) })));
+        tbody.innerHTML = rows.length ? rows.map(level => '<tr><td class="mono ' + (level.side === 'buy' ? 'text-green' : 'text-red') + '">' + level.price.toLocaleString(undefined, { minimumFractionDigits: activeSymbol.precision, maximumFractionDigits: activeSymbol.precision }) + '</td><td class="mono">' + level.amount.toFixed(4) + '</td><td class="mono">' + (level.price * level.amount).toFixed(2) + '</td></tr>').join('') : '<tr><td colspan="3">No exchange depth returned.</td></tr>';
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--text-dim);">Live order book feed unavailable.</td></tr>';
+      }
+    }
+
+    async function generateRecentTrades() {
       const tbody = document.getElementById('recentTradesBody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-dim);">Live trades feed unavailable.</td></tr>';
+      if (!tbody) return;
+      if (!CRYPTO_MARKET_IDS.has(activeSymbol.id)) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-dim);">Exchange trade prints are unavailable for this market.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-dim);">Loading live trades…</td></tr>';
+      try {
+        const response = await fetch('/api/market-data/trades/' + encodeURIComponent(activeSymbol.id));
+        if (!response.ok) throw new Error('Recent trades unavailable');
+        const trades = await response.json();
+        tbody.innerHTML = Array.isArray(trades) && trades.length ? trades.slice(0, 10).map(trade => '<tr><td style="color:var(--text-dim);">' + new Date(Number(trade.time)).toLocaleTimeString() + '</td><td class="mono">' + Number(trade.price).toLocaleString(undefined, { minimumFractionDigits: activeSymbol.precision, maximumFractionDigits: activeSymbol.precision }) + '</td><td class="mono">' + Number(trade.qty).toFixed(4) + '</td><td><span class="side-pill ' + (trade.isBuyerMaker ? 'side-short' : 'side-long') + '">' + (trade.isBuyerMaker ? 'SELL' : 'BUY') + '</span></td></tr>').join('') : '<tr><td colspan="4">No recent trades returned.</td></tr>';
+      } catch {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-dim);">Live trades feed unavailable.</td></tr>';
+      }
     }
 
     function updateBalanceUI() {
       document.getElementById('availableBalanceDisplay').innerText = '$' + balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
-    function addBalance() {
-      showToast('Balances are managed by your authenticated AssetCrest account.', 'error');
-    }
-    function resetBalance() {
-      showToast('Balances cannot be reset from the trading terminal.', 'error');
-    }
-
     function toggleMarketModal() {
       const modal = document.getElementById('marketModalOverlay');
       modal.classList.toggle('active');
@@ -1956,9 +1990,15 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       renderPositions();
       renderHistory();
       renderAllMarketsTable();
-      generateOrderBook();
-      generateRecentTrades();
+      void refreshAllMarketQuotes();
+      void generateOrderBook();
+      void generateRecentTrades();
       calculateOrder();
+      window.setInterval(() => { void refreshAllMarketQuotes(); }, 30000);
+      window.setInterval(() => {
+        void generateOrderBook();
+        void generateRecentTrades();
+      }, 5000);
 
       // On mobile initial load, show Chart tab
       if (window.innerWidth <= 768) {

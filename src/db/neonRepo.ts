@@ -574,57 +574,61 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
       );
     `);
 
-    const existingWallets = await db.select({ id: cryptoWallets.id }).from(cryptoWallets).limit(1);
-    if (existingWallets.length === 0) {
-      for (const w of DEFAULT_WALLETS) {
+    // Demo wallets and funded demo admin accounts are development-only.
+    // Production must use administrator-configured wallet addresses and an explicitly claimed admin.
+    if (process.env.NODE_ENV !== 'production') {
+      const existingWallets = await db.select({ id: cryptoWallets.id }).from(cryptoWallets).limit(1);
+      if (existingWallets.length === 0) {
+        for (const w of DEFAULT_WALLETS) {
+          await db
+            .insert(cryptoWallets)
+            .values({
+              id: w.id,
+              cryptocurrency: w.cryptocurrency,
+              symbol: w.symbol,
+              network: w.network,
+              address: w.address,
+              label: w.label,
+              status: w.status,
+              minDeposit: w.minDeposit,
+              maxDeposit: w.maxDeposit,
+              instructions: w.instructions,
+              createdAt: w.createdAt,
+              updatedAt: w.updatedAt,
+              updatedByAdminName: w.updatedByAdminName,
+              updatedByAdminEmail: w.updatedByAdminEmail,
+              assignedUserIds: w.assignedUserIds || [],
+            })
+            .onConflictDoNothing();
+        }
+      }
+  
+      const existingUsers = await db.select({ id: users.id }).from(users).limit(1);
+      if (existingUsers.length === 0) {
+        const envAdminPass = process.env.ADMIN_PASSWORD?.trim();
         await db
-          .insert(cryptoWallets)
+          .insert(users)
           .values({
-            id: w.id,
-            cryptocurrency: w.cryptocurrency,
-            symbol: w.symbol,
-            network: w.network,
-            address: w.address,
-            label: w.label,
-            status: w.status,
-            minDeposit: w.minDeposit,
-            maxDeposit: w.maxDeposit,
-            instructions: w.instructions,
-            createdAt: w.createdAt,
-            updatedAt: w.updatedAt,
-            updatedByAdminName: w.updatedByAdminName,
-            updatedByAdminEmail: w.updatedByAdminEmail,
-            assignedUserIds: w.assignedUserIds || [],
+            id: 'usr-admin',
+            username: 'admin',
+            name: 'AssetCrest Admin',
+            email: BOOTSTRAPPED_ADMIN_EMAIL,
+            passwordHash: envAdminPass ? hashPassword(envAdminPass) : '',
+            role: 'admin',
+            accountType: 'Individual',
+            referralCode: 'ADMIN',
+            accountBalance: 25000,
+            totalProfit: 0,
+            bonus: 0,
+            referralBonus: 0,
+            totalDeposit: 25000,
+            cryptoBalances: { USDC: 5000, ETH: 2, BTC: 0.1, USDT: 5000, BNB: 5, SOL: 10, XRP: 1000 },
+            kycStatus: 'Approved',
+            accountStatus: 'Active',
+            createdAt: '2026-10-01',
           })
           .onConflictDoNothing();
       }
-    }
-
-    const existingUsers = await db.select({ id: users.id }).from(users).limit(1);
-    if (existingUsers.length === 0) {
-      const envAdminPass = process.env.ADMIN_PASSWORD?.trim();
-      await db
-        .insert(users)
-        .values({
-          id: 'usr-admin',
-          username: 'admin',
-          name: 'AssetCrest Admin',
-          email: BOOTSTRAPPED_ADMIN_EMAIL,
-          passwordHash: envAdminPass ? hashPassword(envAdminPass) : '',
-          role: 'admin',
-          accountType: 'Individual',
-          referralCode: 'ADMIN',
-          accountBalance: 25000,
-          totalProfit: 0,
-          bonus: 0,
-          referralBonus: 0,
-          totalDeposit: 25000,
-          cryptoBalances: { USDC: 5000, ETH: 2, BTC: 0.1, USDT: 5000, BNB: 5, SOL: 10, XRP: 1000 },
-          kycStatus: 'Approved',
-          accountStatus: 'Active',
-          createdAt: '2026-10-01',
-        })
-        .onConflictDoNothing();
     }
   })().catch((err) => {
     schemaInitPromise = null;

@@ -500,6 +500,13 @@ export function createNeonApiRouter(): Router {
   router.post('/neon/swap', requireAuth, async (req: AuthRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      // The current client submits resulting balances, which are not a trusted source of pricing.
+      // Keep this endpoint unavailable in production until a server-verified quote provider is wired in.
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(503).json({
+          error: 'Crypto swaps are temporarily unavailable while server-side quote verification is being configured.',
+        });
+      }
       const body = parseJsonBody<{
         nextUsdBalance?: number;
         nextCryptoBalances?: Record<string, number>;

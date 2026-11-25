@@ -1390,11 +1390,18 @@ export async function submitWithdrawalInNeon(params: {
     if (user.kycStatus !== 'Approved') throw new Error('KYC approval is required before withdrawing.');
     if (amt > Number(user.accountBalance)) throw new Error('Insufficient account balance.');
 
-    const nextBalance = Number((Number(user.accountBalance) - amt).toFixed(2));
-    await tx
+    const debited = await tx
       .update(users)
-      .set({ accountBalance: nextBalance, updatedAt: new Date() })
-      .where(eq(users.id, params.userId));
+      .set({ accountBalance: sql`${users.accountBalance} - ${amt}`, updatedAt: new Date() })
+      .where(and(
+        eq(users.id, params.userId),
+        eq(users.kycStatus, 'Approved'),
+        sql`${users.accountBalance} >= ${amt}`
+      ))
+      .returning({ id: users.id });
+    if (debited.length === 0) {
+      throw new Error('Withdrawal could not be reserved. Check KYC approval and available balance.');
+    }
 
     await tx.insert(transactions).values({
       id,
@@ -1514,13 +1521,15 @@ export async function sendTransferInNeon(params: {
     if (sender.id === recipient.id) throw new Error('Cannot transfer to your own account.');
     if (amt > Number(sender.accountBalance)) throw new Error('Insufficient account balance.');
 
-    await tx
+    const debited = await tx
       .update(users)
       .set({
-        accountBalance: Number((Number(sender.accountBalance) - amt).toFixed(2)),
+        accountBalance: sql`${users.accountBalance} - ${amt}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, sender.id));
+      .where(and(eq(users.id, sender.id), sql`${users.accountBalance} >= ${amt}`))
+      .returning({ id: users.id });
+    if (debited.length === 0) throw new Error('Insufficient balance; refresh and try again.');
 
     await tx.insert(transferRequests).values({
       id: transferId,
@@ -1578,30 +1587,32 @@ export async function claimTransferRequestInNeon(params: {
   }
 
   await db.transaction(async (tx) => {
-    const reqRows = await tx
-      .select()
-      .from(transferRequests)
-      .where(eq(transferRequests.id, params.transferId))
-      .limit(1);
-    const req = reqRows[0];
-    if (!req || req.toUid !== params.claimingUserId || req.status !== 'PendingClaim') return;
-
-    const userRows = await tx.select().from(users).where(eq(users.id, req.toUid)).limit(1);
-    const recipient = userRows[0];
-    if (!recipient) return;
-
-    await tx
+    const claimedRows = await tx
       .update(transferRequests)
       .set({ status: 'Completed' })
-      .where(eq(transferRequests.id, req.id));
+      .where(and(
+        eq(transferRequests.id, params.transferId),
+        eq(transferRequests.toUid, params.claimingUserId),
+        eq(transferRequests.status, 'PendingClaim')
+      ))
+      .returning({
+        toUid: transferRequests.toUid,
+        fromName: transferRequests.fromName,
+        amount: transferRequests.amount,
+        note: transferRequests.note,
+      });
+    const claimed = claimedRows[0];
+    if (!claimed) return;
 
     await tx
       .update(users)
       .set({
-        accountBalance: Number((Number(recipient.accountBalance) + Number(req.amount)).toFixed(2)),
+        accountBalance: sql`${users.accountBalance} + ${Number(claimed.amount)}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, recipient.id));
+      .where(eq(users.id, claimed.toUid));
+
+    const req = claimed;
 
     await tx.insert(transactions).values({
       id: txId,
@@ -1976,23 +1987,26 @@ export async function approveDepositInNeon(txId: string): Promise<void> {
   }
 
   await db.transaction(async (trx) => {
-    const txRows = await trx.select().from(transactions).where(eq(transactions.id, txId)).limit(1);
-    const tx = txRows[0];
-    if (!tx || tx.status === 'Completed') return;
+    const approvedRows = await trx
+      .update(transactions)
+      .set({ status: 'Completed' })
+      .where(and(
+        eq(transactions.id, txId),
+        eq(transactions.type, 'Deposit'),
+        eq(transactions.status, 'Pending')
+      ))
+      .returning({ userId: transactions.userId, amount: transactions.amount });
+    const approved = approvedRows[0];
+    if (!approved) return;
 
-    const userRows = await trx.select().from(users).where(eq(users.id, tx.userId)).limit(1);
-    const owner = userRows[0];
-    if (!owner) return;
-
-    await trx.update(transactions).set({ status: 'Completed' }).where(eq(transactions.id, tx.id));
     await trx
       .update(users)
       .set({
-        accountBalance: Number((Number(owner.accountBalance) + Number(tx.amount)).toFixed(2)),
-        totalDeposit: Number((Number(owner.totalDeposit) + Number(tx.amount)).toFixed(2)),
+        accountBalance: sql`${users.accountBalance} + ${Number(approved.amount)}`,
+        totalDeposit: sql`${users.totalDeposit} + ${Number(approved.amount)}`,
         updatedAt: new Date(),
       })
-      .where(eq(users.id, owner.id));
+      .where(eq(users.id, approved.userId));
   });
 }
 

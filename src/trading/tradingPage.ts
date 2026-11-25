@@ -1320,10 +1320,10 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         <div class="form-group">
           <div class="form-label">
             <span>Order Margin (USD)</span>
-            <span class="mono" id="amountUnitsDisplay">0.00 units</span>
+            <span class="mono" id="amountUnitsDisplay">—</span>
           </div>
           <div class="input-wrapper">
-            <input type="number" step="any" id="inputAmountUsd" class="form-input mono" value="1000" placeholder="1000" oninput="calculateOrder()">
+            <input type="number" step="any" id="inputAmountUsd" class="form-input mono" value="" placeholder="Enter amount" oninput="calculateOrder()">
             <span class="input-suffix">USD</span>
           </div>
         </div>

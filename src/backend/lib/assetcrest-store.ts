@@ -895,10 +895,12 @@ function readStoreFromStorage(): AssetCrestStore {
     // Persistent Neon database users are intentionally not modified.
     const legacyDemoIds = new Set(['usr-annabella', 'usr-marcus', 'usr-elena']);
     const legacyDemoNames = new Set(['annabella menor', 'marcus vance', 'elena vance']);
-    const retainedUsers = parsed.users.filter((user) =>
-      !legacyDemoIds.has(String(user.id || '').toLowerCase()) &&
-      !legacyDemoNames.has(String(user.name || '').trim().toLowerCase())
-    );
+    const retainedUsers = parsed.users
+      .filter((user) =>
+        !legacyDemoIds.has(String(user.id || '').toLowerCase()) &&
+        !legacyDemoNames.has(String(user.name || '').trim().toLowerCase())
+      )
+      .map((user) => ({ ...user, password: '' }));
     const retainedUserIds = new Set(retainedUsers.map((user) => user.id));
     const keepOwnedRecords = <T extends { userId?: string }>(items: T[] | undefined): T[] =>
       Array.isArray(items) ? items.filter((item) => Boolean(item.userId && retainedUserIds.has(item.userId))) : [];

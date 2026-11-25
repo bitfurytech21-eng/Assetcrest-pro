@@ -225,7 +225,7 @@ function SignUpFormFields({
     'w-full h-12 px-4 rounded-lg border border-[#e2e8f0] bg-white text-[15px] text-[#1e293b] placeholder:text-[#8b95a5] focus:outline-none focus:border-[#345485] focus:ring-2 focus:ring-[#345485]/15 transition-colors';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
       {showInlineError && formError && (
         <ErrorAlertBanner message={formError} onDismiss={() => setFormError('')} />
       )}
@@ -408,21 +408,21 @@ interface SignUpPageProps {
 export function AssetCrestAuthBanner({ fullWidth = false }: { fullWidth?: boolean }) {
   return (
     <div
-      className={`w-full bg-[#e8f1f8] py-7 px-6 flex items-center justify-center ${
+      className={`w-full bg-[#e8f1f8] py-8 sm:py-16 px-6 flex items-center justify-center ${
         fullWidth ? '' : 'rounded-[2px]'
       }`}
     >
       <a href="/" className="inline-flex items-center gap-2.5 select-none">
-        <svg width="38" height="34" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <svg width="72" height="72" viewBox="0 0 64 64" fill="none" aria-hidden="true">
           <polygon points="32,4 58,19 58,45 32,60 6,45 6,19" fill="#991b1b" />
           <polygon points="32,4 58,19 32,34 6,19" fill="#dc2626" />
           <polygon points="32,34 58,19 58,45 32,60" fill="#7f1d1d" />
           <polygon points="6,19 32,34 32,60 6,45" fill="#b91c1c" />
           <polygon points="32,15 48,45 38,45 32,31 26,45 16,45" fill="#ffffff" />
         </svg>
-        <span className="text-[23px] tracking-[0.02em] leading-none inline-flex items-baseline">
-          <span className="font-normal text-[#4e383d]">ΛSSET</span>
-          <span className="font-bold text-[#942634]">CREST</span>
+        <span className="text-[30px] sm:text-[42px] tracking-[0.02em] leading-none inline-flex items-baseline">
+          <span className="font-normal text-[#dc5264]">ΛSSET</span>
+          <span className="font-bold text-[#9f2638]">CREST</span>
         </span>
       </a>
     </div>
@@ -572,15 +572,15 @@ export function SignInPage({
   };
 
   const inputClass =
-    'w-full h-12 px-4 rounded-lg border border-[#d1d9e4] bg-white text-[15px] text-[#1e293b] placeholder:text-[#8b95a5] focus:outline-none focus:border-[#345485] focus:ring-2 focus:ring-[#345485]/15 transition-colors';
+    'w-full h-14 sm:h-[88px] px-5 sm:px-7 rounded-xl border border-[#c9cbd8] bg-white text-[17px] sm:text-[28px] text-[#1e293b] placeholder:text-[#8b95a5] focus:outline-none focus:border-[#345485] focus:ring-2 focus:ring-[#345485]/15 transition-colors';
 
   return (
     <div className="min-h-screen bg-white text-[#141824] flex flex-col">
       {/* Full-Width Pale Ice-Blue Brand Header Banner */}
       <AssetCrestAuthBanner fullWidth />
 
-      <div className="w-full max-w-[440px] mx-auto px-6 pt-10 pb-12 flex-1 flex flex-col justify-start">
-        <h1 className="text-[22px] font-bold text-[#141824] text-center mb-8 tracking-tight">
+      <div className="w-full max-w-[860px] mx-auto px-6 sm:px-10 pt-10 sm:pt-16 pb-12 flex-1 flex flex-col justify-start">
+        <h1 className="text-[28px] sm:text-[40px] font-bold text-[#141824] text-center mb-10 sm:mb-14 tracking-tight">
           Sign In
         </h1>
 
@@ -624,12 +624,12 @@ export function SignInPage({
           </div>
 
           <div className="pt-0.5">
-            <label className="inline-flex items-center gap-2.5 text-[14px] text-[#334155] cursor-pointer select-none min-h-[36px]">
+            <label className="inline-flex items-center gap-3 sm:gap-5 text-[16px] sm:text-[26px] text-[#334155] cursor-pointer select-none min-h-[44px] sm:min-h-[52px]">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-5 w-5 rounded border border-[#d1d9e4] text-[#345485] focus:ring-[#345485]/25 accent-[#345485] cursor-pointer"
+                className="h-6 w-6 sm:h-11 sm:w-11 rounded-lg border border-[#d1d9e4] text-[#345485] focus:ring-[#345485]/25 accent-[#345485] cursor-pointer"
               />
               <span>Remember me</span>
             </label>
@@ -639,7 +639,7 @@ export function SignInPage({
             <button
               type="button"
               onClick={() => onForgotPassword(identifier.includes('@') ? identifier.trim() : '')}
-              className="text-[14px] text-[#284577] hover:underline font-medium cursor-pointer"
+              className="text-[16px] sm:text-[26px] text-[#284577] hover:underline font-medium cursor-pointer"
             >
               Forgot Password ?
             </button>
@@ -648,12 +648,12 @@ export function SignInPage({
           <button
             type="submit"
             disabled={submitting}
-            className="w-full h-12 rounded-lg bg-[#345485] hover:bg-[#2a4570] active:scale-[0.99] text-white text-[15px] font-medium transition cursor-pointer disabled:opacity-60"
+            className="w-full h-14 sm:h-[86px] rounded-xl bg-[#345485] hover:bg-[#2a4570] active:scale-[0.99] text-white text-[18px] sm:text-[28px] font-medium transition cursor-pointer disabled:opacity-60"
           >
             {submitting ? 'Signing In...' : 'Sign In'}
           </button>
 
-          <div className="pt-5 text-center text-[14px]">
+          <div className="pt-7 sm:pt-9 text-center text-[16px] sm:text-[26px]">
             <span className="text-[#8b95a5]">Not a Member yet?</span>{' '}
             <button
               type="button"

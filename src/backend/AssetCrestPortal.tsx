@@ -119,7 +119,7 @@ function nextToastId(): number {
 
 const emptySubscribe = () => () => {};
 function getClientOrigin(): string {
-  return typeof window !== 'undefined' ? window.location.origin : 'https://assetcrest.co';
+  return typeof window !== 'undefined' ? window.location.origin : 'https://assetcrestonline.com';
 }
 
 interface ToastItem {
@@ -423,7 +423,7 @@ export default function AssetCrestPortal() {
   const detectedOrigin = useSyncExternalStore(
     emptySubscribe,
     getClientOrigin,
-    () => 'https://assetcrest.co'
+    () => 'https://assetcrestonline.com'
   );
   const [apkAppName, setApkAppName] = useState('AssetCrest');
   const [apkPackageName, setApkPackageName] = useState('com.assetcrest.investor');
@@ -1464,7 +1464,7 @@ export default function AssetCrestPortal() {
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               The account <strong>{activeUser.email}</strong> has been blocked by Platform Administration. Contact compliance at{' '}
-              <span className="font-mono">desk@assetcrest.co</span> or sign in with another account.
+              <span className="font-mono">info@assetcrestonline.com</span> or sign in with another account.
             </p>
             <div className="flex flex-wrap justify-center gap-2 pt-2">
               <button

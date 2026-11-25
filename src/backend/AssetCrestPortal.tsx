@@ -60,7 +60,6 @@ import {
   ReceiptPreviewModal,
   SignInPage,
   SignUpPage,
-  WelcomeRegistrationModal,
 } from '@/src/backend/components/AuthAndAccountModals';
 import { AdminConsoleShell } from '@/src/backend/components/AdminConsoleShell';
 import {
@@ -654,10 +653,6 @@ export default function AssetCrestPortal() {
   };
 
   const userTickets = effectiveStore.tickets.filter((tk) => tk.userId === activeUser.id);
-  const welcomeModalUser = effectiveStore.welcomeModalUserId
-    ? effectiveStore.users.find((u) => u.id === effectiveStore.welcomeModalUserId) || null
-    : null;
-
   const navigateTo = (tab: PageTab) => {
     setActiveTab(tab);
     setSidebarOpen(false);
@@ -1410,15 +1405,6 @@ export default function AssetCrestPortal() {
         onNotify={notify}
         isCloudMode={isCloudMode}
         cloudEmail={cloudSync.neonSessionUser?.email ?? null}
-      />
-      <WelcomeRegistrationModal
-        user={welcomeModalUser}
-        onDismiss={() =>
-          isCloudMode
-            ? cloudSync.dismissWelcome()
-            : updateAssetCrestStore((prev) => ({ ...prev, welcomeModalUserId: null }))
-        }
-        onNavigate={navigateTo}
       />
       <ReceiptPreviewModal
         transaction={receiptModalTx}

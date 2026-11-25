@@ -2112,7 +2112,7 @@ export default function AssetCrestPortal() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Account balance</p>
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-slate-800 dark:text-white mt-0.5">
+                  <p className="text-2xl font-semibold font-sans tabular-nums text-slate-800 dark:text-white mt-0.5">
                     ${activeUser.accountBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -2124,7 +2124,7 @@ export default function AssetCrestPortal() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Total Profit</p>
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-slate-800 dark:text-white mt-0.5">
+                  <p className="text-2xl font-semibold font-sans tabular-nums text-slate-800 dark:text-white mt-0.5">
                     ${activeUser.totalProfit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -2136,7 +2136,7 @@ export default function AssetCrestPortal() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Bonus</p>
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-slate-800 dark:text-white mt-0.5">
+                  <p className="text-2xl font-semibold font-sans tabular-nums text-slate-800 dark:text-white mt-0.5">
                     ${activeUser.bonus.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -2148,7 +2148,7 @@ export default function AssetCrestPortal() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Referral Bonus</p>
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-slate-800 dark:text-white mt-0.5">
+                  <p className="text-2xl font-semibold font-sans tabular-nums text-slate-800 dark:text-white mt-0.5">
                     ${activeUser.referralBonus.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
@@ -2160,7 +2160,7 @@ export default function AssetCrestPortal() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Total Deposit</p>
-                  <p className="text-2xl font-semibold font-mono tabular-nums text-slate-800 dark:text-white mt-0.5">
+                  <p className="text-2xl font-semibold font-sans tabular-nums text-slate-800 dark:text-white mt-0.5">
                     ${activeUser.totalDeposit.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>

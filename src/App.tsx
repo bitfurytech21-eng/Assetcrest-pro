@@ -8,6 +8,7 @@ import { OfflineIndicator } from '@/src/backend/components/OfflineIndicator';
 import { ErrorBoundary } from '@/src/backend/components/ErrorBoundary';
 import AssetCrestPortal from '@/src/backend/AssetCrestPortal';
 import PublicSitePage from '@/src/backend/components/PublicSitePage';
+import TawkToChat from '@/src/backend/components/TawkToChat';
 
 const PUBLIC_PATHS = new Set([
   '/', '/home', '/about-us', '/company-history',
@@ -25,6 +26,7 @@ export default function App() {
       <ServiceWorkerRegistrar />
       <OfflineIndicator />
       <ErrorBoundary>
+        <TawkToChat />
         {isPublicPage ? <PublicSitePage /> : <AssetCrestPortal />}
       </ErrorBoundary>
     </>

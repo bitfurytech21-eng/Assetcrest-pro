@@ -301,8 +301,9 @@ app.get("/api/market-data/prices", async (_req, res) => {
     const result = await fetchLiveCryptoPricesUsd();
     res.setHeader("Cache-Control", "public, max-age=3");
     res.json({
-      source: "binance",
+      source: result.source,
       prices: result.prices,
+      changes: result.changes,
       updatedAt: result.updatedAt,
     });
   } catch (err: any) {

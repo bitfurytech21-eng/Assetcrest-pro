@@ -170,34 +170,15 @@ function HomePage() {
   const [testimonialIndex, setTestimonialIndex] = useState(5);
 
   useEffect(() => {
-    const id = window.setInterval(() => setSlide(current => (current + 1) % slides.length), 6500);
-    return () => window.clearInterval(id);
-  }, []);
-
-  useEffect(() => {
     let active = true;
-    const pairs = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT'];
-    const symbols = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE'];
     const loadMarket = async () => {
       try {
-        const [pricesResponse, ...quoteResponses] = await Promise.all([
-          fetch('/api/market-data/prices', { headers: { Accept: 'application/json' } }),
-          ...pairs.map(pair => fetch('/api/market-data/quote/' + pair, { headers: { Accept: 'application/json' } })),
-        ]);
-        if (!pricesResponse.ok) throw new Error('Market feed unavailable');
-        const payload = await pricesResponse.json();
-        const quotes = await Promise.all(quoteResponses.map(async response => response.ok ? response.json() : null));
+        const response = await fetch('/api/market-data/prices', { headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error('Market feed unavailable');
+        const payload = await response.json();
         if (!active || !payload.prices) return;
-        const nextPrices: Record<string, number> = { ...payload.prices };
-        const nextChanges: Record<string, number> = {};
-        quotes.forEach((quote, index) => {
-          const price = Number(quote?.lastPrice);
-          const change = Number(quote?.priceChangePercent);
-          if (Number.isFinite(price) && price > 0) nextPrices[symbols[index]] = price;
-          if (Number.isFinite(change)) nextChanges[symbols[index]] = change;
-        });
-        setMarketPrices(nextPrices);
-        setMarketChanges(nextChanges);
+        setMarketPrices(payload.prices);
+        setMarketChanges(payload.changes || {});
         setMarketUpdatedAt(payload.updatedAt || new Date().toISOString());
         setMarketStatus('live');
       } catch {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight, MessageCircle, Clock3, MapPin, Facebook, Twitter } from 'lucide-react';
 
-const media = (file: string) => `/reference-assets/${file}`;
+const media = (file: string) => `https://assetcrest.co/wp-content/uploads/${file}`;
 
 const navItems = [
   { label: 'Home', href: '/' },
@@ -126,6 +126,13 @@ function Footer() {
               <p className="mt-3 max-w-4xl text-lg leading-relaxed text-slate-400 sm:text-2xl">Moor House, 120 London Wall, London<br className="hidden sm:block" /> EC2Y 5ET, United Kingdom</p>
             </section>
           </div>
+          <section className="pt-12 text-center sm:pt-16">
+            <h2 className="text-2xl font-medium text-white sm:text-3xl">Contact details</h2>
+            <div className="mt-6 flex flex-col items-center gap-3 text-base text-slate-300">
+              <a href="mailto:support@assetcrest.co" className="hover:text-white">support@assetcrest.co</a>
+              <a href="https://assetcrestonline.com" className="hover:text-white">assetcrestonline.com</a>
+            </div>
+          </section>
           <section className="pt-12 text-center sm:pt-16">
             <h2 className="text-2xl font-medium text-white sm:text-3xl">Visit our social pages</h2>
             <div className="mt-8 flex items-center justify-center gap-7 text-[#df6075]">
@@ -468,6 +475,12 @@ function ProcessPage() {
       <div className="grid gap-6 md:grid-cols-2">{steps.map(([n,title,copy])=><article key={n} className="flex gap-5 border border-slate-200 p-7"><span className="text-3xl font-extrabold text-[#e94d65]">{n}</span><div><h3 className="mb-3 text-xl font-bold text-[#1b4962]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></div></article>)}</div>
       <div className="mt-16"><SectionHeading eyebrow="Our services" title="Investment sectors" /><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{sectors.map(({title,copy,Icon})=><article key={title} className="flex gap-4 border border-slate-200 p-6"><Icon className="h-10 w-10 shrink-0 text-[#d9576a]" strokeWidth={1.5}/><div><h3 className="mb-2 font-bold text-[#294760]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></div></article>)}</div></div>
       <div className="mt-16"><SectionHeading eyebrow="Platform features" title="More information for investors" /><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{features.map(([title,copy])=><article key={title} className="bg-[#f4f6f8] p-7"><h3 className="mb-3 font-bold text-[#1b4962]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></article>)}</div></div>
+      <div className="mt-16 grid gap-8 border-y border-slate-200 py-12 text-center sm:grid-cols-3">
+        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$7.1B</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">Enabled over $7.1 billion in deposits</h3></div>
+        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$901M</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">With over $901 million withdrawn</h3></div>
+        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">209,000+</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">Proudly serving 209,000+ users</h3></div>
+        <p className="sm:col-span-3 text-xs leading-5 text-slate-500">Figures reproduced from the original AssetCrest website and not independently verified.</p>
+      </div>
       <div className="mt-12 grid items-center gap-10 lg:grid-cols-2"><img src={media('2019/04/img-faq-2.png')} alt="Investment process illustration" loading="lazy" className="mx-auto max-h-80 w-full object-contain" /><div><h3 className="text-2xl font-extrabold text-[#1b4962]">Support throughout the process</h3><p className="mt-4 text-sm leading-7 text-slate-600">Review platform information, keep your account details secure and use verified support channels if you need assistance.</p><RegisterCTA /></div></div>
     </div></section>
   </>;

@@ -19,6 +19,8 @@ const HOME_UPSTREAM_URL = (
 
 function isPortalAppPath(pathname: string): boolean {
   const p = pathname.toLowerCase();
+  // The public homepage is bundled in this repository; never send / or /home to an upstream proxy.
+  if (p === "/" || p === "/home") return true;
   if (p === "/app" || p.startsWith("/app/")) return true;
   if (p === "/admin" || p.startsWith("/admin/")) return true;
   if (

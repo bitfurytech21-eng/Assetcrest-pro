@@ -612,12 +612,6 @@ function ContactPage() {
   </>;
 }
 
-function SupportShortcut() {
-  return <a href="/contact-us/" aria-label="Contact AssetCrest support" title="Contact AssetCrest support" className="fixed bottom-6 right-6 z-[60] flex h-16 w-16 items-center justify-center rounded-full bg-[#009ce0] text-white shadow-[0_8px_30px_rgba(0,0,0,.18)] transition hover:scale-105 hover:bg-[#0089c8] sm:bottom-8 sm:right-8 sm:h-[72px] sm:w-[72px]">
-    <MessageCircle className="h-9 w-9 fill-white stroke-[#009ce0]" strokeWidth={1.5} />
-  </a>;
-}
-
 export default function PublicSitePage() {
   const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\/+$/, '') || '/';
   let page: React.ReactNode;
@@ -630,5 +624,5 @@ export default function PublicSitePage() {
     case '/contact-us': page = <ContactPage />; break;
     default: page = <HomePage />;
   }
-  return <div className="min-h-screen bg-white font-sans text-[#202124]"><Header /><main>{page}</main><Footer /><SupportShortcut /></div>;
+  return <div className="min-h-screen bg-white font-sans text-[#202124]"><Header /><main>{page}</main><Footer /></div>;
 }

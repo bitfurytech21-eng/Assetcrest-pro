@@ -12,8 +12,8 @@ import { renderTradingPage } from "./src/trading/tradingPage.ts";
 import { handleApkPackagePost } from "./src/api/apkPackage.ts";
 import { fetchLiveCryptoPricesUsd } from "./src/lib/market-prices.ts";
 
-const HOME_UPSTREAM_URL = (
-  process.env.HOME_UPSTREAM_URL?.trim() || "https://assetcrest-pro-bqm8.onrender.com"
+// Optional separate marketing-site origin. Never default to this Render service.\nconst HOME_UPSTREAM_URL = (
+  process.env.HOME_UPSTREAM_URL?.trim() || ""
 ).replace(/\/+$/, "");
 
 function isPortalAppPath(pathname: string): boolean {
@@ -51,7 +51,28 @@ function isPortalAppPath(pathname: string): boolean {
   return false;
 }
 
-async function proxyHomePageUpstream(req: express.Request, res: express.Response): Promise<void> {
+async function proxyHomePageUpstream(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction,
+): Promise<void> {
+  // With no separate marketing origin, serve the locally built application.
+  // Guard against a Render variable accidentally pointing back to this service.
+  const requestHost = String(req.headers["x-forwarded-host"] || req.headers.host || "")
+    .split(",")[0].trim().toLowerCase();
+  let upstreamHost = "";
+  try {
+    upstreamHost = HOME_UPSTREAM_URL ? new URL(HOME_UPSTREAM_URL).host.toLowerCase() : "";
+  } catch {
+    console.error("[AssetCrest] HOME_UPSTREAM_URL is invalid; using the local app.");
+    next();
+    return;
+  }
+  if (!HOME_UPSTREAM_URL || (requestHost && upstreamHost === requestHost)) {
+    next();
+    return;
+  }
+
   const targetUrl = `${HOME_UPSTREAM_URL}${req.originalUrl || req.url || "/"}`;
   const headers = new Headers();
   if (req.headers.accept) headers.set("accept", String(req.headers.accept));
@@ -124,7 +145,12 @@ async function proxyHomePageUpstream(req: express.Request, res: express.Response
     res.send(buf);
   } catch (err: any) {
     console.error("[AssetCrest] Home proxy error for", targetUrl, err?.message || err);
-    res.status(502).type("text/plain").send("AssetCrest home page upstream is temporarily unavailable.");
+    // Keep the public homepage available if an optional upstream is unavailable.
+    if (method === "GET" || method === "HEAD") {
+      next();
+      return;
+    }
+    res.status(502).type("text/plain").send("AssetCrest upstream is temporarily unavailable.");
   }
 }
 
@@ -393,7 +419,7 @@ async function startServer() {
         next();
         return;
       }
-      void proxyHomePageUpstream(req, res);
+      void proxyHomePageUpstream(req, res, next);
     });
 
     const distHtmlPath = path.resolve("dist/index.html");
@@ -415,7 +441,7 @@ async function startServer() {
         next();
         return;
       }
-      void proxyHomePageUpstream(req, res);
+      void proxyHomePageUpstream(req, res, next);
     });
 
     const { createServer: createViteServer } = await import("vite");

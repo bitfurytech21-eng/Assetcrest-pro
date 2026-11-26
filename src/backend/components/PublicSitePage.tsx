@@ -276,9 +276,9 @@ function HomePage() {
           <p className="mt-5 text-base leading-8 text-slate-600">At AssetCrest, we specialize in delivering cutting-edge investment opportunities in cryptocurrency markets, real estate, and digital assets. Our mission is to provide innovative, secure, and transparent trading solutions tailored to meet the needs of both new and seasoned investors. With a robust platform and expert guidance, we empower you to grow your financial future in a rapidly evolving digital economy.</p>
         </div>
         <div className="grid grid-cols-1 gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-2">
-          {sectors.map(({ title, copy, Icon }) => <article key={title} className="flex items-start gap-6 sm:gap-8">
-            <div className="flex h-[100px] w-[100px] shrink-0 items-center justify-center text-[#d9576a] sm:h-[130px] sm:w-[130px]"><Icon className="h-[78px] w-[78px] sm:h-[108px] sm:w-[108px]" strokeWidth={1.35} /></div>
-            <div className="min-w-0 flex-1"><h3 className="mb-3 text-2xl font-extrabold leading-tight text-[#294760] sm:text-3xl">{title}</h3><p className="text-[17px] leading-[1.75] text-[#191919] sm:text-lg sm:leading-8">{copy}</p></div>
+          {sectors.map(({ title, copy, Icon }) => <article key={title} className="flex items-start gap-5 sm:gap-8">
+            <div className="flex h-[92px] w-[92px] shrink-0 items-center justify-center text-[#d9576a] sm:h-[120px] sm:w-[120px]"><Icon className="h-[76px] w-[76px] sm:h-[100px] sm:w-[100px]" strokeWidth={1.35} /></div>
+            <div className="min-w-0 flex-1"><h3 className="mb-3 text-[26px] font-extrabold leading-tight text-[#294760] sm:text-3xl">{title}</h3><p className="text-[17px] leading-[1.75] text-[#191919] sm:text-lg sm:leading-8">{copy}</p></div>
           </article>)}
         </div>
         <div className="mt-12 text-center"><a href="/register" className="inline-flex bg-[#e94d65] px-8 py-4 text-base font-bold text-white hover:bg-[#d83f58]">Register</a></div>

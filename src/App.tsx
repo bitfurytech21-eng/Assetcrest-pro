@@ -10,7 +10,9 @@ import AssetCrestPortal from '@/src/backend/AssetCrestPortal';
 import PublicHomePage from '@/src/backend/components/PublicHomePage';
 
 export default function App() {
-  const pathname = typeof window !== 'undefined' ? window.location.pathname.replace(/\\/+$/, '') || '/' : '/';
+  const pathname = typeof window !== 'undefined'
+    ? window.location.pathname.replace(/\/+$/, '') || '/'
+    : '/';
   const isPublicHome = pathname === '/' || pathname === '/home';
 
   return (

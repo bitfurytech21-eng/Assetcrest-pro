@@ -415,19 +415,81 @@ function ProcessPage() {
 
 function OfferPage() {
   const benefits = [
-    ['Educational resources','Access investment guides and educational material to help you make informed decisions.'],
-    ['Personalized support','Use the available support channels for questions about account access and platform processes.'],
-    ['Program information','Review published program criteria and any applicable terms before participating.'],
-    ['Eligibility details','Confirm eligibility requirements directly with the company before relying on an offer.'],
-    ['Account tracking','Use the secure portal to review account information and any program status shown there.'],
-    ['Opportunity updates','Check official company announcements for current program information.'],
+    ['Educational Content and Resources','We offer expert-led webinars, and valuable investment guides. Our resources are designed to empower you with the skills needed for smarter, more informed investing.'],
+    ['Personalized Support and Guidance','Receive one-on-one support tailored to your investment needs. Our dedicated team is available to provide advice, answer questions, and guide you on your path to achieving your financial goals.'],
+    ['Tiered Reward System','Progress through multiple achievement levels, unlocking progressively greater rewards. Each level is designed to recognize and incentivize exceptional performance and commitment within the investment community.'],
+    ['Exclusive Investment Opportunities','Access priority investment options and exclusive deals available only to top-performing clients. These opportunities are curated to offer higher returns and long-term growth potential for our most dedicated investors.'],
+    ['Detailed Eligibility Criteria','Understand the specific benchmarks and qualifications required to unlock each reward level. From investment milestones to performance standards, we provide transparency into the requirements that guide your path to success.'],
+    ['Performance Tracking Dashboard','Monitor your achievements and track your journey with an easy-to-use dashboard. Stay updated on your current status and get real-time insights into how you’re progressing toward your next milestone.'],
+  ];
+  const batches = [
+    { season: 'Spring', batch: 'Batch A: Spring', application: 'March ~', migration: 'May', qualification: '6', reach: '$55,000', reward: '30%', Icon: Sun, featured: true },
+    { season: 'Summer', batch: 'Batch B: Summer', application: 'June ~', migration: 'August', qualification: '4', reach: '$35,000', reward: '20%', Icon: Sun },
+    { season: 'Autumn', batch: 'Batch C: Autumn', application: 'September ~', migration: 'November', qualification: '5', reach: '$45,000', reward: '25%', Icon: Mountain },
+    { season: 'Winter', batch: 'Batch D: Winter', application: 'December ~', migration: 'February', qualification: '3', reach: '$25,000', reward: '15%', Icon: Hourglass },
   ];
   return <>
-    <PageHero eyebrow="Client information" title="Investment offer" image="2019/04/bgn-quotes.jpg" />
-    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-7xl"><SectionHeading eyebrow="AssetCrest offer" title="Information and resources for clients" copy="The reference page describes an investor offer and reward program. Participation, qualification and any benefits are subject to current written terms and eligibility confirmation." />
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">{benefits.map(([a,b])=><article key={a} className="border border-slate-200 p-7"><div className="mb-5 h-1 w-12 bg-[#e94d65]" /><h3 className="mb-3 text-lg font-bold text-[#1b4962]">{a}</h3><p className="text-sm leading-7 text-slate-600">{b}</p></article>)}</div>
-      <div className="mt-12 bg-[#f4f6f8] p-8 text-center sm:p-12"><h3 className="text-2xl font-extrabold text-[#1b4962]">Need to review your eligibility?</h3><p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-600">Sign in to the existing client portal to review information associated with your account.</p><div className="mt-7 flex justify-center"><a href="/login" className="bg-[#1b4962] px-7 py-4 text-sm font-bold text-white hover:bg-[#12394f]">Login to client portal</a></div></div>
-    </div></section>
+    <PageHero eyebrow="YOUR GATEWAY TO EXCLUSIVE INVESTMENT OPPORTUNITIES AND REWARDS" title="AssetCrest Investment Users Offer" image="2019/04/bgn-quotes.jpg" />
+    <section className="bg-white px-6 py-16 sm:py-20">
+      <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">AssetCrest Investment Users Offer</p>
+          <h2 className="text-3xl font-extrabold leading-tight text-[#1b4962] sm:text-5xl">Unlocking Exclusive Privileges for Outstanding Achievers</h2>
+          <p className="mt-7 text-base leading-8 text-slate-600">Introducing the AssetCrest Users Application Portal: Unlocking Exclusive Privileges for Outstanding Achievers. We are excited to announce the launch of the AssetCrest Investment Users Offer, fully sponsored by the AssetCrest Headquarters Board of Directors and the Financial Department.</p>
+          <p className="mt-5 text-base leading-8 text-slate-600">At the <strong>AssetCrest Investment Users Offer Application Portal</strong>, we are dedicated to empowering our clients to reach new heights on their investment journey. The <strong>AssetCrest Investment Offer</strong> represents our ongoing commitment to recognizing and rewarding outstanding achievement, fostering a community of informed, motivated, and successful investors.</p>
+          <p className="mt-5 text-base leading-8 text-slate-600">To access <strong>AssetCrest Invest Offer</strong>, existing qualified clients can simply log in with a qualification access digit issued during application. New clients are invited to register on our main website and explore the Invest Offer portal once they meet the initial qualification criteria.</p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4"><a href="/register" className="inline-flex bg-[#e94d65] px-8 py-4 text-sm font-bold text-white hover:bg-[#d83f58]">Register</a><a href="/login" className="inline-flex bg-[#294760] px-8 py-4 text-sm font-bold text-white hover:bg-[#1b3449]">Login</a></div>
+        </div>
+        <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {benefits.map(([title,copy])=><article key={title} className="border border-slate-200 bg-white p-7 shadow-sm"><div className="mb-5 h-1 w-12 bg-[#e94d65]" /><h3 className="mb-3 text-xl font-bold text-[#1b4962]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></article>)}
+        </div>
+      </div>
+    </section>
+    <section className="bg-[#f4f6f8] px-6 py-16 sm:py-20">
+      <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-2">
+        <img src={media('2025/01/450484682_1017640810366665_7619605870696947195_n.jpg')} alt="AssetCrest investment program" loading="lazy" className="h-full max-h-[520px] w-full object-cover shadow-lg" />
+        <div>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">ACCESSIBLE, AND INNOVATIVE INVESTMENT</p>
+          <h2 className="text-3xl font-extrabold leading-tight text-[#1b4962] sm:text-4xl">The Origin of AssetCrest <span className="text-[#e94d65]">Investment Programs</span></h2>
+          <p className="mt-6 text-base leading-8 text-slate-600">The concept behind the development of the <strong>AssetCrest</strong> Investment Programs for beginners was driven by the global challenges posed by the COVID-19 pandemic. During the pandemic, many individuals found themselves unable to engage in outdoor or traditional jobs. As a result, the <strong>AssetCrest</strong> team of experts in the stock and cryptocurrency sectors collaborated to create a home-based working space that could provide alternative income sources. Their combined expertise enabled the team to develop a platform designed to maximize investment opportunities for individuals seeking to work from home.</p>
+          <p className="mt-5 text-base leading-8 text-slate-600">Through <strong>AssetCrest</strong> Investment, applicants were able to participate in a program that catered to various investment preferences. This idea quickly gained momentum after it was publicly advertised. Feedback from participants, especially those nearing retirement, highlighted the program’s potential to provide a lucrative and sustainable investment avenue. As a result, many individuals found the opportunity compelling and continuously encouraged new applicants to join the program.</p>
+          <div className="mt-8 flex flex-wrap gap-4"><a href="/register" className="bg-[#e94d65] px-7 py-4 text-sm font-bold text-white hover:bg-[#d83f58]">Register</a><a href="/login" className="bg-[#294760] px-7 py-4 text-sm font-bold text-white hover:bg-[#1b3449]">Login</a></div>
+        </div>
+      </div>
+      <div className="mx-auto mt-16 grid max-w-7xl gap-8 border-t border-slate-200 pt-12 text-center sm:grid-cols-3">
+        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$7.1B</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">Enabled over $7.1 billion in deposits</h3></div>
+        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$901M</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">With over $901 million withdrawn</h3></div>
+        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">209,000+</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">Proudly serving 209,000+ users</h3></div>
+        <p className="sm:col-span-3 text-xs leading-5 text-slate-500">Figures reproduced from the original AssetCrest page; they have not been independently verified.</p>
+      </div>
+    </section>
+    <section className="relative overflow-hidden bg-[#1b4962] px-6 py-16 text-white sm:py-24" style={{backgroundImage:'linear-gradient(rgba(27,73,98,.94),rgba(27,73,98,.96)),url("' + media('2019/04/bgn-quotes.jpg') + '")',backgroundPosition:'center',backgroundSize:'cover'}}>
+      <div className="mx-auto max-w-7xl">
+        <div className="mx-auto mb-12 max-w-3xl text-center">
+          <p className="mb-4 text-xs font-bold uppercase tracking-[.22em] text-[#e94d65]">SAVE WITH OUR PACKAGES</p>
+          <h2 className="text-4xl font-extrabold leading-tight text-white sm:text-6xl">Holiday and <span className="text-[#e94d65]">Vacation Offer</span></h2>
+          <p className="mt-6 text-base leading-8 text-white/90 sm:text-lg">The AssetCrest Board of Directors is excited to present a unique opportunity to reward dedicated and hardworking applicants with a fully sponsored three-week holiday trip. This offer is available to qualified individuals through a three-batch open slot opportunity, allowing successful applicants to choose any war-free city or state of their preference for a relaxing holiday.</p>
+        </div>
+        <div className="grid items-stretch gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          {batches.map(({season,batch,application,migration,qualification,reach,reward,Icon,featured})=><article key={season} className={'relative flex flex-col bg-white px-7 pb-8 pt-12 text-[#191919] shadow-xl ' + (featured ? 'ring-2 ring-[#e94d65]' : '')}>
+            <div className="absolute -top-6 left-1/2 flex h-14 w-14 -translate-x-1/2 items-center justify-center rounded-full bg-[#e94d65] text-white shadow-lg"><Icon className="h-7 w-7" strokeWidth={1.7} /></div>
+            <p className="text-center text-3xl font-extrabold text-[#294760]">{season}</p>
+            <div className="mt-6 flex-1 border-t border-slate-200 pt-5">
+              {[batch,'Application Period: ' + application,'Migration Period: ' + migration,'Account Qualification: ' + qualification,'Targeted Reach: ' + reach,'Instant Reward: ' + reward].map(line=><p key={line} className="border-b border-slate-100 py-3 text-sm leading-6 text-slate-700">{line}</p>)}
+            </div>
+            <a href="/register" className={'mt-7 inline-flex w-full justify-center px-6 py-4 text-sm font-bold ' + (featured ? 'bg-[#e94d65] text-white hover:bg-[#d83f58]' : 'bg-[#294760] text-white hover:bg-[#1b3449]')}>Register</a>
+          </article>)}
+        </div>
+      </div>
+    </section>
+    <section className="relative overflow-hidden bg-white px-6 py-20 text-center" style={{backgroundImage:'linear-gradient(rgba(255,255,255,.88),rgba(255,255,255,.92)),url("' + media('2025/01/e709b4b9fc95491755ae03b6554d1f13bf1b898a-4592x3448-1.jpg') + '")',backgroundPosition:'center',backgroundSize:'cover'}}>
+      <div className="mx-auto max-w-3xl">
+        <p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">AssetCrest</p>
+        <h2 className="text-3xl font-extrabold text-[#1b4962] sm:text-5xl"><span className="underline decoration-[#e94d65]">Yearning for</span> Change?</h2>
+        <p className="mt-6 text-base leading-8 text-slate-700">Invest in renewable energy with confidence, knowing that your contributions are driving positive change towards a more sustainable future.</p>
+        <a href="/register" className="mt-8 inline-flex bg-[#e94d65] px-8 py-4 text-sm font-bold text-white hover:bg-[#d83f58]">Register</a>
+      </div>
+    </section>
   </>;
 }
 

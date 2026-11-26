@@ -105,9 +105,9 @@ function Footer() {
       <section className="bg-white px-6 pb-12 pt-16 text-center sm:pb-14 sm:pt-20">
         <div className="mx-auto max-w-4xl">
           <h2 className="text-3xl font-bold text-[#171717] sm:text-4xl">Contact</h2>
-          <div className="mt-16 flex flex-col justify-center gap-5 sm:mt-20 sm:flex-row sm:gap-8">
-            <a href="/register" className="flex min-h-[76px] min-w-[220px] items-center justify-center bg-[#191919] px-10 py-5 text-2xl font-bold text-white shadow-[0_5px_0_rgba(0,0,0,.12)] transition hover:bg-[#303030] sm:min-h-[104px] sm:min-w-[270px] sm:text-3xl">Register</a>
-            <a href="/login" className="flex min-h-[76px] min-w-[220px] items-center justify-center bg-[#d9576a] px-10 py-5 text-2xl font-bold text-white shadow-[0_5px_0_rgba(150,38,58,.2)] transition hover:bg-[#c94a60] sm:min-h-[104px] sm:min-w-[270px] sm:text-3xl">Login</a>
+          <div className="mt-16 flex flex-row justify-center gap-4 sm:mt-20 sm:gap-8">
+            <a href="/register" className="flex min-h-[72px] min-w-0 flex-1 items-center justify-center bg-[#191919] px-2 py-4 text-xl font-bold text-white shadow-[0_5px_0_rgba(0,0,0,.12)] transition hover:bg-[#303030] sm:min-h-[104px] sm:min-w-[270px] sm:flex-none sm:px-10 sm:py-5 sm:text-3xl">Register</a>
+            <a href="/login" className="flex min-h-[72px] min-w-0 flex-1 items-center justify-center bg-[#d9576a] px-2 py-4 text-xl font-bold text-white shadow-[0_5px_0_rgba(150,38,58,.2)] transition hover:bg-[#c94a60] sm:min-h-[104px] sm:min-w-[270px] sm:flex-none sm:px-10 sm:py-5 sm:text-3xl">Login</a>
           </div>
         </div>
       </section>

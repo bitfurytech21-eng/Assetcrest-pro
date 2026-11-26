@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Menu, X, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const media = (file: string) => `/reference-assets/${file}`;
 
@@ -37,21 +38,21 @@ const slides = [
 ];
 
 const sectors = [
-  ['Forex Trading', 'Explore the foreign-exchange market and the role of currency movements in a diversified investment strategy.'],
-  ['Cryptocurrency Mining', 'Learn how proof-of-work networks use computing power to validate transactions and secure blockchain systems.'],
-  ['Medical Cannabis', 'Explore the medical-cannabis sector and the importance of transparent supply chains and responsible operations.'],
-  ['Real Estate Investments', 'Discover property investment themes, real assets and the factors that can influence long-term property value.'],
-  ['Gold Mining', 'Understand gold production and the role precious metals can play in a diversified portfolio.'],
-  ['Oil & Gas', 'Explore the energy market, including the forces that influence oil and gas supply, demand and pricing.'],
-  ['Renewable Energy', 'Discover projects and technologies across solar, wind and hydroelectric energy.'],
-  ['Green Hydrogen', 'Learn about renewable-powered hydrogen production and its potential role in lower-carbon energy systems.'],
-  ['Energy Trading', 'Explore energy markets and the systems used to track and trade energy and environmental attributes.'],
+  { title: 'Forex Trading', copy: 'The forex market moves $5 trillion daily. With strategic analysis tools, we help clients benefit from trading opportunities, capturing revenue through smart forex investments.', Icon: Scale },
+  { title: 'Cryptocurrency Mining', copy: 'Bitcoin mining generates new bitcoins by solving computational puzzles essential for securing the network. We provide expert services for efficient, secure mining operations, helping investors participate in the cryptocurrency market.', Icon: ChartPie },
+  { title: 'Medical Cannabis', copy: 'We support the medical cannabis industry by ensuring transparent supply chains and safe access for patients. Our projects advance cannabis’s potential as a therapeutic solution.', Icon: Users },
+  { title: 'Real Estate Investments', copy: 'Real estate is a prime wealth generator, providing income and growth. Our platform makes it easy to access this once-exclusive market, offering profitable real estate investment options.', Icon: Building2 },
+  { title: 'Gold Mining', copy: 'Gold is a timeless safe-haven asset, ideal for portfolio stability and inflation protection. We help investors diversify and secure wealth with strategic gold investments.', Icon: Mountain },
+  { title: 'Oil & Gas', copy: 'Investing in oil is now accessible to all. Our platform allows users to trade on oil prices easily, whether they’re beginners or seasoned investors, enabling profit from this essential sector.', Icon: HardHat },
+  { title: 'Renewable Energy', copy: 'Our renewable energy services connect investors with projects in solar, wind, and hydroelectric power, combining profitability with environmental impact.', Icon: Sun },
+  { title: 'Green Hydrogen', copy: 'We invest in green hydrogen projects, producing clean fuel through renewable energy. This innovative sector offers investors a way to support the future of sustainable energy.', Icon: FlaskConical },
+  { title: 'Energy Trading', copy: 'Our energy trading marketplace connects green energy producers and consumers. Buy, sell, and track renewable energy certificates with ease and transparency.', Icon: ArrowLeftRight },
 ];
 
 const principles = [
-  ['Cutting-Edge Security', 'Security should be built into every stage of a digital financial experience.'],
-  ['Professional Expertise', 'Clear information and informed support help investors understand the opportunities they explore.'],
-  ['Transparency', 'We aim to make product information, processes and relevant risks clear and accessible.'],
+  ['Cutting-Edge Security', 'We employ the most advanced security protocols in the industry, including encryption, multi-signature authentication, and hardware security modules to protect your digital assets.', '2019/04/bgn-boxes-01.jpg'],
+  ['Professional Expertise', 'Our team consists of leading financial experts and blockchain innovators. Whether you’re new to investing or experienced, we provide tailored strategies and continuous support to help you succeed.', '2019/04/bgn-boxes-02.jpg'],
+  ['Regulatory Compliance', 'We adhere to strict regulatory standards across multiple jurisdictions, ensuring that your investments are legally compliant and fully protected.', '2019/04/bgn-boxes-03.jpg'],
 ];
 
 const planNames = ['Beginners', 'Prime', 'Executive', 'Premium'];
@@ -77,41 +78,21 @@ function Logo() {
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\/+$/, '') || '/';
   return (
-    <header className="relative z-30 bg-white text-[#1b4962] shadow-sm">
-      <div className="hidden border-b border-slate-100 bg-[#f7f8fa] text-xs text-slate-600 md:block">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
-          <span>Monday - Friday · 8AM - 9PM</span>
-          <span>Moor House, 120 London Wall, London EC2Y 5ET, United Kingdom</span>
-          <span>Visit our social pages</span>
-        </div>
-      </div>
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-4 sm:px-6">
-        <Logo />
-        <button type="button" className="inline-flex h-11 w-11 items-center justify-center border border-slate-200 text-2xl md:hidden" aria-label="Toggle navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(v => !v)}>
-          {menuOpen ? '×' : '☰'}
+    <header className="relative z-40 bg-white">
+      <div className="mx-auto flex h-[104px] max-w-[1440px] items-center justify-start gap-7 px-6 sm:h-[150px] sm:gap-10 sm:px-10 lg:h-[190px] lg:gap-12 lg:px-[7%]">
+        <button type="button" onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} className="flex h-12 w-12 shrink-0 items-center justify-center text-[#171717] sm:h-[72px] sm:w-[105px]">
+          {menuOpen ? <X className="h-10 w-10 sm:h-14 sm:w-14" strokeWidth={2.2} /> : <Menu className="h-10 w-10 sm:h-14 sm:w-14" strokeWidth={2.2} />}
         </button>
-        <div className="hidden items-center gap-7 md:flex">
-          <nav aria-label="Main navigation" className="flex items-center gap-5 lg:gap-7">
-            {navItems.map(item => {
-              const active = pathname === item.href.replace(/\/+$/, '') || (item.href === '/' && pathname === '/');
-              return <a key={item.href} href={item.href} className={`text-sm font-semibold transition hover:text-[#e94d65] ${active ? 'text-[#e94d65]' : 'text-[#1b4962]'}`}>{item.label}</a>;
-            })}
-          </nav>
-          <div className="flex items-center gap-2">
-            <a href="/register" className="bg-[#e94d65] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#d83f58]">Register</a>
-            <a href="/login" className="bg-[#1b4962] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#12394f]">Login</a>
-          </div>
-        </div>
+        <Logo />
       </div>
-      {menuOpen && <div className="border-t border-slate-100 bg-white px-5 pb-5 md:hidden">
-        <nav aria-label="Mobile navigation" className="grid gap-1 py-3">
-          {navItems.map(item => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="border-b border-slate-100 py-3 text-sm font-semibold">{item.label}</a>)}
-        </nav>
-        <div className="grid grid-cols-2 gap-2 pt-3">
-          <a href="/register" className="bg-[#e94d65] px-4 py-3 text-center text-sm font-bold text-white">Register</a>
-          <a href="/login" className="bg-[#1b4962] px-4 py-3 text-center text-sm font-bold text-white">Login</a>
+      {menuOpen && <div className="absolute inset-x-0 top-full z-50 border-t border-slate-100 bg-white shadow-2xl">
+        <div className="mx-auto grid max-w-7xl gap-1 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
+          {navItems.map(item => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="border-b border-slate-100 px-3 py-4 text-base font-semibold text-[#1b4962] hover:text-[#e94d65]">{item.label}</a>)}
+          <div className="grid grid-cols-2 gap-3 pt-4 sm:col-span-2 lg:col-span-3">
+            <a href="/register" className="bg-[#e94d65] px-6 py-4 text-center text-sm font-bold text-white">Register</a>
+            <a href="/login" className="bg-[#1b4962] px-6 py-4 text-center text-sm font-bold text-white">Login</a>
+          </div>
         </div>
       </div>}
     </header>
@@ -183,9 +164,10 @@ function RegisterCTA() {
 function HomePage() {
   const [slide, setSlide] = useState(1);
   const [marketPrices, setMarketPrices] = useState<Record<string, number>>({});
+  const [marketChanges, setMarketChanges] = useState<Record<string, number>>({});
   const [marketUpdatedAt, setMarketUpdatedAt] = useState('');
   const [marketStatus, setMarketStatus] = useState<'loading' | 'live' | 'unavailable'>('loading');
-  const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [testimonialIndex, setTestimonialIndex] = useState(5);
 
   useEffect(() => {
     const id = window.setInterval(() => setSlide(current => (current + 1) % slides.length), 6500);
@@ -194,72 +176,68 @@ function HomePage() {
 
   useEffect(() => {
     let active = true;
-    const loadPrices = async () => {
+    const pairs = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'DOGEUSDT'];
+    const symbols = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'DOGE'];
+    const loadMarket = async () => {
       try {
-        const response = await fetch('/api/market-data/prices', { headers: { Accept: 'application/json' } });
-        if (!response.ok) throw new Error('Market feed unavailable');
-        const payload = await response.json();
+        const [pricesResponse, ...quoteResponses] = await Promise.all([
+          fetch('/api/market-data/prices', { headers: { Accept: 'application/json' } }),
+          ...pairs.map(pair => fetch('/api/market-data/quote/' + pair, { headers: { Accept: 'application/json' } })),
+        ]);
+        if (!pricesResponse.ok) throw new Error('Market feed unavailable');
+        const payload = await pricesResponse.json();
+        const quotes = await Promise.all(quoteResponses.map(async response => response.ok ? response.json() : null));
         if (!active || !payload.prices) return;
-        setMarketPrices(payload.prices);
+        const nextPrices: Record<string, number> = { ...payload.prices };
+        const nextChanges: Record<string, number> = {};
+        quotes.forEach((quote, index) => {
+          const price = Number(quote?.lastPrice);
+          const change = Number(quote?.priceChangePercent);
+          if (Number.isFinite(price) && price > 0) nextPrices[symbols[index]] = price;
+          if (Number.isFinite(change)) nextChanges[symbols[index]] = change;
+        });
+        setMarketPrices(nextPrices);
+        setMarketChanges(nextChanges);
         setMarketUpdatedAt(payload.updatedAt || new Date().toISOString());
         setMarketStatus('live');
       } catch {
         if (active) setMarketStatus('unavailable');
       }
     };
-    loadPrices();
-    const id = window.setInterval(loadPrices, 30000);
+    loadMarket();
+    const id = window.setInterval(loadMarket, 30000);
     return () => { active = false; window.clearInterval(id); };
   }, []);
 
   const current = slides[slide];
   const marketSymbols = [
-    ['BTC', 'Bitcoin'], ['ETH', 'Ethereum'], ['BNB', 'BNB'], ['SOL', 'Solana'],
-    ['XRP', 'XRP'], ['USDT', 'Tether'], ['USDC', 'USD Coin'],
+    { symbol: 'BTC', name: 'Bitcoin', icon: '₿' },
+    { symbol: 'ETH', name: 'Ethereum', icon: '◆' },
+    { symbol: 'BNB', name: 'BNB', icon: '◆' },
+    { symbol: 'SOL', name: 'Solana', icon: '◎' },
+    { symbol: 'XRP', name: 'XRP', icon: '✕' },
+    { symbol: 'DOGE', name: 'Dogecoin', icon: 'Ð' },
   ];
   const testimonials = [
-    {
-      title: 'Transparency at Its Finest',
-      quote: 'I’ve tried other investment platforms, but AssetCrest stands out with its transparency. They clearly outline potential risks and rewards, making it easier for me to make informed decisions. The level of detail in their service descriptions and the accessibility of their team make it a standout choice for anyone wanting straightforward investment options.',
-      name: 'Collin Leblanc', country: 'South Africa', image: '2019/04/img-quote-02-160x160.jpg',
-    },
-    {
-      title: 'Perfect for Diversifying My Portfolio',
-      quote: 'AssetCrest has a wide range of investment plans, which allowed me to diversify my portfolio seamlessly. They offer different options tailored to risk tolerance, and it’s easy to shift between plans if needed. The flexibility they offer has made it my go-to platform for both short-term and long-term investments.',
-      name: 'Lilah Chang', country: 'China', image: '2019/04/img-quote-05-160x160.jpg',
-    },
-    {
-      title: 'Advanced Tools and Real-Time Insights',
-      quote: 'AssetCrest’s platform gives me a wealth of data at my fingertips. The real-time insights and analytics have been a huge asset in helping me monitor my investments and make timely decisions. The combination of powerful tools and easy accessibility makes it ideal for digital investors who want control over their assets.',
-      name: 'Justin Emerson', country: 'United Kingdom', image: '2019/04/img-quote-04-160x160.jpg',
-    },
-    {
-      title: 'A Trusted Investment Hub for Beginners and Pros',
-      quote: 'AssetCrest has created a user-friendly experience that accommodates both new investors and seasoned professionals. The platform’s straightforward layout and extensive educational resources make it easy to understand various investment options. From the intuitive dashboard to seamless account management, it’s clear AssetCrest prioritizes user experience.',
-      name: 'Joanna Prestley', country: 'Canada', image: '2019/04/img-quote-03-160x160.jpg',
-    },
-    {
-      title: 'Consistent Returns and Excellent Support',
-      quote: 'AssetCrest has proven to be reliable with steady returns and professional support. Their investment plans are well-structured and transparent, which brings confidence in managing my portfolio. I especially appreciate the support team and the assistance available to clients.',
-      name: 'Bradley Smith', country: 'United States', image: '2019/04/img-quote-01-160x160.jpg',
-    },
-    {
-      title: 'Innovative and Secure Digital Platform',
-      quote: 'Security is my top concern when it comes to digital investments. The reference testimonial describes the platform’s approach to combining technology with traditional investment principles.',
-      name: 'Priscilla Jackson', country: 'France', image: '2019/04/img-quote-06-160x160.jpg',
-    },
+    { title: 'Transparency at Its Finest', quote: 'I’ve tried other investment platforms, but AssetCrest stands out with its transparency. They clearly outline potential risks and rewards, making it easier for me to make informed decisions. The level of detail in their service descriptions and the accessibility of their team make it a standout choice for anyone wanting straightforward investment options.', name: 'Collin Leblanc', country: 'South Africa', image: '2019/04/img-quote-02-160x160.jpg' },
+    { title: 'Perfect for Diversifying My Portfolio', quote: 'AssetCrest has a wide range of investment plans, which allowed me to diversify my portfolio seamlessly. They offer different options tailored to risk tolerance, and it’s easy to shift between plans if needed. The flexibility they offer has made it my go-to platform for both short-term and long-term investments.', name: 'Lilah Chang', country: 'China', image: '2019/04/img-quote-05-160x160.jpg' },
+    { title: 'Advanced Tools and Real-Time Insights', quote: 'AssetCrest’s platform gives me a wealth of data at my fingertips. The real-time insights and analytics have been a huge asset in helping me monitor my investments and make timely decisions. The combination of powerful tools and easy accessibility makes it ideal for digital investors who want control over their assets.', name: 'Justin Emerson', country: 'United Kingdom', image: '2019/04/img-quote-04-160x160.jpg' },
+    { title: 'A Trusted Investment Hub for Beginners and Pros', quote: 'AssetCrest has created a user-friendly experience that accommodates both new investors and seasoned professionals. The platform’s straightforward layout and extensive educational resources make it easy to understand various investment options. From the intuitive dashboard to seamless account management, it’s clear AssetCrest prioritizes user experience. Highly recommended for anyone looking to enter digital investments.', name: 'Joanna Prestley', country: 'Canada', image: '2019/04/img-quote-03-160x160.jpg' },
+    { title: 'Consistent Returns and Excellent Support', quote: 'AssetCrest has proven to be reliable with steady returns and professional support. Their investment plans are well-structured and transparent, which brings confidence in managing my portfolio. I especially appreciate the 24/7 customer support team—they’re responsive and genuinely knowledgeable. It feels like they have our best interests at heart.', name: 'Bradley Smith', country: 'United States', image: '2019/04/img-quote-01-160x160.jpg' },
+    { title: 'Innovative and Secure Digital Platform', quote: 'Security is my top concern when it comes to digital investments, and Assetera doesn’t disappoint. They’ve integrated robust security protocols, so I feel safe with my assets on the platform. Their approach to combining innovative technology with traditional investment principles really sets them apart. A game-changer in the digital investment space!', name: 'Priscilla Jackson', country: 'France', image: '2019/04/img-quote-06-160x160.jpg' },
   ];
-  const visibleTestimonials = [testimonials[testimonialIndex], testimonials[(testimonialIndex + 1) % testimonials.length], testimonials[(testimonialIndex + 2) % testimonials.length]];
-  const partnerLogos = [
-    'logo-hotel-berg.png', 'logo-hotel-california.png', 'logo-estato.png',
-    'logo-addison.png', 'logo-urbanist.png', 'logo-bold-news.png',
-    'logo-celeste.png', 'logo-applauz.png', 'logo-bello.png',
+  const activeTestimonial = testimonials[testimonialIndex];
+  const partnerLogos = ['logo-hotel-berg.png', 'logo-hotel-california.png', 'logo-estato.png', 'logo-addison.png', 'logo-urbanist.png', 'logo-bold-news.png', 'logo-celeste.png', 'logo-applauz.png', 'logo-bello.png'];
+  const circles = [
+    { title: 'Consistency', copy: 'Reliable results, time after time. AssetCrest is committed to stability in every market condition.', Icon: Hourglass },
+    { title: 'Improvement', copy: 'Evolving with purpose. We continually refine our strategies to deliver smarter, stronger returns.', Icon: TrendingUp },
+    { title: 'Branching', copy: 'Expanding possibilities. AssetCrest opens new avenues for growth and innovation in finance.', Icon: GitBranch },
   ];
 
   return <>
-    <section id="top" className="relative isolate min-h-[650px] overflow-hidden bg-[#dfe5e9] sm:min-h-[720px]">
+    <section id="top" className="relative isolate min-h-[620px] overflow-hidden bg-[#e8edf0] sm:min-h-[720px]">
       {slides.map((item, index) => <div key={item.image} aria-hidden={index !== slide} className={'absolute inset-0 -z-10 bg-cover bg-center transition-opacity duration-700 ' + (index === slide ? 'opacity-100' : 'opacity-0')} style={{ backgroundImage: 'linear-gradient(90deg,rgba(255,255,255,.94) 0%,rgba(255,255,255,.84) 44%,rgba(255,255,255,.18) 100%),url("' + media(item.image) + '")' }} />)}
-      <div className="mx-auto flex min-h-[650px] max-w-7xl items-center px-6 py-20 sm:min-h-[720px]">
+      <div className="mx-auto flex min-h-[620px] max-w-7xl items-center px-6 py-20 sm:min-h-[720px]">
         <div className="max-w-3xl">
           <div className="mb-8 flex items-center gap-5"><span className="h-1 w-24 bg-[#e94d65] sm:w-36" /><p className="max-w-xl text-sm font-semibold uppercase leading-snug tracking-wide text-[#191919] sm:text-xl">{current.eyebrow}</p></div>
           <h1 className="text-5xl font-extrabold leading-[1.02] tracking-[-.055em] text-[#294760] sm:text-7xl lg:text-8xl">{current.title}<br /><span className="text-[#d9576a]">{current.accent}</span></h1>
@@ -270,114 +248,127 @@ function HomePage() {
       <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 gap-3" aria-label="Choose homepage slide">
         {slides.map((item, index) => <button key={item.image} type="button" onClick={() => setSlide(index)} aria-label={'Show slide ' + (index + 1)} aria-pressed={slide === index} className={'h-3 w-3 rounded-full border-2 border-[#e94d65] ' + (slide === index ? 'bg-[#e94d65]' : 'bg-white')} />)}
       </div>
-      <div className="absolute right-5 top-1/2 hidden -translate-y-1/2 flex-col gap-3 lg:flex">
-        {slides.map((item, index) => <button key={item.image} type="button" onClick={() => setSlide(index)} aria-label={'Go to slide ' + (index + 1)} className={'h-3 w-3 rounded-full ' + (slide === index ? 'bg-[#e94d65]' : 'bg-white/80')} />)}
-      </div>
     </section>
 
-    <section className="bg-white px-6 py-10">
-      <div className="mx-auto grid max-w-7xl gap-7 md:grid-cols-3">
-        {principles.map(([title, copy], index) => <article key={title} className="flex gap-5 border-b border-slate-200 py-5 md:border-b-0 md:border-r md:px-5 md:last:border-r-0">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center bg-[#fff0f2] text-xl font-extrabold text-[#e94d65]">{['01', '02', '03'][index]}</div>
-          <div><h2 className="mb-2 text-lg font-bold text-[#1b4962]">{title}</h2><p className="text-sm leading-7 text-slate-600">{copy}</p><a href="/about-us/" className="mt-3 inline-flex text-sm font-bold text-[#e94d65] hover:underline">Learn more</a></div>
+    <section className="bg-white px-6 py-8 sm:py-12">
+      <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-3">
+        {principles.map(([title, copy, image]) => <article key={title} className="relative min-h-[390px] overflow-hidden bg-cover bg-center px-7 py-10 shadow-[0_12px_38px_rgba(0,0,0,.12)] sm:min-h-[430px] sm:px-10 sm:py-12" style={{ backgroundImage: 'linear-gradient(180deg,rgba(255,255,255,.88),rgba(255,255,255,.76)),url("' + media(image) + '")' }}>
+          <span className="mb-8 block h-1 w-16 bg-[#e94d65]" />
+          <h2 className="mb-5 text-3xl font-extrabold leading-tight text-[#1b4962] sm:text-4xl">{title}</h2>
+          <p className="max-w-md text-base leading-8 text-[#191919] sm:text-lg">{copy}</p>
+          <a href="/register" className="mt-8 inline-flex min-w-[150px] items-center justify-center bg-[#e94d65] px-7 py-4 text-base font-bold text-white shadow-[0_4px_0_rgba(150,38,58,.25)] hover:bg-[#d83f58]">Register</a>
         </article>)}
       </div>
     </section>
 
-    <section aria-label="Live cryptocurrency market prices" className="overflow-hidden bg-[#172d40] py-5 text-white">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6">
-        <div className="min-w-[150px]"><p className="text-xs font-bold uppercase tracking-[.18em] text-[#ff9aaa]">Market watch</p><p className="mt-1 text-xs text-slate-300">{marketStatus === 'live' ? 'Live spot prices · USD' : marketStatus === 'loading' ? 'Loading live prices…' : 'Live prices temporarily unavailable'}</p></div>
-        <div className="flex flex-1 flex-wrap justify-end gap-x-7 gap-y-3">
-          {marketSymbols.map(([symbol, name]) => <div key={symbol} className="min-w-[78px]"><p className="text-xs font-bold text-slate-300">{name} <span className="text-[#ff9aaa]">{symbol}</span></p><p className="mt-1 text-sm font-semibold tabular-nums">{marketPrices[symbol] ? '$' + marketPrices[symbol].toLocaleString('en-US', { maximumFractionDigits: marketPrices[symbol] < 1 ? 5 : 2 }) : '—'}</p></div>)}
+    <section aria-label="Live cryptocurrency market prices" className="overflow-hidden bg-white py-10 sm:py-16">
+      <div className="mx-auto mb-3 max-w-7xl px-6 text-center"><p className="text-[11px] font-bold uppercase tracking-[.22em] text-[#e94d65]">Live cryptocurrency market</p></div>
+      <div className="assetcrest-ticker-viewport">
+        <div className="assetcrest-ticker-track">
+          {[0, 1].map(copy => <div key={copy} className="flex shrink-0 items-center gap-10 pr-10 sm:gap-16 sm:pr-16">
+            {marketSymbols.map(item => {
+              const price = marketPrices[item.symbol];
+              const change = marketChanges[item.symbol];
+              return <div key={item.symbol} className="flex min-w-max items-center gap-3 sm:gap-5">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f0f2f4] text-2xl font-bold text-[#7c8790] sm:h-16 sm:w-16 sm:text-3xl">{item.icon}</span>
+                <div className="whitespace-nowrap text-lg font-semibold text-[#171717] sm:text-2xl">{item.name} <span className="font-normal">({item.symbol})</span></div>
+                <div className="whitespace-nowrap text-lg font-semibold tabular-nums text-[#171717] sm:text-2xl">{price ? '$ ' + price.toLocaleString('en-US', { maximumFractionDigits: price < 1 ? 5 : 2 }) : marketStatus === 'loading' ? 'Loading…' : '—'}</div>
+                {Number.isFinite(change) && <div className={'whitespace-nowrap text-lg font-bold tabular-nums sm:text-2xl ' + (change < 0 ? 'text-[#d9475d]' : 'text-emerald-600')}>{change < 0 ? '↓ ' : '↑ '}{Math.abs(change).toFixed(2)}%</div>}
+              </div>;
+            })}
+          </div>)}
         </div>
       </div>
-      {marketUpdatedAt && <p className="mx-auto mt-3 max-w-7xl px-6 text-right text-[10px] text-slate-400">Updated {new Date(marketUpdatedAt).toLocaleTimeString()}</p>}
+      {marketUpdatedAt && <p className="mx-auto mt-3 max-w-7xl px-6 text-right text-[10px] text-slate-400">Live exchange data · Updated {new Date(marketUpdatedAt).toLocaleTimeString()}</p>}
+      {marketStatus === 'unavailable' && <p className="mt-2 text-center text-xs text-slate-500">Live market data is temporarily unavailable. Prices will reappear when the exchange feed reconnects.</p>}
     </section>
 
-    <section className="bg-white px-6 py-20 sm:py-24">
+    <section className="bg-white px-6 py-16 sm:py-24">
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto mb-12 max-w-4xl text-center">
           <p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">Future of Finance</p>
-          <h2 className="text-3xl font-extrabold leading-tight text-[#1b4962] sm:text-5xl">Explore a world of <span className="text-[#e94d65]">investment sectors</span></h2>
-          <p className="mt-5 text-base leading-8 text-slate-600">At AssetCrest, the published company overview covers cryptocurrency markets, real estate and digital assets, alongside traditional markets and emerging energy technologies. Explore the sectors below and review the relevant risks and terms before making any investment decision.</p>
+          <h2 className="text-3xl font-extrabold leading-tight text-[#1b4962] sm:text-5xl">Future of <span className="text-[#e94d65]">Finance</span></h2>
+          <p className="mt-5 text-base leading-8 text-slate-600">At AssetCrest, we specialize in delivering cutting-edge investment opportunities in cryptocurrency markets, real estate, and digital assets. Our mission is to provide innovative, secure, and transparent trading solutions tailored to meet the needs of both new and seasoned investors. With a robust platform and expert guidance, we empower you to grow your financial future in a rapidly evolving digital economy.</p>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {sectors.map(([title, copy], index) => <article key={title} className="group relative min-h-[220px] overflow-hidden border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-            <div className="absolute inset-x-0 top-0 h-1 bg-[#e94d65]" />
-            <div className="flex h-full flex-col p-7">
-              <div className="mb-5 flex items-center justify-between"><span className="flex h-12 w-12 items-center justify-center bg-[#edf3f6] text-sm font-extrabold text-[#1b4962]">{String(index + 1).padStart(2, '0')}</span><span className="text-2xl text-[#e94d65]">{['↗', '₿', '✚', '⌂', '◇', '⌁', '☀', 'H₂', '⇄'][index]}</span></div>
-              <h3 className="mb-3 text-lg font-bold text-[#1b4962] group-hover:text-[#e94d65]">{title}</h3>
-              <p className="text-sm leading-7 text-slate-600">{copy}</p>
-            </div>
+        <div className="grid gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
+          {sectors.map(({ title, copy, Icon }) => <article key={title} className="flex items-start gap-6 sm:gap-8">
+            <div className="flex h-[100px] w-[100px] shrink-0 items-center justify-center text-[#d9576a] sm:h-[130px] sm:w-[130px]"><Icon className="h-[78px] w-[78px] sm:h-[108px] sm:w-[108px]" strokeWidth={1.35} /></div>
+            <div className="min-w-0 flex-1"><h3 className="mb-3 text-2xl font-extrabold leading-tight text-[#294760] sm:text-3xl">{title}</h3><p className="text-base leading-8 text-[#191919] sm:text-lg">{copy}</p></div>
           </article>)}
         </div>
-        <div className="mt-10 text-center"><a href="/investment-plans/" className="inline-flex bg-[#1b4962] px-7 py-4 text-sm font-bold text-white hover:bg-[#12394f]">Explore investment plans</a></div>
+        <div className="mt-12 text-center"><a href="/register" className="inline-flex bg-[#e94d65] px-8 py-4 text-base font-bold text-white hover:bg-[#d83f58]">Register</a></div>
       </div>
     </section>
 
-    <section className="relative overflow-hidden bg-[#f4f6f8] px-6 py-20 sm:py-24">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
-        <div className="relative">
-          <img src={media('2019/04/img-experience.png')} alt="AssetCrest company and investment experience" loading="lazy" className="mx-auto max-h-[470px] w-full object-contain" />
-          <img src={media('2019/04/bgn-boxes-01.jpg')} alt="" loading="lazy" className="absolute -bottom-5 -left-5 -z-0 hidden h-36 w-36 object-cover opacity-70 md:block" />
-        </div>
-        <div>
-          <p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">Growing with our clients</p>
-          <h2 className="text-4xl font-extrabold leading-tight text-[#1b4962] sm:text-5xl">A considered approach to <span className="text-[#e94d65]">financial growth</span></h2>
-          <p className="mt-6 text-base leading-8 text-slate-600">AssetCrest describes its work across cryptocurrency exchanges, real estate, stocks and gold. The company overview emphasizes technology, financial information and support for investors exploring a changing digital economy.</p>
-          <p className="mt-4 text-base leading-8 text-slate-600">Whether you are learning about markets or managing an existing account, use the public information pages to explore the platform and the secure portal for account-specific activity.</p>
-          <div className="mt-8 grid gap-5 sm:grid-cols-3">
-            {[
-              ['Consistency', 'A dependable and clear investor experience.'],
-              ['Improvement', 'Reviewing tools as markets and technology evolve.'],
-              ['Branching', 'Exploring new areas of finance and innovation.'],
-            ].map(([title, copy]) => <div key={title} className="border-l-2 border-[#e94d65] pl-4"><h3 className="font-bold text-[#1b4962]">{title}</h3><p className="mt-2 text-xs leading-6 text-slate-600">{copy}</p></div>)}
-          </div>
-          <RegisterCTA />
-        </div>
-      </div>
-    </section>
-
-    <section className="relative overflow-hidden bg-[#1b4962] px-6 py-20 text-white sm:py-24" style={{ backgroundImage: 'linear-gradient(90deg,rgba(20,55,78,.94),rgba(20,55,78,.90)),url("' + media('2019/04/bgn-industries.png') + '")' }}>
-      <div className="mx-auto grid max-w-7xl items-center gap-10 md:grid-cols-2">
-        <div><p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#ff9aaa]">Unlock financial growth</p><h2 className="text-4xl font-extrabold leading-tight sm:text-5xl">Get your investment <span className="text-[#ff9aaa]">information right.</span></h2><p className="mt-5 max-w-xl text-base leading-8 text-slate-200">Explore the information available on AssetCrest, understand the risks and terms, and use the secure client portal when you are ready to manage your account.</p><div className="mt-8 flex flex-wrap gap-3"><a href="/investment-plans/" className="bg-[#e94d65] px-7 py-4 text-sm font-bold text-white hover:bg-[#d83f58]">View plans</a><a href="/our-process/" className="border border-white/60 px-7 py-4 text-sm font-bold text-white hover:bg-white hover:text-[#1b4962]">How it works</a></div></div>
-        <img src={media('2019/04/img-callback.png')} alt="AssetCrest investment information and support" loading="lazy" className="mx-auto max-h-[360px] w-full max-w-lg object-contain" />
-      </div>
-    </section>
-
-    <section className="relative overflow-hidden bg-white px-6 py-20 sm:py-24">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-cover bg-center opacity-30" style={{ backgroundImage: 'url("' + media('2019/04/bgn-quotes-top.png') + '")' }} />
+    <section className="relative overflow-hidden bg-[#f7f7f7] px-6 py-16 sm:py-24">
+      <div className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-[.12]" style={{ backgroundImage: 'url("' + media('2019/04/bgn-experience.png') + '")' }} />
       <div className="relative mx-auto max-w-7xl">
-        <SectionHeading eyebrow="Great reviews for our services" title="Client stories published by AssetCrest" copy="These testimonials are reproduced from the reference website. They are not independently verified endorsements or evidence of investment performance." />
-        <div className="grid gap-6 lg:grid-cols-3">
-          {visibleTestimonials.map((item) => <article key={item.name} className="flex h-full flex-col border border-slate-200 bg-white p-7 shadow-sm">
-            <div className="mb-5 flex items-center gap-4"><img src={media(item.image)} alt="" loading="lazy" className="h-16 w-16 rounded-full object-cover" /><div><p className="font-bold text-[#1b4962]">{item.name}</p><p className="text-xs text-slate-500">{item.country}</p></div></div>
-            <h3 className="mb-3 text-lg font-bold text-[#1b4962]">{item.title}</h3><p className="flex-1 text-sm leading-7 text-slate-600">{item.quote}</p>
+        <div className="grid items-center gap-10 lg:grid-cols-2">
+          <div><img src={media('2019/04/img-experience.png')} alt="AssetCrest experience illustration" loading="lazy" className="mx-auto max-h-[450px] w-full object-contain" /></div>
+          <div>
+            <p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">Growing with our clients</p>
+            <h2 className="text-4xl font-extrabold leading-tight text-[#1b4962] sm:text-5xl">20+ Years of <span className="text-[#e94d65]">Experience</span></h2>
+            <p className="mt-6 text-base leading-8 text-[#242424]">AssetCrest is a global financial company specializing in a wide range of investment services, from trading on cryptocurrency exchanges to investments in real estate, stocks, and gold. Our team of highly qualified professional traders ensures that we deliver secure, innovative, and profitable solutions for our clients.</p>
+            <p className="mt-4 text-base leading-8 text-[#242424]">At AssetCrest, We blend cutting-edge technology with expert financial services to deliver a seamless, secure, and profitable investment experience. Whether you’re looking to diversify your portfolio, optimize your returns, or simply explore the digital financial frontier, we have the tools and expertise to help you succeed.</p>
+            <RegisterCTA />
+          </div>
+        </div>
+        <div className="mt-16 grid gap-14 sm:grid-cols-3 sm:gap-8">
+          {circles.map(({ title, copy, Icon }) => <article key={title} className="flex flex-col items-center text-center">
+            <div className="relative flex h-[250px] w-[250px] items-center justify-center sm:h-[270px] sm:w-[270px]">
+              <svg viewBox="0 0 220 220" className="h-full w-full -rotate-90" role="img" aria-label="96 percent progress ring">
+                <circle cx="110" cy="110" r="101" fill="none" stroke="#f1f1f1" strokeWidth="5" />
+                <circle cx="110" cy="110" r="101" fill="none" stroke="#e94d65" strokeWidth="5" strokeLinecap="butt" strokeDasharray="608 635" />
+              </svg>
+              <Icon className="absolute h-14 w-14 text-[#294760]" strokeWidth={1.6} />
+            </div>
+            <h3 className="mt-7 text-3xl font-extrabold text-[#294760]">{title}</h3>
+            <p className="mt-5 max-w-sm text-base leading-8 text-[#242424]">{copy}</p>
           </article>)}
         </div>
-        <div className="mt-9 flex items-center justify-center gap-4">
-          <button type="button" onClick={() => setTestimonialIndex((testimonialIndex + testimonials.length - 1) % testimonials.length)} aria-label="Previous testimonials" className="flex h-11 w-11 items-center justify-center border border-slate-300 text-xl text-[#1b4962] hover:border-[#e94d65] hover:text-[#e94d65]">‹</button>
-          <div className="flex gap-2">{testimonials.map((item, index) => <button key={item.name} type="button" onClick={() => setTestimonialIndex(index)} aria-label={'Show testimonial group ' + (index + 1)} aria-pressed={testimonialIndex === index} className={'h-2.5 w-2.5 rounded-full ' + (testimonialIndex === index ? 'bg-[#e94d65]' : 'bg-slate-300')} />)}</div>
-          <button type="button" onClick={() => setTestimonialIndex((testimonialIndex + 1) % testimonials.length)} aria-label="Next testimonials" className="flex h-11 w-11 items-center justify-center border border-slate-300 text-xl text-[#1b4962] hover:border-[#e94d65] hover:text-[#e94d65]">›</button>
-        </div>
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-cover bg-bottom opacity-30" style={{ backgroundImage: 'url("' + media('2019/04/bgn-quotes-bottom.png') + '")' }} />
     </section>
 
-    <section className="bg-[#f4f6f8] px-6 py-14">
+    <section className="relative overflow-hidden bg-[#1b4962] px-6 py-16 text-white sm:py-24" style={{ backgroundImage: 'linear-gradient(rgba(27,73,98,.94),rgba(27,73,98,.96)),url("' + media('2019/04/bgn-quotes.jpg') + '")' }}>
       <div className="mx-auto max-w-7xl">
-        <p className="mb-8 text-center text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">More from the original AssetCrest design</p>
-        <div className="grid grid-cols-2 items-center gap-8 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9">
-          {partnerLogos.map((file) => <div key={file} className="flex h-16 items-center justify-center bg-white px-3 py-2"><img src={media('2019/04/' + file)} alt="" loading="lazy" className="max-h-10 max-w-full object-contain opacity-75 grayscale transition hover:opacity-100 hover:grayscale-0" /></div>)}
+        <div className="mb-12 max-w-2xl"><p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-[#e94d65]">Great reviews for our services</p><h2 className="text-4xl font-extrabold leading-tight text-white sm:text-6xl">Trusted by some<br /><span className="text-[#e94d65]">Biggest Names</span></h2></div>
+        <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
+          <img src={media(activeTestimonial.image)} alt={activeTestimonial.name} loading="lazy" className="h-44 w-44 rounded-full bg-white object-cover sm:h-52 sm:w-52" />
+          <h3 className="mt-9 max-w-3xl text-3xl font-extrabold leading-tight text-[#e94d65] sm:text-4xl">{activeTestimonial.title}</h3>
+          <p className="mt-8 max-w-4xl text-base leading-8 text-white sm:text-2xl sm:leading-[1.65]">{activeTestimonial.quote}</p>
+          <div className="mt-8 flex items-center gap-1 text-3xl text-white" aria-label="Five stars">★★★★★</div>
+          <p className="mt-8 text-lg uppercase tracking-wide text-white">{activeTestimonial.name}</p>
+          <p className="mt-4 text-2xl font-bold text-white">{activeTestimonial.country}</p>
+          <div className="mt-12 flex items-center justify-center gap-3">
+            <button type="button" onClick={() => setTestimonialIndex((testimonialIndex + testimonials.length - 1) % testimonials.length)} aria-label="Previous testimonial" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white hover:bg-white/10"><ChevronLeft className="h-5 w-5" /></button>
+            {testimonials.map((item, index) => <button key={item.name} type="button" onClick={() => setTestimonialIndex(index)} aria-label={'Show testimonial ' + (index + 1)} aria-pressed={testimonialIndex === index} className={'h-3 w-3 rounded-full ' + (testimonialIndex === index ? 'bg-[#e94d65]' : 'bg-white/30')} />)}
+            <button type="button" onClick={() => setTestimonialIndex((testimonialIndex + 1) % testimonials.length)} aria-label="Next testimonial" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white hover:bg-white/10"><ChevronRight className="h-5 w-5" /></button>
+          </div>
         </div>
-        <p className="mt-5 text-center text-[11px] leading-5 text-slate-500">The logos above are visual assets displayed on the reference website; their current commercial relationships have not been verified.</p>
       </div>
     </section>
 
-    <section className="bg-white px-6 py-20 sm:py-24">
-      <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
-        <div><p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">Get in touch</p><h2 className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">Questions about the platform?</h2><p className="mt-5 max-w-xl text-base leading-8 text-slate-600">For questions about your account, sign in to the secure client portal. For general information, explore the company pages or review the published process before registering.</p><div className="mt-8 flex flex-wrap gap-3"><a href="/contact-us/" className="bg-[#e94d65] px-7 py-4 text-sm font-bold text-white hover:bg-[#d83f58]">Contact us</a><a href="/login" className="bg-[#1b4962] px-7 py-4 text-sm font-bold text-white hover:bg-[#12394f]">Client login</a></div></div>
-        <div className="relative min-h-[260px] overflow-hidden bg-[#f4f6f8] p-5"><img src={media('2019/04/img-footer-map.png')} alt="Map image displayed in the original AssetCrest footer" loading="lazy" className="h-full max-h-[300px] w-full object-contain" /><div className="absolute bottom-5 left-5 bg-white/95 px-4 py-3 shadow"><p className="text-xs font-bold uppercase tracking-wider text-[#e94d65]">Office address published on reference site</p><p className="mt-1 text-sm text-[#1b4962]">Moor House, 120 London Wall, London EC2Y 5ET, United Kingdom</p></div></div>
+    <section className="bg-white px-6 py-12 sm:py-16">
+      <div className="mx-auto max-w-7xl"><div className="grid grid-cols-2 items-center gap-8 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9">
+        {partnerLogos.map(file => <div key={file} className="flex h-16 items-center justify-center px-3 py-2"><img src={media('2019/04/' + file)} alt="" loading="lazy" className="max-h-12 max-w-full object-contain opacity-75" /></div>)}
+      </div></div>
+    </section>
+
+    <section className="relative overflow-hidden bg-[#f6f7f8] px-6 py-16 sm:py-24">
+      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
+        <div>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">Unlock financial growth</p>
+          <h2 className="text-4xl font-extrabold leading-tight text-[#1b4962] sm:text-5xl">Get your <span className="text-[#e94d65]">Investment Right</span></h2>
+          <p className="mt-6 text-base leading-8 text-[#242424]">At AssetCrest, we strive for transparency, security, and innovation. Our mission is to provide investors with high-quality, tax-efficient financial solutions, backed by real-time market data, advanced technology, and a deep understanding of global financial markets.</p>
+          <a href="/register" className="mt-8 inline-flex bg-[#e94d65] px-8 py-4 text-base font-bold text-white hover:bg-[#d83f58]">Register</a>
+          <div className="mt-12 grid gap-8 sm:grid-cols-3">
+            <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$7.1B</p><p className="mt-2 text-sm leading-6 text-slate-600">Enabled over $7.1 billion in deposits</p></div>
+            <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$901M</p><p className="mt-2 text-sm leading-6 text-slate-600">With over $901 million withdrawn</p></div>
+            <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">209K+</p><p className="mt-2 text-sm leading-6 text-slate-600">Proudly serving 209,000+ users</p></div>
+          </div>
+          <p className="mt-6 text-[11px] leading-5 text-slate-500">These figures are displayed on the reference website and have not been independently verified.</p>
+        </div>
+        <img src={media('2019/04/img-callback.png')} alt="AssetCrest information and contact illustration" loading="lazy" className="mx-auto max-h-[440px] w-full object-contain" />
       </div>
     </section>
   </>;

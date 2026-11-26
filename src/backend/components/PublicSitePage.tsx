@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight, MessageCircle, Clock3, MapPin, Facebook, Twitter } from 'lucide-react';
 
-const media = (file: string) => `/reference-assets/${file}`;
+const media = (file: string) => `https://assetcrest.co/wp-content/uploads/${file}`;
 
 const navItems = [
   { label: 'Home', href: '/' },
@@ -58,14 +58,15 @@ const principles = [
 const planNames = ['Beginners', 'Prime', 'Executive', 'Premium'];
 
 const milestones = [
-  ['March 1999', 'AssetCrest Founded', 'The reference company history describes the establishment of AssetCrest by a team exploring accessible digital financial solutions.', '2017/04/blog-post-14-768x512.jpg'],
-  ['June 2002', 'Digital Payment Integration', 'The published timeline describes the introduction of online payment integrations and a focus on efficient digital transactions.', '2019/04/blog-post-26-768x512.jpg'],
-  ['August 2010', 'Blockchain Exploration Begins', 'The timeline describes early exploration of blockchain technology and its potential for transparency and digital finance.', '2019/04/blog-post-18-768x512.jpg'],
-  ['December 2012', 'First Blockchain Investment Product', 'The reference timeline marks the launch of a blockchain-based investment product.', '2017/04/blog-post-05-768x512.jpg'],
-  ['February 2015', 'Strategic Partnerships', 'The published history describes partnerships intended to broaden the range of digital financial services.', '2017/04/blog-post-12-768x512.jpg'],
-  ['September 2018', 'Mobile Investment App', 'The timeline describes the introduction of a mobile experience for accessing investment tools.', '2017/04/blog-post-04-768x512.jpg'],
-  ['April 2020', 'Platform Expansion', 'The reference history describes an expansion of its digital-asset services and platform capabilities.', '2017/04/blog-post-10-768x512.jpg'],
-  ['October 2022', 'Analytics Tools', 'The published timeline describes adding data and analytics tools to support investor research.', '2017/04/blog-post-13-768x512.jpg'],
+  ['March 1999', 'AssetCrest Founded', 'AssetCrest was established by a team of early technology enthusiasts with the goal of creating accessible financial solutions for the digital age. At this time, the internet was still emerging as a global platform, and our team was dedicated to exploring how digital finance could offer new opportunities for all investors.', '2017/04/blog-post-14-768x512.jpg'],
+  ['June 2002', 'Digital Payment Integration', 'We introduced digital payment integrations, allowing investors to easily access and manage funds in an online ecosystem. This move marked our commitment to providing seamless investment experiences by ensuring that transactions were secure, efficient, and easy to manage.', '2019/04/blog-post-26-768x512.jpg'],
+  ['August 2010', 'Blockchain Exploration Begins', 'With the emergence of blockchain technology, AssetCrest began exploring ways to integrate blockchain into our services. This was the beginning of our shift from traditional digital finance to decentralized finance (DeFi), with the goal of bringing blockchain-backed security and transparency to investors.', '2019/04/blog-post-18-768x512.jpg'],
+  ['December 2012', 'Launch of First Blockchain Investment Product', 'AssetCrest launched its first blockchain-based investment product, allowing users to invest in digital assets with unparalleled security. This product offered features such as transparent transactions and minimized intermediary fees.', '2017/04/blog-post-05-768x512.jpg'],
+  ['February 2015', 'Strategic Partnerships with Global Institutions', 'We formed partnerships with prominent global financial institutions to enhance the range of digital assets available on our platform. This strengthened AssetCrest’s reputation as a reliable partner in digital finance and expanded our reach into institutional investing.', '2017/04/blog-post-12-768x512.jpg'],
+  ['September 2018', 'Launch of Mobile Investment App', 'Recognizing the shift towards mobile, we introduced our mobile app, bringing our investment tools to users’ fingertips with real-time market data, mobile trading, and personalized investment recommendations.', '2017/04/blog-post-04-768x512.jpg'],
+  ['April 2020', 'Major Platform Expansion', 'During this pivotal year, AssetCrest expanded its platform to include a wider range of blockchain assets, staking options, and investment plans tailored to diverse user needs.', '2017/04/blog-post-10-768x512.jpg'],
+  ['October 2022', 'Adoption of AI-Powered Investment Tools', 'To enhance investment performance and insights, we integrated AI-powered analytics, helping users make data-driven investment choices and explore predictive market trends and automated trading strategies.', '2017/04/blog-post-13-768x512.jpg'],
+  ['May 2023', 'Industry Excellence Award', 'The original company history page states that AssetCrest was recognized with an award for “Excellence in Digital Trading and Investment” in 2023. This historical claim has not been independently verified.', '2017/04/blog-post-06-768x512.jpg'],
 ];
 
 function Logo() {
@@ -125,6 +126,15 @@ function Footer() {
               <p className="mt-3 max-w-4xl text-lg leading-relaxed text-slate-400 sm:text-2xl">Moor House, 120 London Wall, London<br className="hidden sm:block" /> EC2Y 5ET, United Kingdom</p>
             </section>
           </div>
+          <section className="pt-12 text-center sm:pt-16">
+            <h2 className="text-2xl font-medium text-white sm:text-3xl">Contact details</h2>
+            <div className="mt-6 flex flex-col items-center gap-3 text-base text-slate-300">
+              <a href="mailto:info@assetcrestonline.com" className="hover:text-white">info@assetcrestonline.com</a>
+              <a href="mailto:customersupport@assetcrestonline.com" className="hover:text-white">customersupport@assetcrestonline.com</a>
+              <a href="mailto:compliance%26maintenance@assetcrestonline.com" className="hover:text-white">compliance&maintenance@assetcrestonline.com</a>
+              <a href="https://assetcrestonline.com" className="hover:text-white">assetcrestonline.com</a>
+            </div>
+          </section>
           <section className="pt-12 text-center sm:pt-16">
             <h2 className="text-2xl font-medium text-white sm:text-3xl">Visit our social pages</h2>
             <div className="mt-8 flex items-center justify-center gap-7 text-[#df6075]">
@@ -372,27 +382,59 @@ function HomePage() {
 }
 
 function AboutPage() {
+  const principles = [
+    ['Security First','We prioritize the safety of our users’ assets and data with state-of-the-art security measures and transparent protocols, ensuring peace of mind for all our investors.'],
+    ['Innovation and Progress','Our platform is built on forward-thinking technology that adapts to market needs, providing advanced tools and resources for intelligent investment choices in the digital economy.'],
+    ['Trust and Transparency','At AssetCrest, we believe in building trust through openness. We are committed to clear, transparent operations so that our investors are informed and confident.'],
+    ['Exceptional User Experience','Simplicity is key. We focus on providing an intuitive and seamless experience for every investor, regardless of their experience level, ensuring ease in navigating the digital finance world.'],
+    ['Financial Growth and Opportunity','Our platform is designed with growth in mind, offering diverse investment options that align with each investor’s financial goals, for meaningful, long-term wealth generation.'],
+    ['Community and Support','AssetCrest is more than just a platform; it’s a community. We are dedicated to supporting our investors with excellent customer care and educational resources to help them succeed.'],
+  ];
   return <>
     <PageHero eyebrow="Who we are" title="About AssetCrest" image="2019/04/bgn-cases-2.png" />
     <section className="bg-white px-6 py-20"><div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2">
-      <div><p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">Our story</p><h2 className="mb-7 text-3xl font-extrabold text-[#1b4962] sm:text-4xl">Making digital finance easier to navigate</h2>
+      <div><p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">Our story</p><h2 className="mb-7 text-3xl font-extrabold text-[#1b4962] sm:text-4xl">Making digital finance accessible</h2>
         <div className="space-y-5 text-base leading-8 text-slate-600">
-          <p>AssetCrest was born out of a passion for reshaping the financial world. Our founding team, a group of blockchain enthusiasts and investment experts, envisioned a future where digital finance would be accessible to everyone—not just the tech-savvy or the wealthy few. We set out to build a platform that combines the innovation of blockchain with the stability, security and user-friendliness investors expect.</p>
-          <p>With a focus on innovation, we aim to stay aware of industry changes and provide tools and services that adapt to market dynamics. We are here to provide a space where digital assets can be explored with integrity and forward-thinking strategies.</p>
-          <p>Our vision is to create a world where digital finance is a seamless extension of the global economy. We aim to make digital assets easier to understand through secure, transparent information and an inclusive community.</p>
-          <p>Our commitment to innovation, transparency and community support remains central to the way we describe our work and the experience we seek to provide.</p>
+          <p>AssetCrest was born out of a passion for reshaping the financial world. Our founding team, a group of blockchain enthusiasts and investment experts, envisioned a future where digital finance would be accessible to everyone—not just the tech-savvy or the wealthy few. At that time, the blockchain industry was still maturing, with countless potential but a need for dependable, secure platforms that could meet the complex needs of modern investors. So, we set out to build AssetCrest—a platform that combines the innovation of blockchain with the stability, security, and user-friendliness that investors expect.</p>
+          <p>With a focus on innovation, we stay ahead of industry changes, offering tools and services that adapt to market dynamics and support our investors in achieving financial growth. We’re here to provide a space where digital assets are managed with integrity and forward-thinking strategies. For us, the future is digital, and our commitment is to be the gateway to that future for our community.</p>
+          <p>What began as a small team has transformed into a thriving community of thousands of investors worldwide. Our platform now stands as a symbol of trust, reliability, and opportunity in a constantly changing blockchain landscape. We are proud to say that our growth is fueled by a clear mission and a bold vision: to make blockchain investments both profitable and secure for everyone. Assetera is designed to empower individuals and institutions alike, enabling them to navigate the digital asset landscape with confidence.</p>
+          <p>Our vision is to create a world where digital finance is a seamless extension of the global economy. At AssetCrest, we aim to redefine investment in the blockchain space, transforming digital assets from a novelty to a reliable part of any investment portfolio. We envision a platform that goes beyond the traditional limitations of financial services by offering forward-thinking strategies, secure and transparent asset management, and an inclusive community.</p>
+          <p>At AssetCrest, we are driven by a shared vision of making digital finance accessible, secure, and empowering for all. As we continue to grow, our commitment to innovation, transparency, and community support remains unwavering. We believe that the future of finance is digital and are dedicated to providing our users with the tools, resources, and trust they need to succeed in this evolving landscape.</p>
         </div><RegisterCTA />
       </div>
       <img src={media('2017/04/blog-post-06-1280x854.jpg')} alt="Digital finance and investment" loading="lazy" className="w-full shadow-xl" />
     </div></section>
-    <section className="bg-[#f4f6f8] px-6 py-20"><div className="mx-auto max-w-7xl"><SectionHeading eyebrow="Our principles" title="What guides our work" /><div className="grid gap-6 md:grid-cols-3">{[['Consistency','We focus on clear processes and a dependable user experience.'],['Improvement','We continue to review our tools and services as technology and markets evolve.'],['Branching','We explore new areas of digital finance and emerging investment themes.']].map(([a,b])=><div key={a} className="bg-white p-8 shadow-sm"><h3 className="mb-3 text-xl font-bold text-[#1b4962]">{a}</h3><p className="text-sm leading-7 text-slate-600">{b}</p></div>)}</div></div></section>
+    <section className="bg-[#f4f6f8] px-6 py-20"><div className="mx-auto max-w-7xl"><SectionHeading eyebrow="Our principles" title="What guides our work" /><div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{principles.map(([title,copy])=><article key={title} className="bg-white p-8 shadow-sm"><h3 className="mb-3 text-xl font-bold text-[#1b4962]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></article>)}</div></div></section>
+    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-7xl">
+      <SectionHeading eyebrow="Our people" title="Meet the team" />
+      <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          ['Calvin Durant','2019/04/img-people-06.jpg'],
+          ['Caitlin Thomas','2019/04/img-people-05.jpg'],
+          ['Amely Norwood','2019/04/img-people-07.jpg'],
+          ['Darryl Penn','2019/04/img-people-08.jpg'],
+        ].map(([name,image])=><article key={name} className="text-center"><img src={media(image)} alt={name} loading="lazy" className="aspect-[4/5] w-full object-cover" /><h3 className="mt-4 text-lg font-bold text-[#294760]">{name}</h3><a href="/register" className="mt-2 inline-block text-sm font-semibold text-[#d9576a]">Read more</a></article>)}
+      </div>
+      <div className="mt-16 border-t border-slate-200 pt-12">
+        <SectionHeading eyebrow="Our partners" title="Partner brands" />
+        <div className="grid grid-cols-2 items-center gap-8 sm:grid-cols-3 lg:grid-cols-5">
+          {['logo-hotel-berg.png','logo-hotel-california.png','logo-estato.png','logo-addison.png','logo-urbanist.png','logo-bold-news.png','logo-celeste.png','logo-applauz.png','logo-bello.png'].map(file=><img key={file} src={media('2019/04/'+file)} alt={file.replace('logo-','').replace('.png','').replaceAll('-',' ')} loading="lazy" className="mx-auto max-h-16 max-w-full object-contain" />)}
+        </div>
+      </div>
+    </div></section>
   </>;
 }
 
 function HistoryPage() {
   return <>
     <PageHero eyebrow="Our journey" title="Company history" image="2019/04/bgn-cases.png" />
-    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-4xl"><SectionHeading eyebrow="Milestones" title="A timeline of the company" copy="The milestones below reflect the timeline published on the reference website; they have not been independently verified." />
+    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-4xl">
+      <div className="mb-12 space-y-5 text-base leading-8 text-slate-600">
+        <p>AssetCrest was founded on the vision of creating a platform where digital finance could be accessible, secure, and profitable for everyone. What began as a small team of innovators has evolved into a trusted leader in blockchain-based investment solutions. Rooted in a dedication to transparency, performance, and investor empowerment, AssetCrest has built a community that now spans across the globe, with thousands of users relying on our expertise in digital finance.</p>
+        <p>Starting from humble beginnings in 1999, AssetCrest pioneered digital finance at a time when digital trading was still in its infancy. By blending our passion for technology with a commitment to ethical investment, we steadily grew our platform, attracting both individual investors and large institutions. With each milestone, our team worked to improve security, scalability, and user experience.</p>
+      </div>
+      <div className="mb-12 grid grid-cols-2 gap-4 sm:grid-cols-4">{['Client Satisfaction','Precise Investment','Business Uprise','Projects Success'].map(label=><div key={label} className="border border-slate-200 p-5 text-center text-sm font-bold text-[#294760]">{label}</div>)}</div>
+      <SectionHeading eyebrow="Milestones" title="A timeline of the company" copy="The milestones below reflect the timeline published on the reference website; they have not been independently verified." />
       <div className="relative space-y-8 before:absolute before:bottom-0 before:left-[17px] before:top-2 before:w-px before:bg-[#e5a0aa] sm:before:left-[23px]">
         {milestones.map(([date,title,copy,image])=><article key={date} className="relative grid gap-5 pl-12 sm:grid-cols-[150px_1fr] sm:gap-8 sm:pl-16">
           <span className="absolute left-0 top-1 flex h-9 w-9 items-center justify-center rounded-full border-4 border-white bg-[#e94d65] text-[0px] shadow sm:h-12 sm:w-12" />
@@ -405,26 +447,65 @@ function HistoryPage() {
 }
 
 function PlansPage() {
+  const plans = [
+    {name:'Beginners',min:'$200',max:'$4,999',daily:'1.36%',monthly:'40.8%',referral:'5%',duration:'30'},
+    {name:'Prime',min:'$5,000',max:'$49,999',daily:'1.72%',monthly:'51.6%',referral:'5%',duration:'30'},
+    {name:'Executive',min:'$50,000',max:'$99,999',daily:'2.08%',monthly:'62.4%',referral:'5%',duration:'30'},
+    {name:'Premium',min:'$100,000',max:'$1,000,000',daily:'2.44%',monthly:'73.2%',referral:'5%',duration:'30'},
+  ];
+  const benefits = [
+    ['Daily Returns','Earn consistent daily returns tailored to your selected plan, helping you grow your investment steadily over time.'],
+    ['Capital Protection','The original website states that each investment plan includes 100% capital protection. This claim has not been independently verified and must not be treated as a guarantee.'],
+    ['Automated Payouts','The original website describes automated payouts that credit returns to investors. Confirm the current payout terms in the secure portal.'],
+    ['24/7 Support','Our dedicated support team is described as available around the clock, ready to assist with questions or needs.'],
+    ['A.I.-Integrated Trading','The original website describes AI-driven trading technology using data insights and real-time analysis.'],
+    ['Flexible Investment','The original website lists a 30-day duration for each plan. Confirm current terms and any withdrawal restrictions before proceeding.'],
+  ];
   return <>
     <PageHero eyebrow="Investment options" title="Investment plans" image="2019/04/bgn-industries.png" />
-    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-7xl"><SectionHeading eyebrow="Find your starting point" title="Explore the available plan categories" copy="The reference website lists four plan categories. Current rates, minimums, terms, risk disclosures and eligibility must be confirmed in the secure portal before making any investment decision." />
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">{planNames.map((name,i)=><article key={name} className={`border bg-white p-8 shadow-sm ${i===1?'border-[#e94d65]':'border-slate-200'}`}><p className="mb-4 text-xs font-bold uppercase tracking-[.18em] text-[#e94d65]">Plan 0{i+1}</p><h3 className="mb-4 text-2xl font-extrabold text-[#1b4962]">{name}</h3><p className="min-h-20 text-sm leading-7 text-slate-600">A plan category published by AssetCrest. Review the current terms, risks and eligibility requirements in the client portal.</p><a href="/register" className="mt-7 inline-flex w-full justify-center bg-[#1b4962] px-5 py-3 text-sm font-bold text-white hover:bg-[#12394f]">View in client portal</a></article>)}</div>
+    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-7xl"><SectionHeading eyebrow="Find your starting point" title="Explore the available plan categories" copy="The following figures are transcribed from the original AssetCrest investment-plans page. They are historical website claims, not verified current offers, and do not establish that returns or capital are guaranteed." />
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">{plans.map((plan,i)=><article key={plan.name} className={`border bg-white p-7 shadow-sm ${i===1?'border-[#e94d65]':'border-slate-200'}`}><p className="mb-4 text-xs font-bold uppercase tracking-[.18em] text-[#e94d65]">Plan 0{i+1}</p><h3 className="mb-5 text-2xl font-extrabold text-[#1b4962]">{plan.name}</h3><dl className="space-y-3 text-sm">{[['Minimum',plan.min],['Maximum',plan.max],['Daily profits (published)',plan.daily],['Monthly profits (published)',plan.monthly],['Referral bonus (published)',plan.referral],['Duration (days)',plan.duration]].map(([label,value])=><div key={label} className="flex justify-between gap-3 border-b border-slate-100 pb-2"><dt className="text-slate-500">{label}</dt><dd className="font-semibold text-[#294760]">{value}</dd></div>)}</dl><p className="mt-4 text-xs leading-5 text-slate-500">The source page also lists “100% Protection”, automated payouts, A.I. trading and 24/7 support; these statements are not independently verified.</p><a href="/register" className="mt-6 inline-flex w-full justify-center bg-[#1b4962] px-5 py-3 text-sm font-bold text-white hover:bg-[#12394f]">View in client portal</a></article>)}</div>
     </div></section>
-    <section className="bg-[#f4f6f8] px-6 py-20"><div className="mx-auto max-w-6xl"><SectionHeading eyebrow="Before investing" title="Information to review" /><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[['Understand the risks','Investment values can rise or fall. Review all material risks before committing funds.'],['Read the current terms','Confirm fees, investment duration, withdrawal rules and any applicable limits.'],['Verify the provider','Check the legal entity, regulatory status and custody arrangements independently.'],['Understand liquidity','Check when and how invested funds may be withdrawn.'],['Review support channels','Use verified company contact details and the secure portal for account-specific help.'],['Make informed decisions','Do not rely on projected or guaranteed returns without independently verifiable documentation.']].map(([a,b])=><div key={a} className="bg-white p-7"><h3 className="mb-3 font-bold text-[#1b4962]">{a}</h3><p className="text-sm leading-7 text-slate-600">{b}</p></div>)}</div></div></section>
+    <section className="bg-[#f4f6f8] px-6 py-20"><div className="mx-auto max-w-6xl"><SectionHeading eyebrow="Plan information" title="Features described on the original website" /><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{benefits.map(([title,copy])=><div key={title} className="bg-white p-7"><h3 className="mb-3 font-bold text-[#1b4962]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></div>)}</div></div></section>
   </>;
 }
 
 function ProcessPage() {
   const steps = [
-    ['01','Create an account','Use the Register page to start account creation and follow the verification steps shown by the secure portal.'],
-    ['02','Review the options','Explore the available plan information and read the terms, risks, eligibility and fees before proceeding.'],
-    ['03','Make an informed decision','Only proceed after you have reviewed the investment details and confirmed the payment instructions inside your account.'],
-    ['04','Manage your account','Use the client portal to review account activity, available statements and withdrawal information.'],
+    ['01','Create an account','Creating an account takes only minutes. Enter your information and complete the email verification steps shown by the secure portal.'],
+    ['02','Choose an investment plan','After registration, review the available plan information and choose only after reading the current terms, risks, eligibility and fees.'],
+    ['03','Review your investment','Use your account to review your investment details and activity. The original site describes the investment period as running until maturity.'],
+    ['04','Manage withdrawals','The original process page says earnings and initial capital are credited after maturity and can then be requested for withdrawal. Check the actual withdrawal terms in the secure portal.'],
+  ];
+  const features = [
+    ['High Reliability','Trusted by investors globally, we continuously enhance our platform to minimize risks and maximize returns.'],
+    ['Comprehensive Support','Our 24/7 support team is always available through email, live chat, and messaging platforms to assist you.'],
+    ['Legal and Certified','The original website describes the company as licensed and regulated. Verify the legal entity and regulatory status independently before relying on this claim.'],
+    ['Proprietary Technology','We quickly react to market trends, providing bespoke and highly efficient portfolio management solutions.'],
+    ['Secure Withdrawals','The original page describes fast withdrawals with high maximum limits and real-time processing. Confirm current processing times and limits in the portal.'],
+    ['Investment Options','The original page states that it provides access to over 4,000 funds, including stocks, forex, ETFs, and cryptocurrencies. This figure has not been independently verified.'],
   ];
   return <>
     <PageHero eyebrow="How it works" title="Our process" image="2017/04/blog-post-05-1280x854.jpg" />
-    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-7xl"><SectionHeading eyebrow="Getting started" title="A clear path through the investor journey" copy="The reference site describes account creation, selecting an option and managing funds. The steps below keep those actions within the existing secure AssetCrest portal." />
+    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-7xl">
+      <div className="mx-auto mb-14 max-w-4xl space-y-5 text-base leading-8 text-slate-600">
+        <p>At AssetCrest, we’re proud to be trusted by thousands of users worldwide who rely on us for secure, high-performance investment solutions. Our platform is designed to make investing in digital assets accessible and rewarding, regardless of experience level. By blending cutting-edge technology with a user-friendly experience, AssetCrest aims to lead the way in providing innovative opportunities in today’s digital economy.</p>
+        <p>Creating an account with us is simple and takes only minutes. Just click “Create Account,” enter your information, and verify your email through a unique code. This easy onboarding process ensures that every investor has a secure start and is fully set up to explore our platform’s features without hassle.</p>
+        <p>After you’re signed up, you can choose a deposit plan that aligns with your financial goals. Our range of investment options is tailored for different investor types, allowing you to select the path that best suits your strategy and budget. We prioritize flexibility, so whether you’re a first-time investor or an experienced professional, there’s an option that fits your needs.</p>
+        <p>Once your investment matures, your earnings and initial capital are credited to your account, ready for withdrawal. AssetCrest takes pride in ensuring that withdrawals are fast, secure, and seamless. With transparency and reliability at the core of our platform, we make it easy for you to access and enjoy your returns. Join us at AssetCrest, where digital investment meets opportunity and trust.</p>
+        <p>Unlock the full potential of your financial future with AssetCrest. Our platform offers investment opportunities in the blockchain space, designed to help you grow your digital assets. Whether you’re just starting or looking to expand your portfolio, AssetCrest provides tools and support to help you make informed decisions.</p>
+        <p>With a variety of investment plans tailored to different goals and budgets, AssetCrest says every investor can find a path that suits them. Review the current product details and risks before making any decision.</p>
+      </div>
+      <SectionHeading eyebrow="Getting started" title="A clear path through the investor journey" copy="The following steps summarize the process described on the original AssetCrest website." />
       <div className="grid gap-6 md:grid-cols-2">{steps.map(([n,title,copy])=><article key={n} className="flex gap-5 border border-slate-200 p-7"><span className="text-3xl font-extrabold text-[#e94d65]">{n}</span><div><h3 className="mb-3 text-xl font-bold text-[#1b4962]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></div></article>)}</div>
+      <div className="mt-16"><SectionHeading eyebrow="Our services" title="Investment sectors" /><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{sectors.map(({title,copy,Icon})=><article key={title} className="flex gap-4 border border-slate-200 p-6"><Icon className="h-10 w-10 shrink-0 text-[#d9576a]" strokeWidth={1.5}/><div><h3 className="mb-2 font-bold text-[#294760]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></div></article>)}</div></div>
+      <div className="mt-16"><SectionHeading eyebrow="Platform features" title="More information for investors" /><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{features.map(([title,copy])=><article key={title} className="bg-[#f4f6f8] p-7"><h3 className="mb-3 font-bold text-[#1b4962]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></article>)}</div></div>
+      <div className="mt-16 grid gap-8 border-y border-slate-200 py-12 text-center sm:grid-cols-3">
+        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$7.1B</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">Enabled over $7.1 billion in deposits</h3></div>
+        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$901M</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">With over $901 million withdrawn</h3></div>
+        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">209,000+</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">Proudly serving 209,000+ users</h3></div>
+        <p className="sm:col-span-3 text-xs leading-5 text-slate-500">Figures reproduced from the original AssetCrest website and not independently verified.</p>
+      </div>
       <div className="mt-12 grid items-center gap-10 lg:grid-cols-2"><img src={media('2019/04/img-faq-2.png')} alt="Investment process illustration" loading="lazy" className="mx-auto max-h-80 w-full object-contain" /><div><h3 className="text-2xl font-extrabold text-[#1b4962]">Support throughout the process</h3><p className="mt-4 text-sm leading-7 text-slate-600">Review platform information, keep your account details secure and use verified support channels if you need assistance.</p><RegisterCTA /></div></div>
     </div></section>
   </>;
@@ -514,12 +595,22 @@ function ContactPage() {
   return <>
     <PageHero eyebrow="Get in touch" title="Contact AssetCrest" image="2019/04/bgn-searching.jpg" />
     <section className="bg-white px-6 py-20"><div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2">
-      <div><p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">Contact and support</p><h2 className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">How can we help?</h2><p className="mt-5 text-base leading-8 text-slate-600">For account-specific questions, please use the existing secure client portal. This keeps personal and account information within the authenticated service.</p><div className="mt-8 flex flex-wrap gap-3"><a href="/login" className="bg-[#1b4962] px-7 py-4 text-sm font-bold text-white">Client login</a><a href="/register" className="border border-[#1b4962] px-7 py-4 text-sm font-bold text-[#1b4962]">Register</a></div></div>
-      <div className="bg-[#f4f6f8] p-8 sm:p-10"><h3 className="mb-5 text-xl font-bold text-[#1b4962]">Support through your account</h3><p className="text-sm leading-7 text-slate-600">Sign in to access the support options made available to registered clients. Do not send passwords, verification codes or payment credentials by email or through public forms.</p><img src={media('2019/04/img-faq-1.png')} alt="Customer support" loading="lazy" className="mt-7 max-h-64 w-full object-contain" /></div>
+      <div><p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#e94d65]">Contact details</p><h2 className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">We’re here to help</h2>
+        <div className="mt-8 space-y-7 text-slate-600"><div><h3 className="font-bold text-[#1b4962]">Address</h3><p className="mt-2 text-base leading-7">Moor House, 120 London Wall, London EC2Y 5ET, United Kingdom</p></div><div><h3 className="font-bold text-[#1b4962]">Email us</h3><div className="mt-2 flex flex-col items-start gap-2 text-base text-[#d9576a]"><a className="underline" href="mailto:info@assetcrestonline.com">info@assetcrestonline.com</a><a className="underline" href="mailto:customersupport@assetcrestonline.com">customersupport@assetcrestonline.com</a><a className="underline" href="mailto:compliance%26maintenance@assetcrestonline.com">compliance&maintenance@assetcrestonline.com</a></div></div></div>
+        <p className="mt-8 text-sm leading-7 text-slate-600">For account-specific questions, please use the existing secure client portal. Never send passwords, verification codes or payment credentials by email or through a public form.</p><div className="mt-8 flex flex-wrap gap-3"><a href="/login" className="bg-[#1b4962] px-7 py-4 text-sm font-bold text-white">Client login</a><a href="/register" className="border border-[#1b4962] px-7 py-4 text-sm font-bold text-[#1b4962]">Register</a></div>
+      </div>
+      <div className="bg-[#f4f6f8] p-8 sm:p-10"><h3 className="mb-3 text-xl font-bold text-[#1b4962]">Send us a message</h3><p className="mb-6 text-sm leading-7 text-slate-600">Required fields are marked *</p>
+        <form action="mailto:customersupport@assetcrestonline.com" method="post" encType="text/plain" className="space-y-4">
+          <label className="block text-sm font-semibold text-[#294760]">Your Name *<input required name="Your Name" autoComplete="name" className="mt-2 w-full border border-slate-300 bg-white px-4 py-3 font-normal outline-none focus:border-[#d9576a]" /></label>
+          <label className="block text-sm font-semibold text-[#294760]">Your Email *<input required type="email" name="Your Email" autoComplete="email" className="mt-2 w-full border border-slate-300 bg-white px-4 py-3 font-normal outline-none focus:border-[#d9576a]" /></label>
+          <label className="block text-sm font-semibold text-[#294760]">Subject *<input required name="Subject" className="mt-2 w-full border border-slate-300 bg-white px-4 py-3 font-normal outline-none focus:border-[#d9576a]" /></label>
+          <label className="block text-sm font-semibold text-[#294760]">Your Message *<textarea required name="Your Message" rows={5} className="mt-2 w-full border border-slate-300 bg-white px-4 py-3 font-normal outline-none focus:border-[#d9576a]" /></label>
+          <button type="submit" className="bg-[#d9576a] px-7 py-4 text-sm font-bold text-white hover:bg-[#c9495d]">Send message by email</button>
+        </form>
+      </div>
     </div></section>
   </>;
 }
-
 
 function SupportShortcut() {
   return <a href="/contact-us/" aria-label="Contact AssetCrest support" title="Contact AssetCrest support" className="fixed bottom-6 right-6 z-[60] flex h-16 w-16 items-center justify-center rounded-full bg-[#009ce0] text-white shadow-[0_8px_30px_rgba(0,0,0,.18)] transition hover:scale-105 hover:bg-[#0089c8] sm:bottom-8 sm:right-8 sm:h-[72px] sm:w-[72px]">

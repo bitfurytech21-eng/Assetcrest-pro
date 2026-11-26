@@ -595,3 +595,30 @@ textarea:focus-visible,
     animation-duration: 0.01ms !important;
   }
 }
+
+
+/* AssetCrest reference homepage market ticker */
+.assetcrest-ticker-viewport {
+  width: 100%;
+  overflow: hidden;
+  background: #fff;
+}
+.assetcrest-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: assetcrest-ticker-scroll 54s linear infinite;
+  will-change: transform;
+}
+.assetcrest-ticker-viewport:hover .assetcrest-ticker-track,
+.assetcrest-ticker-viewport:focus-within .assetcrest-ticker-track {
+  animation-play-state: paused;
+}
+@keyframes assetcrest-ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .assetcrest-ticker-track {
+    animation: none;
+  }
+}

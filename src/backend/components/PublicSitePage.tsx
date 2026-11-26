@@ -328,10 +328,22 @@ function HomePage() {
       </div>
     </section>
 
-    <section className="bg-white px-6 py-12 sm:py-16">
-      <div className="mx-auto max-w-7xl"><div className="grid grid-cols-2 items-center gap-8 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-9">
-        {partnerLogos.map(file => <div key={file} className="flex h-16 items-center justify-center px-3 py-2"><img src={media('2019/04/' + file)} alt="" loading="lazy" className="max-h-12 max-w-full object-contain opacity-75" /></div>)}
-      </div></div>
+    <section aria-label="AssetCrest partner logos" className="bg-white px-0 py-12 sm:py-16">
+      <div className="mx-auto max-w-7xl">
+        <div className="assetcrest-partners-viewport" aria-label="Partner logos moving horizontally">
+          <div className="assetcrest-partners-track">
+            {[0, 1].map(copy => (
+              <div key={copy} className="assetcrest-partners-group" aria-hidden={copy === 1}>
+                {partnerLogos.map(file => (
+                  <div key={file} className="assetcrest-partner-logo">
+                    <img src={media('2019/04/' + file)} alt={copy === 0 ? file.replace(/^logo-/, '').replace(/\.png$/i, '').replace(/-/g, ' ') : ''} loading="lazy" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
 
     <section className="relative overflow-hidden bg-[#f6f7f8] px-6 py-16 sm:py-24">

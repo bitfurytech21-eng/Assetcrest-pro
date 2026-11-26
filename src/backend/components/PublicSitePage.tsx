@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 
 const media = (file: string) => `/reference-assets/${file}`;
 
@@ -101,38 +101,38 @@ function Header() {
 
 function Footer() {
   return (
-    <footer className="bg-[#172d40] text-white">
-      <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <div className="mb-5 inline-flex bg-white p-2"><Logo /></div>
-          <p className="max-w-xs text-sm leading-7 text-slate-300">AssetCrest's public information covers digital assets, financial markets, real estate and emerging investment themes.</p>
-          <a href="/about-us/" className="mt-5 inline-flex text-sm font-bold text-[#ff9aaa] hover:text-white">About the company →</a>
-        </div>
-        <div>
-          <h3 className="mb-4 text-base font-bold">Explore</h3>
-          <div className="grid gap-3 text-sm text-slate-300">{navItems.map(item => <a key={item.href} href={item.href} className="hover:text-white">{item.label}</a>)}</div>
-        </div>
-        <div>
-          <h3 className="mb-4 text-base font-bold">Client access</h3>
-          <div className="grid gap-3 text-sm text-slate-300">
-            <a href="/register" className="hover:text-white">Create an account</a>
-            <a href="/login" className="hover:text-white">Client login</a>
-            <a href="/app" className="hover:text-white">Investor portal</a>
-            <a href="/our-process/" className="hover:text-white">How the process works</a>
+    <footer className="bg-[#1b4962] text-white">
+      <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-3">
+        <section>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-[#e94d65]">AssetCrest</p>
+          <h2 className="mb-5 text-2xl font-extrabold">Headquarters</h2>
+          <p className="text-sm leading-8 text-slate-200">At AssetCrest, we strive for transparency, security, and innovation. Our mission is to provide investors with high-quality financial information, backed by real-time market data, advanced technology, and a deep understanding of global financial markets.</p>
+          <a href="/about-us/" className="mt-6 inline-flex text-sm font-bold text-[#ff9aaa] hover:text-white">About AssetCrest →</a>
+        </section>
+        <section>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-[#e94d65]">Our locations</p>
+          <h2 className="mb-5 text-2xl font-extrabold">Where to find us?</h2>
+          <img src={media('2019/04/img-footer-map.png')} alt="Map image displayed on the original AssetCrest website" loading="lazy" className="mb-5 h-36 w-full bg-white/5 object-contain" />
+          <p className="text-sm leading-7 text-slate-200">Moor House, 120 London Wall, London EC2Y 5ET, United Kingdom</p>
+        </section>
+        <section>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-[#e94d65]">Get in touch</p>
+          <h2 className="mb-5 text-2xl font-extrabold">AssetCrest Social links</h2>
+          <p className="text-sm leading-8 text-slate-200">For questions about the platform or your account, use the official contact page or sign in to the secure client portal.</p>
+          <p className="mt-4 text-sm leading-7 text-slate-300">Leveraging seamless performance metrics offline to maximize long-term potential.</p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <a href="/contact-us/" className="bg-[#e94d65] px-5 py-3 text-sm font-bold text-white hover:bg-[#d83f58]">Contact us</a>
+            <a href="/login" className="border border-white/60 px-5 py-3 text-sm font-bold text-white hover:bg-white hover:text-[#1b4962]">Client login</a>
           </div>
-          <p className="mt-5 text-xs leading-6 text-slate-400">For account-specific support, use the secure client portal. Never share passwords or verification codes.</p>
-        </div>
-        <div>
-          <h3 className="mb-4 text-base font-bold">Our location</h3>
-          <img src={media('2019/04/img-footer-map.png')} alt="Location map image from the original AssetCrest website" loading="lazy" className="mb-4 h-28 w-full bg-white/5 object-contain" />
-          <p className="text-sm leading-7 text-slate-300">Moor House, 120 London Wall, London EC2Y 5ET, United Kingdom</p>
-          <a href="/contact-us/" className="mt-4 inline-flex border border-white/40 px-4 py-2 text-sm font-semibold hover:bg-white hover:text-[#172d40]">Contact information</a>
-        </div>
+        </section>
       </div>
-      <div className="border-t border-white/15 px-6 py-5">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-center text-xs text-slate-300 sm:flex-row sm:text-left">
-          <span>© {new Date().getFullYear()} AssetCrest. All rights reserved.</span>
-          <a href="#top" className="font-semibold hover:text-white">Back to top ↑</a>
+      <div className="border-t border-white/20 px-6 py-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
+          <p className="text-xs text-slate-300">© {new Date().getFullYear()} AssetCrest. All rights reserved.</p>
+          <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-x-5 gap-y-3 text-[11px] font-bold uppercase tracking-wide text-slate-200">
+            {navItems.map(item => <a key={item.href} href={item.href} className="hover:text-[#ff9aaa]">{item.label}</a>)}
+            <a href="#top" className="hover:text-[#ff9aaa]">Back to top</a>
+          </nav>
         </div>
       </div>
     </footer>
@@ -441,7 +441,14 @@ function ContactPage() {
   </>;
 }
 
-export default function PublicSitePage() {
+
+function SupportShortcut() {
+  return <a href="/contact-us/" aria-label="Contact AssetCrest support" title="Contact AssetCrest support" className="fixed bottom-6 right-6 z-[60] flex h-16 w-16 items-center justify-center rounded-full bg-[#009ce0] text-white shadow-[0_8px_30px_rgba(0,0,0,.18)] transition hover:scale-105 hover:bg-[#0089c8] sm:bottom-8 sm:right-8 sm:h-[72px] sm:w-[72px]">
+    <MessageCircle className="h-9 w-9 fill-white stroke-[#009ce0]" strokeWidth={1.5} />
+  </a>;
+}
+
+export default function PublicSitePage() {xport default function PublicSitePage() {
   const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\/+$/, '') || '/';
   let page: React.ReactNode;
   switch (pathname) {
@@ -453,5 +460,5 @@ export default function PublicSitePage() {
     case '/contact-us': page = <ContactPage />; break;
     default: page = <HomePage />;
   }
-  return <div className="min-h-screen bg-white font-sans text-[#202124]"><Header /><main>{page}</main><Footer /></div>;
+  return <div className="min-h-screen bg-white font-sans text-[#202124]"><Header /><main>{page}</main><Footer /><SupportShortcut /></div>;
 }

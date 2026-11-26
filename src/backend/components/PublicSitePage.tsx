@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const media = (file: string) => \`/reference-assets/\${file}\`;
+const media = (file: string) => `/reference-assets/${file}`;
 
 const navItems = [
   { label: 'Home', href: '/' },
@@ -96,7 +96,7 @@ function Header() {
           <nav aria-label="Main navigation" className="flex items-center gap-5 lg:gap-7">
             {navItems.map(item => {
               const active = pathname === item.href.replace(/\/+$/, '') || (item.href === '/' && pathname === '/');
-              return <a key={item.href} href={item.href} className={\`text-sm font-semibold transition hover:text-[#e94d65] \${active ? 'text-[#e94d65]' : 'text-[#1b4962]'}\`}>{item.label}</a>;
+              return <a key={item.href} href={item.href} className={`text-sm font-semibold transition hover:text-[#e94d65] ${active ? 'text-[#e94d65]' : 'text-[#1b4962]'}`}>{item.label}</a>;
             })}
           </nav>
           <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ function Footer() {
 }
 
 function PageHero({ eyebrow, title, image = '2019/04/bgn-industries.png' }: { eyebrow: string; title: string; image?: string }) {
-  return <section className="relative flex min-h-[250px] items-center overflow-hidden bg-[#1b4962] bg-cover bg-center px-6 py-16 text-white" style={{ backgroundImage: \`linear-gradient(90deg,rgba(13,39,57,.88),rgba(13,39,57,.52)),url("\${media(image)}")\` }}>
+  return <section className="relative flex min-h-[250px] items-center overflow-hidden bg-[#1b4962] bg-cover bg-center px-6 py-16 text-white" style={{ backgroundImage: `linear-gradient(90deg,rgba(13,39,57,.88),rgba(13,39,57,.52)),url("${media(image)}")` }}>
     <div className="mx-auto w-full max-w-7xl">
       <p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-[#ff8798]">{eyebrow}</p>
       <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">{title}</h1>
@@ -176,7 +176,7 @@ function HomePage() {
   const current = slides[slide];
   return <>
     <section className="relative isolate min-h-[650px] overflow-hidden bg-[#dfe5e9] sm:min-h-[720px]">
-      {slides.map((item, index) => <div key={item.image} aria-hidden={index !== slide} className={\`absolute inset-0 -z-10 bg-cover bg-center transition-opacity duration-700 \${index === slide ? 'opacity-100' : 'opacity-0'}\`} style={{ backgroundImage: \`linear-gradient(90deg,rgba(255,255,255,.94) 0%,rgba(255,255,255,.84) 44%,rgba(255,255,255,.18) 100%),url("\${media(item.image)}")\` }} />)}
+      {slides.map((item, index) => <div key={item.image} aria-hidden={index !== slide} className={`absolute inset-0 -z-10 bg-cover bg-center transition-opacity duration-700 ${index === slide ? 'opacity-100' : 'opacity-0'}`} style={{ backgroundImage: `linear-gradient(90deg,rgba(255,255,255,.94) 0%,rgba(255,255,255,.84) 44%,rgba(255,255,255,.18) 100%),url("${media(item.image)}")` }} />)}
       <div className="mx-auto flex min-h-[650px] max-w-7xl items-center px-6 py-20 sm:min-h-[720px]">
         <div className="max-w-3xl">
           <div className="mb-8 flex items-center gap-5"><span className="h-1 w-24 bg-[#e94d65] sm:w-36" /><p className="max-w-xl text-sm font-semibold uppercase leading-snug tracking-wide text-[#191919] sm:text-xl">{current.eyebrow}</p></div>
@@ -186,7 +186,7 @@ function HomePage() {
         </div>
       </div>
       <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 gap-3" aria-label="Choose homepage slide">
-        {slides.map((item, index) => <button key={item.image} type="button" onClick={() => setSlide(index)} aria-label={\`Show slide \${index + 1}\`} aria-pressed={slide === index} className={\`h-3 w-3 rounded-full border-2 border-[#e94d65] \${slide === index ? 'bg-[#e94d65]' : 'bg-white'}\`} />)}
+        {slides.map((item, index) => <button key={item.image} type="button" onClick={() => setSlide(index)} aria-label={`Show slide ${index + 1}`} aria-pressed={slide === index} className={`h-3 w-3 rounded-full border-2 border-[#e94d65] ${slide === index ? 'bg-[#e94d65]' : 'bg-white'}`} />)}
       </div>
     </section>
 
@@ -214,7 +214,7 @@ function HomePage() {
       </div>
     </section>
 
-    <section className="relative overflow-hidden bg-[#1b4962] px-6 py-20 text-white sm:py-24" style={{ backgroundImage: \`linear-gradient(90deg,rgba(20,55,78,.94),rgba(20,55,78,.88)),url("\${media('2019/04/bgn-experience.png')}")\` }}>
+    <section className="relative overflow-hidden bg-[#1b4962] px-6 py-20 text-white sm:py-24" style={{ backgroundImage: `linear-gradient(90deg,rgba(20,55,78,.94),rgba(20,55,78,.88)),url("${media('2019/04/bgn-experience.png')}")` }}>
       <div className="mx-auto grid max-w-7xl items-center gap-12 md:grid-cols-2">
         <div><p className="mb-3 text-xs font-bold uppercase tracking-[.2em] text-[#ff8798]">Growing with our clients</p><h2 className="text-4xl font-extrabold leading-tight sm:text-5xl">A platform built around the investor journey</h2><p className="mt-6 text-base leading-8 text-slate-200">Explore digital finance with accessible information, clear navigation and tools designed to help you understand the markets and manage your account.</p><RegisterCTA /></div>
         <img src={media('2019/04/img-experience.png')} alt="AssetCrest digital finance experience" loading="lazy" className="mx-auto max-h-[390px] w-full max-w-lg object-contain" />
@@ -262,7 +262,7 @@ function PlansPage() {
   return <>
     <PageHero eyebrow="Investment options" title="Investment plans" image="2019/04/bgn-industries.png" />
     <section className="bg-white px-6 py-20"><div className="mx-auto max-w-7xl"><SectionHeading eyebrow="Find your starting point" title="Explore the available plan categories" copy="The reference website lists four plan categories. Current rates, minimums, terms, risk disclosures and eligibility must be confirmed in the secure portal before making any investment decision." />
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">{planNames.map((name,i)=><article key={name} className={\`border bg-white p-8 shadow-sm \${i===1?'border-[#e94d65]':'border-slate-200'}\`}><p className="mb-4 text-xs font-bold uppercase tracking-[.18em] text-[#e94d65]">Plan 0{i+1}</p><h3 className="mb-4 text-2xl font-extrabold text-[#1b4962]">{name}</h3><p className="min-h-20 text-sm leading-7 text-slate-600">A plan category published by AssetCrest. Review the current terms, risks and eligibility requirements in the client portal.</p><a href="/register" className="mt-7 inline-flex w-full justify-center bg-[#1b4962] px-5 py-3 text-sm font-bold text-white hover:bg-[#12394f]">View in client portal</a></article>)}</div>
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">{planNames.map((name,i)=><article key={name} className={`border bg-white p-8 shadow-sm ${i===1?'border-[#e94d65]':'border-slate-200'}`}><p className="mb-4 text-xs font-bold uppercase tracking-[.18em] text-[#e94d65]">Plan 0{i+1}</p><h3 className="mb-4 text-2xl font-extrabold text-[#1b4962]">{name}</h3><p className="min-h-20 text-sm leading-7 text-slate-600">A plan category published by AssetCrest. Review the current terms, risks and eligibility requirements in the client portal.</p><a href="/register" className="mt-7 inline-flex w-full justify-center bg-[#1b4962] px-5 py-3 text-sm font-bold text-white hover:bg-[#12394f]">View in client portal</a></article>)}</div>
     </div></section>
     <section className="bg-[#f4f6f8] px-6 py-20"><div className="mx-auto max-w-6xl"><SectionHeading eyebrow="Before investing" title="Information to review" /><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{[['Understand the risks','Investment values can rise or fall. Review all material risks before committing funds.'],['Read the current terms','Confirm fees, investment duration, withdrawal rules and any applicable limits.'],['Verify the provider','Check the legal entity, regulatory status and custody arrangements independently.'],['Understand liquidity','Check when and how invested funds may be withdrawn.'],['Review support channels','Use verified company contact details and the secure portal for account-specific help.'],['Make informed decisions','Do not rely on projected or guaranteed returns without independently verifiable documentation.']].map(([a,b])=><div key={a} className="bg-white p-7"><h3 className="mb-3 font-bold text-[#1b4962]">{a}</h3><p className="text-sm leading-7 text-slate-600">{b}</p></div>)}</div></div></section>
   </>;

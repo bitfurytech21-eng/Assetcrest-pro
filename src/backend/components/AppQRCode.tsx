@@ -13,7 +13,8 @@ export const AppQRCode: React.FC<AppQRCodeProps> = ({ url, size = 132 }) => {
 
   useEffect(() => {
     let active = true;
-    const target = url || (typeof window !== 'undefined' ? window.location.origin : 'https://assetcrest.co');
+    const target = url || (typeof window !== 'undefined' ? window.location.origin : '');
+    if (!target) return;
     QRCode.toString(target, {
       type: 'svg',
       width: size,

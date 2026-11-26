@@ -52,12 +52,12 @@ export function renderTradingPage(selectedSymbolId?: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>${currentSymbol.symbol} - Live Trading View | AssetCrest</title>
   <meta name="description" content="AssetCrest institutional-grade live TradingView terminal. Advanced charting, technical analysis indicators, live order book, and execution.">
-  <link rel="icon" type="image/png" href="https://assetcrest.co/wp-content/uploads/2023/07/cropped-assetcrest-favicon-32x32.png">
+  <link rel="icon" type="image/png" href="/icon-192.png">
   
   <!-- AssetCrest Brand Fonts: Sarabun & Roboto -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Sarabun:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
   <style>
     :root {
@@ -127,10 +127,13 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       max-width: 100vw;
       overflow-x: hidden;
       letter-spacing: -0.1px;
+      font-feature-settings: "zero" 0;
     }
 
     .mono {
-      font-family: 'Roboto Mono', monospace;
+      font-family: 'Sarabun', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "zero" 0;
     }
 
     /* Top Accent Stripe */
@@ -1012,7 +1015,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
   <header class="terminal-header">
     <div class="brand-section">
       <a href="/" class="logo-container" title="AssetCrest Home">
-        <img class="logo-img" src="https://assetcrest.co/wp-content/uploads/2024/12/logo-new.png" alt="AssetCrest" onerror="this.onerror=null;this.style.display='none';document.getElementById('fallbackBrand').style.display='inline';">
+        <img class="logo-img" src="/icon.svg" alt="AssetCrest" onerror="this.onerror=null;this.style.display='none';document.getElementById('fallbackBrand').style.display='inline';">
         <span id="fallbackBrand" style="display:none; font-weight:800; font-size:18px; color:#ffffff;">
           <span style="color:#e94d65;">Asset</span>Crest
         </span>
@@ -1701,7 +1704,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       const market = MARKETS.find(m => m.id === marketId);
       if (!market) return;
       activeSymbol = market;
-      const newUrl = new URL(window.location);
+      const newUrl = new URL(window.location.href);
       newUrl.searchParams.set('symbol', market.id);
       window.history.pushState({}, '', newUrl);
       updateMarketHeader(market);
@@ -1727,13 +1730,12 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         btnBuy.classList.add('active');
         btnSell.classList.remove('active');
         execBtn.className = 'execute-btn execute-btn-buy';
-        execBtn.innerText = 'Open Long Position (' + activeSymbol.symbol + ')';
       } else {
         btnSell.classList.add('active');
         btnBuy.classList.remove('active');
         execBtn.className = 'execute-btn execute-btn-sell';
-        execBtn.innerText = 'Open Short Position (' + activeSymbol.symbol + ')';
       }
+      execBtn.innerText = 'Broker connection required — orders disabled';
       calculateOrder();
     }
 
@@ -1756,6 +1758,10 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
 
     function fillCurrentPrice() {
+      if (!(activeSymbol.price > 0)) {
+        showToast('Live market price is still loading.', 'error');
+        return;
+      }
       document.getElementById('inputLimitPrice').value = activeSymbol.price;
       calculateOrder();
     }
@@ -1772,6 +1778,11 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       document.getElementById('tpslInputsContainer').style.display = enabled ? 'flex' : 'none';
       if (enabled) {
         const curPrice = activeSymbol.price;
+        if (!(curPrice > 0)) {
+          document.getElementById('inputTPPrice').value = '';
+          document.getElementById('inputSLPrice').value = '';
+          return;
+        }
         if (orderSide === 'buy') {
           document.getElementById('inputTPPrice').value = (curPrice * 1.05).toFixed(activeSymbol.precision);
           document.getElementById('inputSLPrice').value = (curPrice * 0.98).toFixed(activeSymbol.precision);
@@ -1783,6 +1794,10 @@ export function renderTradingPage(selectedSymbolId?: string): string {
     }
 
     function applyBalancePercent(percent) {
+      if (!(balance > 0)) {
+        showToast('Connect a funded broker account to use balance presets.', 'error');
+        return;
+      }
       const maxUsable = balance * percent;
       document.getElementById('inputAmountUsd').value = Math.max(10, Math.floor(maxUsable));
       calculateOrder();
@@ -1913,14 +1928,14 @@ export function renderTradingPage(selectedSymbolId?: string): string {
         const high = m.price > 0 ? '$' + m.high24h.toLocaleString(undefined, { minimumFractionDigits: m.precision }) : '—';
         const low = m.price > 0 ? '$' + m.low24h.toLocaleString(undefined, { minimumFractionDigits: m.precision }) : '—';
         const cls = m.price > 0 && m.change24h >= 0 ? 'text-green' : m.price > 0 ? 'text-red' : '';
-        return '<tr><td>' + m.symbol + '</td><td>' + m.name + '</td><td>' + m.category + '</td><td>' + price + '</td><td class="' + cls + '">' + change + '</td><td>' + high + '</td><td>' + low + '</td><td><button class="btn btn-secondary" onclick="selectMarket(\'' + m.id + '\')">View</button></td></tr>';
+        return \`<tr><td>\${m.symbol}</td><td>\${m.name}</td><td>\${m.category}</td><td>\${price}</td><td class="\${cls}">\${change}</td><td>\${high}</td><td>\${low}</td><td><button class="btn btn-secondary" onclick="selectMarket('\${m.id}')">View</button></td></tr>\`;
       }).join('');
     }
 
     function renderQuickAssetChips() {
       const container = document.getElementById('quickAssetsContainer');
       const filtered = selectedCategory === 'all' ? MARKETS : MARKETS.filter(m => m.category === selectedCategory);
-      container.innerHTML = filtered.map(m => '<div class="asset-chip ' + (m.id === activeSymbol.id ? 'active' : '') + '" data-id="' + m.id + '" onclick="selectMarket(\'' + m.id + '\')"><span class="asset-chip-symbol">' + m.symbol + '</span><span class="mono">' + formatMarketPercent(m) + '</span></div>').join('');
+      container.innerHTML = filtered.map(m => \`<div class="asset-chip \${m.id === activeSymbol.id ? 'active' : ''}" data-id="\${m.id}" onclick="selectMarket('\${m.id}')"><span class="asset-chip-symbol">\${m.symbol}</span><span class="mono">\${formatMarketPercent(m)}</span></div>\`).join('');
     }
 
     async function generateOrderBook() {
@@ -1971,7 +1986,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       const q = query.toLowerCase().trim();
       const filtered = MARKETS.filter(m => m.symbol.toLowerCase().includes(q) || m.name.toLowerCase().includes(q) || m.category.includes(q));
       const list = document.getElementById('marketModalList');
-      list.innerHTML = filtered.map(m => '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;" onclick="selectMarket(\'' + m.id + '\')"><div><strong>' + m.symbol + '</strong><div>' + m.name + '</div></div><div>' + (m.price > 0 ? formatMarketPrice(m) : '—') + '<div>' + formatMarketPercent(m) + '</div></div></div>').join('');
+      list.innerHTML = filtered.map(m => \`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;cursor:pointer;" onclick="selectMarket('\${m.id}')"><div><strong>\${m.symbol}</strong><div>\${m.name}</div></div><div>\${m.price > 0 ? formatMarketPrice(m) : '—'}<div>\${formatMarketPercent(m)}</div></div></div>\`).join('');
     }
 
     function openDepositModal() {
@@ -2002,7 +2017,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       toast.className = 'toast ' + (type === 'error' ? 'toast-error' : 'toast-success');
-      toast.innerHTML = (type === 'error' ? '⚠️ ' : '✅ ') + msg;
+      toast.textContent = (type === 'error' ? '⚠️ ' : '✅ ') + String(msg || '');
       container.appendChild(toast);
       setTimeout(() => {
         toast.style.opacity = '0';

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'assetcrest-pwa-v3';
+const CACHE_NAME = 'assetcrest-pwa-v4';
 const PRECACHE_URLS = [
   '/manifest.json',
   '/icon.svg',
@@ -35,9 +35,19 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_next/')) return;
 
+  const isPortalRoute =
+    url.pathname === '/app' ||
+    url.pathname.startsWith('/app/') ||
+    url.pathname === '/admin' ||
+    url.pathname.startsWith('/admin/') ||
+    PRECACHE_URLS.includes(url.pathname);
+  if (!isPortalRoute) return;
+
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
+      fetch(request).catch(() =>
+        caches.match(request).then((cached) => cached || caches.match('/app/login'))
+      )
     );
     return;
   }

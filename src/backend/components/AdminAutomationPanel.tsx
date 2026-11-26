@@ -41,20 +41,20 @@ interface AdminAutomationPanelProps {
 type AutomationSubTab = 'templates' | 'webhooks' | 'smtp' | 'logs';
 
 const SAMPLE_PREVIEW_VALUES: Record<string, string> = {
-  name: 'Marcus Vance',
-  username: 'marcusvance',
-  email: 'marcus.vance@assetcrest.co',
+  name: 'Alex Morgan',
+  username: 'alexmorgan',
+  email: 'investor@example.com',
   country: 'United Kingdom',
-  referralCode: 'MARCUS',
+  referralCode: 'AC8841',
   code: '482910',
   txId: 'DEP-2026-8841',
   amount: '5,000.00',
   method: 'USDC (BEP20)',
   status: 'Completed',
   newBalance: '11,450.00',
-  destination: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
+  destination: 'Configured Settlement Address',
   note: 'Verified institutional settlement',
-  legalName: 'Marcus Vance',
+  legalName: 'Alex Morgan',
   documentType: 'Passport',
   adminNote: 'Documents verified cleanly.',
   investmentId: 'INV-2026-4410',
@@ -62,16 +62,16 @@ const SAMPLE_PREVIEW_VALUES: Record<string, string> = {
   planName: 'Prime',
   dailyRate: '1.72%',
   durationDays: '30',
-  fromName: 'Elena Vance',
+  fromName: 'Jordan Taylor',
   transferId: 'TRF-2026-9902',
   ticketId: 'MSG-2026-318',
-  senderEmail: 'marcus.vance@assetcrest.co',
-  targetDeskEmail: 'support@assetcrest.co',
+  senderEmail: 'investor@example.com',
+  targetDeskEmail: 'info@assetcrestonline.com',
   subject: 'Account Settlement Inquiry',
   message: 'Please confirm settlement receipt for my recent wire.',
   planCount: '2',
-  dashboardUrl: 'https://app.assetcrest.co/dashboard',
-  resetUrl: 'https://app.assetcrest.co/forgot-password',
+  dashboardUrl: (typeof window !== 'undefined' ? window.location.origin : '') + '/app/dashboard',
+  resetUrl: (typeof window !== 'undefined' ? window.location.origin : '') + '/app/forgot-password',
   timestamp: new Date().toISOString().slice(0, 19).replace('T', ' ') + ' UTC',
 };
 
@@ -122,7 +122,7 @@ export function AdminAutomationPanel({
   const [mailMode, setMailMode] = useState<'auto' | 'smtp' | 'webhook'>('auto');
   const [fromName, setFromName] = useState('AssetCrest');
   const [fromEmail, setFromEmail] = useState('info@assetcrestonline.com');
-  const [replyTo, setReplyTo] = useState('support@assetcrest.co');
+  const [replyTo, setReplyTo] = useState('info@assetcrestonline.com');
   const [smtpHost, setSmtpHost] = useState('');
   const [smtpPort, setSmtpPort] = useState('587');
   const [smtpSecure, setSmtpSecure] = useState(false);

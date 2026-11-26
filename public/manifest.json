@@ -1,9 +1,9 @@
 {
-  "id": "/",
+  "id": "/app/dashboard",
   "name": "AssetCrest",
   "short_name": "AssetCrest",
   "description": "AssetCrest Investor Dashboard, Crypto Deposits, Investment Plans, and Android WebAPK.",
-  "start_url": "/",
+  "start_url": "/app/dashboard",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f4f6f9",

@@ -111,10 +111,45 @@ export type AdminSection =
   | 'automation'
   | 'platform';
 
+export function parseAdminSectionFromPath(pathname: string): AdminSection {
+  const p = pathname.toLowerCase();
+  if (p.startsWith('/admin/plans') || p.startsWith('/app/admin/plans')) return 'plans';
+  if (p.startsWith('/admin/roi') || p.startsWith('/app/admin/roi')) return 'roi';
+  if (p.startsWith('/admin/users/active') || p.startsWith('/app/admin/users/active')) return 'users-active';
+  if (p.startsWith('/admin/users/blocked') || p.startsWith('/app/admin/users/blocked')) return 'users-blocked';
+  if (p.startsWith('/admin/users') || p.startsWith('/app/admin/users')) return 'users-all';
+  if (p.startsWith('/admin/sessions') || p.startsWith('/app/admin/sessions')) return 'sessions';
+  if (p.startsWith('/admin/deposits') || p.startsWith('/app/admin/deposits')) return 'deposits';
+  if (p.startsWith('/admin/wallets') || p.startsWith('/app/admin/wallets')) return 'wallets';
+  if (p.startsWith('/admin/withdrawals') || p.startsWith('/app/admin/withdrawals')) return 'withdrawals';
+  if (p.startsWith('/admin/transactions') || p.startsWith('/app/admin/transactions')) return 'transactions';
+  if (p.startsWith('/admin/kyc') || p.startsWith('/app/admin/kyc')) return 'kyc';
+  if (p.startsWith('/admin/automation') || p.startsWith('/app/admin/automation')) return 'automation';
+  if (p.startsWith('/admin/settings') || p.startsWith('/app/admin/settings')) return 'settings';
+  if (p.startsWith('/admin/platform') || p.startsWith('/app/admin/platform')) return 'platform';
+  return 'dashboard';
+}
+
+export function getPathForAdminSection(section: AdminSection): string {
+  switch (section) {
+    case 'dashboard':
+      return '/admin/dashboard';
+    case 'users-all':
+      return '/admin/users';
+    case 'users-active':
+      return '/admin/users/active';
+    case 'users-blocked':
+      return '/admin/users/blocked';
+    default:
+      return `/admin/${section}`;
+  }
+}
+
 interface AdminConsoleShellProps {
   user: UserAccount;
   store: AssetCrestStore;
   isCloudMode: boolean;
+  initialSection?: AdminSection;
   onExitAdmin: () => void;
   onSignOut: () => void;
   onOpenAuthModal: () => void;
@@ -129,6 +164,7 @@ export function AdminConsoleShell({
   user,
   store,
   isCloudMode,
+  initialSection = 'dashboard',
   onExitAdmin,
   onSignOut,
   onOpenAuthModal,
@@ -137,7 +173,7 @@ export function AdminConsoleShell({
   onInspectKyc,
 }: AdminConsoleShellProps) {
   const theme = useThemeMode();
-  const [section, setSection] = useState<AdminSection>('dashboard');
+  const [section, setSection] = useState<AdminSection>(initialSection);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [investmentMenuOpen, setInvestmentMenuOpen] = useState(true);
@@ -304,40 +340,20 @@ export function AdminConsoleShell({
           </h2>
           {isCloudMode ? (
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Cloud Admin controls are restricted to the verified operator account (
-              <strong className="font-mono">{BOOTSTRAPPED_ADMIN_EMAIL}</strong>).
+              Admin controls are restricted to the verified AssetCrest operator account
+              {BOOTSTRAPPED_ADMIN_EMAIL ? (
+                <>
+                  {' '}(<strong className="font-mono">{BOOTSTRAPPED_ADMIN_EMAIL}</strong>)
+                </>
+              ) : null}
+              .
             </p>
           ) : (
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Switch to the AssetCrest Admin operator account to unlock the Admin Console Shell.
+              Sign in with a verified administrator account to unlock the Admin Console Shell.
             </p>
           )}
           <div className="flex flex-wrap justify-center gap-2 pt-2">
-            {!isCloudMode && (
-              <button
-                type="button"
-                onClick={() => {
-                  const adminAcc = store.users.find((u) => u.role === 'admin');
-                  if (adminAcc) {
-                    updateAssetCrestStore((prev) => ({
-                      ...prev,
-                      activeUserId: adminAcc.id,
-                      activityLogs: appendActivityLog(prev, {
-                        actorId: adminAcc.id,
-                        actorName: adminAcc.name,
-                        action: 'Admin dashboard logged in to account',
-                        category: 'auth',
-                        detail: adminAcc.email,
-                      }),
-                    }));
-                    onNotify('Signed in to AssetCrest Admin Console.', 'success');
-                  }
-                }}
-                className="bg-[#2b4865] hover:bg-[#223a52] text-white text-xs font-medium px-4 py-2 rounded-md cursor-pointer"
-              >
-                Switch to Admin Operator
-              </button>
-            )}
             <button
               type="button"
               onClick={onExitAdmin}
@@ -354,6 +370,9 @@ export function AdminConsoleShell({
   const navigateSection = (next: AdminSection) => {
     setSection(next);
     setMobileNavOpen(false);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, '', getPathForAdminSection(next));
+    }
   };
 
   const openUserInspector = (target: UserAccount) => {
@@ -1089,7 +1108,12 @@ export function AdminConsoleShell({
     };
 
     if (isCloudMode) {
-      await cloudSaveCryptoWallet(record);
+      try {
+        await cloudSaveCryptoWallet(record);
+      } catch (err: any) {
+        onNotify(err?.message || 'Failed to save crypto wallet in Cloud.', 'error');
+        return;
+      }
     }
 
     updateAssetCrestStore((prev) => ({
@@ -1128,7 +1152,12 @@ export function AdminConsoleShell({
       updatedByAdminEmail: user.email,
     };
     if (isCloudMode) {
-      await cloudSaveCryptoWallet(updated);
+      try {
+        await cloudSaveCryptoWallet(updated);
+      } catch (err: any) {
+        onNotify(err?.message || 'Failed to update wallet status in Cloud.', 'error');
+        return;
+      }
     }
     updateAssetCrestStore((prev) => ({
       ...prev,
@@ -1146,7 +1175,12 @@ export function AdminConsoleShell({
 
   const handleDeleteWallet = async (wallet: CryptoWalletRecord) => {
     if (isCloudMode) {
-      await cloudDeleteCryptoWallet(wallet.id);
+      try {
+        await cloudDeleteCryptoWallet(wallet.id);
+      } catch (err: any) {
+        onNotify(err?.message || 'Failed to remove crypto wallet in Cloud.', 'error');
+        return;
+      }
     }
     updateAssetCrestStore((prev) => ({
       ...prev,
@@ -1563,7 +1597,7 @@ export function AdminConsoleShell({
                   className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
                 >
                   <LogIn className="h-3.5 w-3.5 text-slate-400" />
-                  Switch Account / Register
+                  Switch Admin Account
                 </button>
                 {!isCloudMode ? (
                   <button
@@ -1575,7 +1609,7 @@ export function AdminConsoleShell({
                     className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold cursor-pointer"
                   >
                     <Cloud className="h-3.5 w-3.5" />
-                    Connect Neon Cloud Sync
+                    Sign In Admin Cloud Sync
                   </button>
                 ) : (
                   <button

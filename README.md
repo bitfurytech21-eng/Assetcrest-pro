@@ -1,14 +1,13 @@
-# AssetCrest Service & Proxy
+# AssetCrest Service & Investor Portal
 
-High-fidelity reverse proxy and gateway service for AssetCrest (`https://assetcrest.co` and `https://app.assetcrest.co`), integrated with Cloud SQL (PostgreSQL) and Firebase Authentication.
+Self-hosted AssetCrest Investor Portal, Live TradingView terminal, and automated email/webhook platform (`https://ais-pre-hd6te2izxiipwr3ixqdkmp-130818804329.europe-west1.run.app`), integrated with Neon PostgreSQL (Drizzle ORM) and session authentication.
 
 ## Features
 
-- **Full-Fidelity Reverse Proxy**: Streams and dynamically rewrites upstream assets, URLs, and framing restrictions.
-- **Client Script Error Shields**: Includes runtime patches for vendor bundles to prevent `classList` and `null` element evaluation errors.
-- **Cloud SQL (PostgreSQL)**: Managed database integration using Drizzle ORM.
-- **Firebase Authentication**: User authentication and secure route protection via Firebase Admin SDK.
-- **Ready for Render**: Pre-configured `render.yaml` blueprint and automatic port binding for 1-click deployment on Render.com.
+- **Investor Portal & Trading Terminal**: Full React SPA portal with live TradingView charting, deposit/withdrawal desks, KYC verification, and Android WebAPK builder.
+- **Neon PostgreSQL**: Managed database integration using Drizzle ORM with atomic financial ledger updates.
+- **Email Templates & Signed Webhooks**: Automatic transactional email templates and HMAC-signed webhook delivery.
+- **Ready for Cloud Run & Render**: Automatic `PORT` binding, `/api/health` readiness endpoint, and pre-configured deployment support.
 
 ## Deploying to Render
 

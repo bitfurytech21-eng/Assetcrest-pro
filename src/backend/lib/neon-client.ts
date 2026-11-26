@@ -15,7 +15,7 @@ import {
 } from './assetcrest-store';
 import { RoiSettlementPlan } from './roi-engine';
 
-export const BOOTSTRAPPED_ADMIN_EMAIL = 'admin@assetcrest.co';
+export const BOOTSTRAPPED_ADMIN_EMAIL = '';
 
 export interface CloudTransferRequest {
   id: string;
@@ -218,10 +218,10 @@ export async function neonGetAdminStatus(): Promise<{
   return apiRequest('/api/auth/admin-status');
 }
 
-export async function neonClaimAdmin(password: string): Promise<UserAccount> {
+export async function neonClaimAdmin(password: string, email?: string): Promise<UserAccount> {
   const res = await apiRequest<{ token: string; user: UserAccount }>('/api/auth/claim-admin', {
     method: 'POST',
-    body: { password },
+    body: { password, email },
   });
   inMemoryAuthToken = res.token;
   emitState({
@@ -425,25 +425,25 @@ export async function cloudClaimTransferRequest(transfer: CloudTransferRequest):
 }
 
 export async function cloudExecuteSwap(params: {
-  uid: string;
-  nextUsdBalance: number;
-  nextCryptoBalances: Record<Exclude<CryptoAssetSymbol, 'USD'>, number>;
-  method: string;
-  usdAmount: number;
-  note: string;
-}): Promise<string> {
-  const res = await apiRequest<{ id: string }>('/api/neon/swap', {
+  fromSymbol: CryptoAssetSymbol;
+  toSymbol: CryptoAssetSymbol;
+  fromAmount: number;
+}): Promise<{ id: string; toAmount: number; usdAmount: number; note: string }> {
+  const res = await apiRequest<{
+    id: string;
+    toAmount: number;
+    usdAmount: number;
+    note: string;
+  }>('/api/neon/swap', {
     method: 'POST',
     body: {
-      nextUsdBalance: params.nextUsdBalance,
-      nextCryptoBalances: params.nextCryptoBalances,
-      method: params.method,
-      usdAmount: params.usdAmount,
-      note: params.note,
+      fromSymbol: params.fromSymbol,
+      toSymbol: params.toSymbol,
+      fromAmount: params.fromAmount,
     },
   });
   await refreshNeonSync();
-  return res.id;
+  return res;
 }
 
 export async function cloudInvestPlan(params: {

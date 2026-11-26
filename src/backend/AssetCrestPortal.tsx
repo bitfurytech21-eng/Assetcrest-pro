@@ -44,7 +44,6 @@ import {
   ShieldAlert,
   Lock,
   Eye,
-  LogIn,
   Users,
   BadgeCheck,
   Clock,
@@ -55,13 +54,19 @@ import {
 import { PWAInstallButton } from '@/src/backend/components/PWAInstallButton';
 import { AppQRCode } from '@/src/backend/components/AppQRCode';
 import {
+  AdminSignInPage,
   AuthModal,
   KycInspectModal,
   ReceiptPreviewModal,
   SignInPage,
   SignUpPage,
 } from '@/src/backend/components/AuthAndAccountModals';
-import { AdminConsoleShell } from '@/src/backend/components/AdminConsoleShell';
+import {
+  AdminConsoleShell,
+  type AdminSection,
+  getPathForAdminSection,
+  parseAdminSectionFromPath,
+} from '@/src/backend/components/AdminConsoleShell';
 import {
   AccountProfileView,
   CryptoSwapView,
@@ -75,11 +80,11 @@ import {
   appendActivityLog,
   AssetCrestStore,
   captureVisitorLocationForAdmin,
+  CRYPTO_ASSETS,
   formatNowStamp,
   InvestmentPlanConfig,
   nextRecordId,
   PageTab,
-  PAYMENT_METHODS,
   readAndCompressFile,
   SUPPORT_EMAILS,
   TransactionRecord,
@@ -219,19 +224,35 @@ const LANGUAGE_LABELS: Record<
 
 const PORTAL_AUTH_KEY = 'assetcrest_portal_authed_v1';
 
-function getInitialPortalRouteState(): {
+function parsePortalRouteFromPath(pathname: string): {
+  isAdminArea: boolean;
   authRoute: 'login' | 'register' | 'forgot' | 'logout' | null;
   tab: PageTab;
+  adminSection: AdminSection;
 } {
-  if (typeof window === 'undefined') {
-    return { authRoute: null, tab: 'dashboard' };
+  const p = pathname.toLowerCase().replace(/\/+$/, '') || '/';
+  if (p === '/admin/logout' || p === '/app/admin/logout') {
+    return { isAdminArea: true, authRoute: 'logout', tab: 'admin', adminSection: 'dashboard' };
   }
-  const p = window.location.pathname.toLowerCase();
+  if (p === '/admin/login' || p === '/app/admin/login') {
+    return { isAdminArea: true, authRoute: 'login', tab: 'admin', adminSection: 'dashboard' };
+  }
+  if (p === '/admin/forgot-password' || p === '/app/admin/forgot-password') {
+    return { isAdminArea: true, authRoute: 'forgot', tab: 'admin', adminSection: 'dashboard' };
+  }
+  if (p.startsWith('/admin') || p.startsWith('/app/admin')) {
+    return {
+      isAdminArea: true,
+      authRoute: null,
+      tab: 'admin',
+      adminSection: parseAdminSectionFromPath(p),
+    };
+  }
   if (p === '/logout' || p === '/app/logout') {
-    return { authRoute: 'logout', tab: 'dashboard' };
+    return { isAdminArea: false, authRoute: 'logout', tab: 'dashboard', adminSection: 'dashboard' };
   }
   if (p === '/register' || p === '/app/register' || p === '/signup' || p === '/app/signup') {
-    return { authRoute: 'register', tab: 'dashboard' };
+    return { isAdminArea: false, authRoute: 'register', tab: 'dashboard', adminSection: 'dashboard' };
   }
   if (
     p === '/forgot-password' ||
@@ -240,28 +261,47 @@ function getInitialPortalRouteState(): {
     p === '/app/reset-password' ||
     p.startsWith('/password')
   ) {
-    return { authRoute: 'forgot', tab: 'dashboard' };
+    return { isAdminArea: false, authRoute: 'forgot', tab: 'dashboard', adminSection: 'dashboard' };
   }
   if (p === '/login' || p === '/app/login') {
-    return { authRoute: 'login', tab: 'dashboard' };
+    return { isAdminArea: false, authRoute: 'login', tab: 'dashboard', adminSection: 'dashboard' };
   }
-  if (p.startsWith('/admin') || p.startsWith('/app/admin')) {
-    return { authRoute: null, tab: 'admin' };
+  if (p.startsWith('/app/kyc')) return { isAdminArea: false, authRoute: null, tab: 'kyc', adminSection: 'dashboard' };
+  if (p.startsWith('/app/profile') || p.startsWith('/user/profile')) {
+    return { isAdminArea: false, authRoute: null, tab: 'profile', adminSection: 'dashboard' };
   }
-  if (p.startsWith('/app/kyc')) return { authRoute: null, tab: 'kyc' };
-  if (p.startsWith('/app/profile') || p.startsWith('/user/profile')) return { authRoute: null, tab: 'profile' };
-  if (p.startsWith('/app/deposit')) return { authRoute: null, tab: 'deposit' };
-  if (p.startsWith('/app/withdraw')) return { authRoute: null, tab: 'withdraw' };
-  if (p.startsWith('/app/transfer')) return { authRoute: null, tab: 'transfer' };
-  if (p.startsWith('/app/swap')) return { authRoute: null, tab: 'swap' };
-  if (p.startsWith('/app/transactions')) return { authRoute: null, tab: 'transactions' };
-  if (p.startsWith('/app/plans')) return { authRoute: null, tab: 'plans' };
-  if (p.startsWith('/app/vacation')) return { authRoute: null, tab: 'vacation-portal' };
-  if (p.startsWith('/app/real-estate')) return { authRoute: null, tab: 'real-estate' };
-  if (p.startsWith('/app/referrals')) return { authRoute: null, tab: 'referrals' };
-  if (p.startsWith('/app/contact')) return { authRoute: null, tab: 'contact' };
-  if (p.startsWith('/app/apk')) return { authRoute: null, tab: 'apk' };
-  return { authRoute: null, tab: 'dashboard' };
+  if (p.startsWith('/app/deposit')) return { isAdminArea: false, authRoute: null, tab: 'deposit', adminSection: 'dashboard' };
+  if (p.startsWith('/app/withdraw')) return { isAdminArea: false, authRoute: null, tab: 'withdraw', adminSection: 'dashboard' };
+  if (p.startsWith('/app/transfer')) return { isAdminArea: false, authRoute: null, tab: 'transfer', adminSection: 'dashboard' };
+  if (p.startsWith('/app/swap')) return { isAdminArea: false, authRoute: null, tab: 'swap', adminSection: 'dashboard' };
+  if (p.startsWith('/app/transactions')) {
+    return { isAdminArea: false, authRoute: null, tab: 'transactions', adminSection: 'dashboard' };
+  }
+  if (p.startsWith('/app/plans')) return { isAdminArea: false, authRoute: null, tab: 'plans', adminSection: 'dashboard' };
+  if (p.startsWith('/app/vacation')) {
+    return { isAdminArea: false, authRoute: null, tab: 'vacation-portal', adminSection: 'dashboard' };
+  }
+  if (p.startsWith('/app/real-estate')) {
+    return { isAdminArea: false, authRoute: null, tab: 'real-estate', adminSection: 'dashboard' };
+  }
+  if (p.startsWith('/app/referrals')) {
+    return { isAdminArea: false, authRoute: null, tab: 'referrals', adminSection: 'dashboard' };
+  }
+  if (p.startsWith('/app/contact')) return { isAdminArea: false, authRoute: null, tab: 'contact', adminSection: 'dashboard' };
+  if (p.startsWith('/app/apk')) return { isAdminArea: false, authRoute: null, tab: 'apk', adminSection: 'dashboard' };
+  return { isAdminArea: false, authRoute: null, tab: 'dashboard', adminSection: 'dashboard' };
+}
+
+function getInitialPortalRouteState() {
+  if (typeof window === 'undefined') {
+    return {
+      isAdminArea: false,
+      authRoute: null as 'login' | 'register' | 'forgot' | 'logout' | null,
+      tab: 'dashboard' as PageTab,
+      adminSection: 'dashboard' as AdminSection,
+    };
+  }
+  return parsePortalRouteFromPath(window.location.pathname);
 }
 
 export default function AssetCrestPortal() {
@@ -276,10 +316,18 @@ export default function AssetCrestPortal() {
       window.localStorage.removeItem(PORTAL_AUTH_KEY);
       return false;
     }
-    return window.localStorage.getItem(PORTAL_AUTH_KEY) === '1';
+    if (window.localStorage.getItem(PORTAL_AUTH_KEY) !== '1') return false;
+    const hasLocalActiveUser = Boolean(
+      store.activeUserId && store.users.some((u) => u.id === store.activeUserId)
+    );
+    if (!hasLocalActiveUser) {
+      window.localStorage.removeItem(PORTAL_AUTH_KEY);
+      return false;
+    }
+    return true;
   });
 
-  const isAuthenticated = isCloudMode || localAuthed;
+  const isAuthenticated = isCloudMode || (localAuthed && Boolean(store.activeUserId));
 
   const effectiveStore: AssetCrestStore =
     isCloudMode && cloudSync.cloudUser
@@ -301,50 +349,91 @@ export default function AssetCrestPortal() {
       : store;
 
   const theme = useThemeMode();
-  const activeUser =
+  const activeUser: UserAccount | undefined =
     effectiveStore.users.find((u) => u.id === effectiveStore.activeUserId) ??
     effectiveStore.users[0] ??
     cloudSync.cloudUser ??
     store.users[0];
+  const activeUserId = activeUser?.id ?? '';
 
-  const [activeTab, setActiveTab] = useState<PageTab>(initialRoute.tab);
+  const [activeTab, setActiveTab] = useState<PageTab>(
+    initialRoute.authRoute === 'logout' ? 'dashboard' : initialRoute.tab
+  );
+  const [adminSection, setAdminSection] = useState<AdminSection>(initialRoute.adminSection);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [planSubmenuOpen, setPlanSubmenuOpen] = useState(false);
   const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
   const [language, setLanguage] = useState('en');
 
-  // Modals
+  // Modals (AuthModal is used only for unauthenticated Forgot Password recovery)
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(() => {
-    if (initialRoute.authRoute === 'logout') return true;
-    if (initialRoute.authRoute) return true;
-    if (typeof window !== 'undefined') {
-      return window.localStorage.getItem(PORTAL_AUTH_KEY) !== '1';
-    }
-    return true;
+    return initialRoute.authRoute === 'register' || initialRoute.authRoute === 'forgot';
   });
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot'>(() => {
     if (initialRoute.authRoute === 'register') return 'register';
     if (initialRoute.authRoute === 'forgot') return 'forgot';
     return 'login';
   });
+  const [forgotPrefillEmail, setForgotPrefillEmail] = useState('');
   const [receiptModalTx, setReceiptModalTx] = useState<TransactionRecord | null>(null);
   const [kycInspectUser, setKycInspectUser] = useState<UserAccount | null>(null);
 
   useEffect(() => {
-    if (initialRoute.authRoute === 'logout') {
-      void signOutCloud().catch(() => {});
+    if (isCloudMode) {
       if (typeof window !== 'undefined') {
-        window.history.replaceState({}, '', '/app/login');
+        window.localStorage.setItem(PORTAL_AUTH_KEY, '1');
       }
+      setLocalAuthed(true);
+      setAuthModalOpen(false);
+    } else if (!cloudSync.loading) {
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem(PORTAL_AUTH_KEY);
+      }
+      setLocalAuthed(false);
+    }
+  }, [isCloudMode, cloudSync.loading]);
+
+  useEffect(() => {
+    if (initialRoute.authRoute === 'logout') {
+      void signOutCloud()
+        .catch(() => {})
+        .finally(() => {
+          if (typeof window !== 'undefined') {
+            window.location.replace('/');
+          }
+        });
     }
   }, [initialRoute.authRoute]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onPopState = () => {
+      const next = parsePortalRouteFromPath(window.location.pathname);
+      setActiveTab(next.authRoute === 'logout' ? 'dashboard' : next.tab);
+      setAdminSection(next.adminSection);
+      if (next.authRoute === 'register') {
+        setAuthModalMode('register');
+        setAuthModalOpen(true);
+      } else if (next.authRoute === 'forgot') {
+        setAuthModalMode('forgot');
+        setAuthModalOpen(true);
+      } else if (next.authRoute === 'login') {
+        setAuthModalMode('login');
+        setAuthModalOpen(false);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
 
   const handleAuthSuccess = useCallback(() => {
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(PORTAL_AUTH_KEY, '1');
       const p = window.location.pathname.toLowerCase();
       if (
+        p === '/' ||
+        p === '/home' ||
         p === '/login' ||
         p === '/app/login' ||
         p === '/register' ||
@@ -367,22 +456,82 @@ export default function AssetCrestPortal() {
     setAuthModalOpen(false);
   }, []);
 
+  const handleAdminAuthSuccess = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(PORTAL_AUTH_KEY, '1');
+      window.history.replaceState({}, '', getPathForAdminSection(adminSection));
+    }
+    setLocalAuthed(true);
+    setActiveTab('admin');
+    setAuthModalOpen(false);
+  }, [adminSection]);
+
   const handleSignOut = useCallback(async () => {
     setHeaderMenuOpen(false);
     setSidebarOpen(false);
     if (typeof window !== 'undefined') {
       window.localStorage.removeItem(PORTAL_AUTH_KEY);
-      window.history.replaceState({}, '', '/app/login');
     }
     setLocalAuthed(false);
+    setActiveTab('dashboard');
     setAuthModalMode('login');
-    setAuthModalOpen(true);
+    setAuthModalOpen(false);
+    try {
+      await signOutCloud();
+    } catch {
+      // ignore if not in cloud session
+    }
+    if (typeof window !== 'undefined') {
+      window.location.replace('/');
+    }
+  }, []);
+
+  const handleAdminSignOut = useCallback(async () => {
+    setHeaderMenuOpen(false);
+    setSidebarOpen(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(PORTAL_AUTH_KEY);
+    }
+    setLocalAuthed(false);
+    setActiveTab('dashboard');
+    setAuthModalMode('login');
+    setAuthModalOpen(false);
+    try {
+      await signOutCloud();
+    } catch {
+      // ignore if not in cloud session
+    }
+    if (typeof window !== 'undefined') {
+      window.location.replace('/');
+    }
+  }, []);
+
+  const handleSwitchAdminAccount = useCallback(async () => {
+    setHeaderMenuOpen(false);
+    setSidebarOpen(false);
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(PORTAL_AUTH_KEY);
+      window.history.replaceState({}, '', '/admin/login');
+    }
+    setLocalAuthed(false);
+    setActiveTab('admin');
+    setAuthModalMode('login');
+    setAuthModalOpen(false);
     try {
       await signOutCloud();
     } catch {
       // ignore if not in cloud session
     }
   }, []);
+
+  const handleExitAdminToInvestor = useCallback(() => {
+    setActiveTab('dashboard');
+    setSidebarOpen(false);
+    setHeaderMenuOpen(false);
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, '', isAuthenticated ? '/app/dashboard' : '/app/login');
+    }
+  }, [isAuthenticated]);
 
   // Deposit Wizard State
   const [depositStep, setDepositStep] = useState<'amount' | 'payment'>('amount');
@@ -506,13 +655,13 @@ export default function AssetCrestPortal() {
     .filter((w) => {
       if (w.status === 'Inactive') return false;
       if (w.assignedUserIds && w.assignedUserIds.length > 0) {
-        return w.assignedUserIds.includes(activeUser.id);
+        return Boolean(activeUserId) && w.assignedUserIds.includes(activeUserId);
       }
       return true;
     })
     .sort((a, b) => {
-      const aDedicated = a.assignedUserIds?.includes(activeUser.id) ? 1 : 0;
-      const bDedicated = b.assignedUserIds?.includes(activeUser.id) ? 1 : 0;
+      const aDedicated = activeUserId && a.assignedUserIds?.includes(activeUserId) ? 1 : 0;
+      const bDedicated = activeUserId && b.assignedUserIds?.includes(activeUserId) ? 1 : 0;
       if (aDedicated !== bDedicated) return bDedicated - aDedicated;
       if (a.status === 'Active' && b.status !== 'Active') return -1;
       if (a.status !== 'Active' && b.status === 'Active') return 1;
@@ -532,13 +681,13 @@ export default function AssetCrestPortal() {
 
   useEffect(() => {
     cloudRoiRestrictedRef.current = false;
-  }, [activeUser.id, isCloudMode]);
+  }, [activeUserId, isCloudMode]);
 
   const userTransactions = effectiveStore.transactions.filter(
-    (tx) => tx.userId === activeUser.id
+    (tx) => Boolean(activeUserId) && tx.userId === activeUserId
   );
   const userInvestments = effectiveStore.investments.filter(
-    (inv) => inv.userId === activeUser.id
+    (inv) => Boolean(activeUserId) && inv.userId === activeUserId
   );
   const activeUserInvestments = userInvestments.filter((inv) => inv.status === 'Active');
 
@@ -563,7 +712,7 @@ export default function AssetCrestPortal() {
       const existingTxIds = new Set(effectiveStore.transactions.map((t) => t.id));
       const plan = computeRoiSettlementPlan(effectiveStore.investments, {
         nowMs: Date.now(),
-        onlyUserId: isCloudMode && !cloudSync.isAdmin ? activeUser.id : undefined,
+        onlyUserId: isCloudMode && !cloudSync.isAdmin ? activeUserId : undefined,
         existingTxIds,
       });
 
@@ -616,7 +765,7 @@ export default function AssetCrestPortal() {
     isAuthenticated,
     isCloudMode,
     cloudSync.isAdmin,
-    activeUser.id,
+    activeUserId,
     effectiveStore.investments,
     effectiveStore.transactions,
     effectiveStore.users,
@@ -652,7 +801,9 @@ export default function AssetCrestPortal() {
     );
   };
 
-  const userTickets = effectiveStore.tickets.filter((tk) => tk.userId === activeUser.id);
+  const userTickets = effectiveStore.tickets.filter(
+    (tk) => Boolean(activeUserId) && tk.userId === activeUserId
+  );
   const navigateTo = (tab: PageTab) => {
     setActiveTab(tab);
     setSidebarOpen(false);
@@ -1047,7 +1198,7 @@ export default function AssetCrestPortal() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `assetcrest-${activeUser.referralCode.toLowerCase()}-transactions.csv`;
+    a.download = `assetcrest-${(activeUser?.referralCode || 'investor').toLowerCase()}-transactions.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1055,7 +1206,7 @@ export default function AssetCrestPortal() {
     notify('Transactions exported to CSV.', 'success');
   };
 
-  const shareReferralUrl = `${detectedOrigin}/?ref=${activeUser.referralCode}`;
+  const shareReferralUrl = `${detectedOrigin}/?ref=${activeUser?.referralCode || ''}`;
 
   const handleCopyReferral = async () => {
     try {
@@ -1281,7 +1432,141 @@ export default function AssetCrestPortal() {
         : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
     }`;
 
-  if (!isAuthenticated) {
+  if (cloudSync.loading && !isCloudMode) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#f4f6f9] dark:bg-slate-950 text-slate-600 dark:text-slate-300 gap-3">
+        <div className="h-8 w-8 rounded-full border-2 border-[#2b4865] border-t-transparent animate-spin" />
+        <p className="text-xs font-medium tracking-wide">Verifying AssetCrest session...</p>
+      </div>
+    );
+  }
+
+  if (activeTab === 'admin') {
+    if (!isAuthenticated || !activeUser || activeUser.role !== 'admin') {
+      return (
+        <>
+          <AdminSignInPage
+            signedInInvestorEmail={
+              isAuthenticated && activeUser && activeUser.role !== 'admin' ? activeUser.email : null
+            }
+            onNotify={notify}
+            onAdminAuthSuccess={handleAdminAuthSuccess}
+            onBackToInvestorPortal={handleExitAdminToInvestor}
+            onForgotPassword={(prefill) => {
+              setForgotPrefillEmail(prefill || '');
+              setAuthModalMode('forgot');
+              setAuthModalOpen(true);
+            }}
+          />
+
+          {authModalOpen && authModalMode === 'forgot' && (
+            <AuthModal
+              key={`admin-forgot-${forgotPrefillEmail}`}
+              open
+              initialMode="forgot"
+              initialEmail={forgotPrefillEmail}
+              onClose={() => {
+                setAuthModalMode('login');
+                setAuthModalOpen(false);
+              }}
+              onAuthSuccess={handleAdminAuthSuccess}
+              store={effectiveStore}
+              onNotify={notify}
+              isCloudMode={isCloudMode}
+              cloudEmail={cloudSync.neonSessionUser?.email ?? null}
+            />
+          )}
+
+          {/* Toast Stack */}
+          <div className="fixed bottom-16 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none">
+            <AnimatePresence>
+              {toasts.map((toast) => (
+                <motion.div
+                  key={toast.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className={`pointer-events-auto flex items-center justify-between gap-2 px-4 py-3 rounded-md shadow-lg text-xs font-medium text-white ${
+                    toast.tone === 'success'
+                      ? 'bg-[#2b4865]'
+                      : toast.tone === 'error'
+                      ? 'bg-red-600'
+                      : 'bg-slate-700'
+                  }`}
+                >
+                  <span>{toast.message}</span>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <ReceiptPreviewModal
+          transaction={receiptModalTx}
+          onClose={() => setReceiptModalTx(null)}
+        />
+        <KycInspectModal
+          key={kycInspectUser?.id ?? 'none'}
+          user={kycInspectUser}
+          onClose={() => setKycInspectUser(null)}
+          onApprove={handleApproveKyc}
+          onReject={handleRejectKyc}
+        />
+        <AdminConsoleShell
+          user={activeUser}
+          store={effectiveStore}
+          isCloudMode={isCloudMode}
+          initialSection={adminSection}
+          onExitAdmin={handleExitAdminToInvestor}
+          onSignOut={() => {
+            void handleAdminSignOut();
+          }}
+          onOpenAuthModal={() => {
+            void handleSwitchAdminAccount();
+          }}
+          onNotify={notify}
+          onInspectReceipt={(tx) => setReceiptModalTx(tx)}
+          onInspectKyc={(target) => setKycInspectUser(target)}
+        />
+
+        {/* Toast Stack */}
+        <div className="fixed bottom-16 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none">
+          <AnimatePresence>
+            {toasts.map((toast) => (
+              <motion.div
+                key={toast.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                className={`pointer-events-auto flex items-center justify-between gap-2 px-4 py-3 rounded-md shadow-lg text-xs font-medium text-white ${
+                  toast.tone === 'success'
+                    ? 'bg-[#2b4865]'
+                    : toast.tone === 'error'
+                    ? 'bg-red-600'
+                    : 'bg-slate-700'
+                }`}
+              >
+                <span>{toast.message}</span>
+                <button
+                  type="button"
+                  onClick={() => setToasts((prev) => prev.filter((item) => item.id !== toast.id))}
+                  className="opacity-80 hover:opacity-100 cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </>
+    );
+  }
+
+  if (!isAuthenticated || !activeUser) {
     if (authModalOpen && authModalMode === 'register') {
       return (
         <>
@@ -1337,7 +1622,8 @@ export default function AssetCrestPortal() {
               window.history.replaceState({}, '', '/app/register');
             }
           }}
-          onForgotPassword={() => {
+          onForgotPassword={(prefill) => {
+            setForgotPrefillEmail(prefill || '');
             setAuthModalMode('forgot');
             setAuthModalOpen(true);
           }}
@@ -1345,9 +1631,10 @@ export default function AssetCrestPortal() {
 
         {authModalOpen && authModalMode === 'forgot' && (
           <AuthModal
-            key="forgot"
+            key={`forgot-${forgotPrefillEmail}`}
             open
             initialMode="forgot"
+            initialEmail={forgotPrefillEmail}
             onClose={() => {
               setAuthModalMode('login');
               setAuthModalOpen(true);
@@ -1395,17 +1682,6 @@ export default function AssetCrestPortal() {
 
   const sharedModalsAndToasts = (
     <>
-      <AuthModal
-        key={authModalOpen ? authModalMode : 'closed'}
-        open={authModalOpen}
-        initialMode={authModalMode}
-        onClose={() => setAuthModalOpen(false)}
-        onAuthSuccess={handleAuthSuccess}
-        store={effectiveStore}
-        onNotify={notify}
-        isCloudMode={isCloudMode}
-        cloudEmail={cloudSync.neonSessionUser?.email ?? null}
-      />
       <ReceiptPreviewModal
         transaction={receiptModalTx}
         onClose={() => setReceiptModalTx(null)}
@@ -1474,36 +1750,12 @@ export default function AssetCrestPortal() {
                 }}
                 className="px-4 py-2 rounded-md bg-[#2b4865] hover:bg-[#223a52] text-white text-xs font-semibold cursor-pointer"
               >
-                Sign Out &amp; Switch Account
+                Sign Out
               </button>
             </div>
           </div>
         </main>
       </div>
-    );
-  }
-
-  if (activeTab === 'admin') {
-    return (
-      <>
-        {sharedModalsAndToasts}
-        <AdminConsoleShell
-          user={activeUser}
-          store={effectiveStore}
-          isCloudMode={isCloudMode}
-          onExitAdmin={() => navigateTo('dashboard')}
-          onSignOut={() => {
-            void handleSignOut();
-          }}
-          onOpenAuthModal={() => {
-            setAuthModalMode('login');
-            setAuthModalOpen(true);
-          }}
-          onNotify={notify}
-          onInspectReceipt={(tx) => setReceiptModalTx(tx)}
-          onInspectKyc={(target) => setKycInspectUser(target)}
-        />
-      </>
     );
   }
 
@@ -1564,11 +1816,8 @@ export default function AssetCrestPortal() {
 
           <button
             type="button"
-            onClick={() => {
-              setAuthModalMode('login');
-              setAuthModalOpen(true);
-            }}
-            aria-label="Account profile and sign in"
+            onClick={() => navigateTo('profile')}
+            aria-label="Account profile"
             className="h-8 w-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-xs font-bold overflow-hidden cursor-pointer"
           >
             {activeUser.avatarDataUrl ? (
@@ -1653,14 +1902,6 @@ export default function AssetCrestPortal() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => navigateTo('admin')}
-                  className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 cursor-pointer"
-                >
-                  <ShieldCheck className="h-3.5 w-3.5 text-amber-500" />
-                  Admin Control Portal
-                </button>
-                <button
-                  type="button"
                   onClick={() => navigateTo('apk')}
                   className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 font-medium text-[#2b4865] dark:text-sky-400 cursor-pointer"
                 >
@@ -1668,46 +1909,6 @@ export default function AssetCrestPortal() {
                   Install / Export APK
                 </button>
                 <div className="border-t border-slate-100 dark:border-slate-800 mt-1 pt-1">
-                  {!isCloudMode ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setHeaderMenuOpen(false);
-                        setAuthModalMode('login');
-                        setAuthModalOpen(true);
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold cursor-pointer"
-                    >
-                      <Cloud className="h-3.5 w-3.5" />
-                      Connect Neon Cloud Sync
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setHeaderMenuOpen(false);
-                        void signOutCloud().then(() => {
-                          notify('Signed out of Neon Cloud Sync.', 'info');
-                        });
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-slate-600 dark:text-slate-300 font-medium cursor-pointer"
-                    >
-                      <Cloud className="h-3.5 w-3.5" />
-                      Sign Out Neon Sync
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHeaderMenuOpen(false);
-                      setAuthModalMode('login');
-                      setAuthModalOpen(true);
-                    }}
-                    className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-[#2b4865] dark:text-sky-400 font-semibold cursor-pointer"
-                  >
-                    <LogIn className="h-3.5 w-3.5" />
-                    Switch Account / Register
-                  </button>
                   <a
                     href="/trading"
                     className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 text-rose-600 dark:text-rose-400 font-semibold"
@@ -1973,15 +2174,6 @@ export default function AssetCrestPortal() {
                       >
                         {activeUser.kycStatus}
                       </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => navigateTo('admin')}
-                      className={navItemClass(false)}
-                    >
-                      <ShieldCheck className="h-4 w-4 shrink-0" />
-                      <span>Admin Dashboard</span>
                     </button>
 
                     <button
@@ -2626,9 +2818,20 @@ export default function AssetCrestPortal() {
                     onChange={(e) => setWithdrawMethod(e.target.value)}
                     className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-100 focus:outline-none focus:border-blue-500"
                   >
-                    {PAYMENT_METHODS.map((m) => (
-                      <option key={m.id} value={m.label}>
-                        {m.label} ({m.networkType})
+                    {(visibleDepositWallets.length > 0
+                      ? visibleDepositWallets.map((w) => ({
+                          id: w.id,
+                          value: w.label,
+                          display: `${w.label} (${w.network})`,
+                        }))
+                      : CRYPTO_ASSETS.filter((a) => a.symbol !== 'USD').map((a) => ({
+                          id: a.symbol,
+                          value: `${a.symbol} (${a.network})`,
+                          display: `${a.name} — ${a.symbol} (${a.network})`,
+                        }))
+                    ).map((opt) => (
+                      <option key={opt.id} value={opt.value}>
+                        {opt.display}
                       </option>
                     ))}
                   </select>

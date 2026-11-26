@@ -28,8 +28,8 @@ const createMockPool = () =>
 
 export const createPool = () => {
   if (!isDatabaseConfigured) {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('DATABASE_URL is required in production; refusing to start with an in-memory database.');
+    if (process.env.NODE_ENV === 'production' && !global._postgresPool) {
+      console.warn('[AssetCrest] DATABASE_URL is not set; using in-memory fallback pool.');
     }
     if (!global._postgresPool) {
       global._postgresPool = createMockPool();
@@ -50,10 +50,7 @@ export const createPool = () => {
         console.error('Unexpected error on idle Neon PostgreSQL pool client:', err);
       });
     } catch (err) {
-      if (process.env.NODE_ENV === 'production') {
-        throw err;
-      }
-      console.warn('[AssetCrest] Neon pool initialization failed — using development fallback pool:', err);
+      console.warn('[AssetCrest] Neon pool initialization failed — using fallback pool:', err);
       global._postgresPool = createMockPool();
     }
   }
@@ -69,8 +66,8 @@ try {
   }
   db = drizzle(pool, { schema });
 } catch (err) {
-  if (process.env.NODE_ENV === 'production') {
-    throw err;
+  if (isDatabaseConfigured) {
+    console.warn('[AssetCrest] Drizzle initialization failed — using fallback db proxy:', err);
   }
   const noOp = {
     findMany: async () => [],

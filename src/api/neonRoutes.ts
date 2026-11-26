@@ -73,6 +73,7 @@ import {
   verifyMutationOriginOrHeader,
 } from '../lib/auth-session.ts';
 import { requireAdmin, requireAuth, type AuthRequest } from '../middleware/auth.ts';
+import { fetchLiveCryptoPricesUsd, type CryptoMarketSymbol } from '../lib/market-prices.ts';
 
 function parseJsonBody<T = Record<string, any>>(req: Request): T {
   const raw = req.body;
@@ -118,8 +119,11 @@ export function createNeonApiRouter(): Router {
       return res.status(403).json({ error: 'Forbidden: Invalid request origin' });
     }
     try {
-      const body = parseJsonBody<{ password?: string }>(req);
-      const user = await claimAdminPassword(String(body.password || ''));
+      const body = parseJsonBody<{ password?: string; email?: string }>(req);
+      const user = await claimAdminPassword(
+        String(body.password || ''),
+        body.email ? String(body.email) : undefined
+      );
       const token = await createSessionForUser(user.id);
       setSessionCookie(req, res, token);
       res.status(200).json({ token, user });
@@ -500,46 +504,45 @@ export function createNeonApiRouter(): Router {
   router.post('/neon/swap', requireAuth, async (req: AuthRequest, res) => {
     try {
       if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-      // The current client submits resulting balances, which are not a trusted source of pricing.
-      // Keep this endpoint unavailable in production until a server-verified quote provider is wired in.
-      if (process.env.NODE_ENV === 'production') {
-        return res.status(503).json({
-          error: 'Crypto swaps are temporarily unavailable while server-side quote verification is being configured.',
-        });
-      }
       const body = parseJsonBody<{
-        nextUsdBalance?: number;
-        nextCryptoBalances?: Record<string, number>;
-        method?: string;
-        usdAmount?: number;
-        note?: string;
+        fromSymbol?: string;
+        toSymbol?: string;
+        fromAmount?: number;
       }>(req);
 
-      const nextUsdBalance = Number(body.nextUsdBalance);
-      const usdAmount = Number(body.usdAmount);
-      if (!Number.isFinite(nextUsdBalance) || nextUsdBalance < 0 || !Number.isFinite(usdAmount)) {
-        return res.status(400).json({ error: 'Invalid swap payload.' });
-      }
-      const rawBalances = body.nextCryptoBalances || {};
-      const nextCryptoBalances = {
-        USDC: Math.max(0, Number(rawBalances.USDC ?? 0) || 0),
-        ETH: Math.max(0, Number(rawBalances.ETH ?? 0) || 0),
-        BTC: Math.max(0, Number(rawBalances.BTC ?? 0) || 0),
-        USDT: Math.max(0, Number(rawBalances.USDT ?? 0) || 0),
-        BNB: Math.max(0, Number(rawBalances.BNB ?? 0) || 0),
-        SOL: Math.max(0, Number(rawBalances.SOL ?? 0) || 0),
-        XRP: Math.max(0, Number(rawBalances.XRP ?? 0) || 0),
-      };
+      const allowedSymbols = new Set<CryptoMarketSymbol>([
+        'USD',
+        'USDC',
+        'USDT',
+        'BTC',
+        'ETH',
+        'BNB',
+        'SOL',
+        'XRP',
+      ]);
+      const fromSymbol = String(body.fromSymbol || '').toUpperCase() as CryptoMarketSymbol;
+      const toSymbol = String(body.toSymbol || '').toUpperCase() as CryptoMarketSymbol;
+      const fromAmount = Number(body.fromAmount);
 
-      const id = await executeSwapInNeon({
+      if (
+        !allowedSymbols.has(fromSymbol) ||
+        !allowedSymbols.has(toSymbol) ||
+        fromSymbol === toSymbol ||
+        !Number.isFinite(fromAmount) ||
+        fromAmount <= 0
+      ) {
+        return res.status(400).json({ error: 'Invalid swap pair or amount.' });
+      }
+
+      const { prices } = await fetchLiveCryptoPricesUsd();
+      const result = await executeSwapInNeon({
         userId: req.user.id,
-        nextUsdBalance,
-        nextCryptoBalances,
-        method: String(body.method || 'Crypto Swap'),
-        usdAmount,
-        note: String(body.note || ''),
+        fromSymbol,
+        toSymbol,
+        fromAmount,
+        prices,
       });
-      res.status(201).json({ id });
+      res.status(201).json(result);
     } catch (err) {
       sendError(res, err, 400);
     }
@@ -830,7 +833,7 @@ export function createNeonApiRouter(): Router {
         return res.status(400).json({ error: 'Subject and message are required.' });
       }
 
-      const targetDeskEmail = String(body.targetDeskEmail || 'support@assetcrest.co');
+      const targetDeskEmail = String(body.targetDeskEmail || 'info@assetcrestonline.com');
       const subject = String(body.subject).trim();
       const message = String(body.message).trim();
       const id = await createTicketInNeon({
@@ -1393,18 +1396,30 @@ export function createNeonApiRouter(): Router {
         ...hooks.filter((h) => h.isActive && h.signingSecret).map((h) => h.signingSecret),
       ].filter(Boolean);
 
-      if (sigHeader) {
-        const verified = activeSecrets.some((sec) =>
-          verifyInboundWebhookHmac(sec, tsHeader, sigHeader, rawBodyStr)
-        );
-        if (activeSecrets.length > 0 && !verified) {
-          return res.status(401).json({ error: 'Invalid webhook HMAC signature.' });
-        }
-      } else if (settings.emailWebhookSecret) {
+      if (activeSecrets.length === 0) {
+        return res.status(401).json({ error: 'Inbound webhook signing secret is not configured.' });
+      }
+
+      if (!sigHeader) {
         return res.status(401).json({ error: 'Missing X-AssetCrest-Signature header.' });
       }
 
-      const payload = rawBodyStr.trim() ? (JSON.parse(rawBodyStr) as Record<string, any>) : {};
+      const verified = activeSecrets.some((sec) =>
+        verifyInboundWebhookHmac(sec, tsHeader, sigHeader, rawBodyStr)
+      );
+      if (!verified) {
+        return res.status(401).json({ error: 'Invalid webhook HMAC signature.' });
+      }
+
+      let payload: Record<string, any> = {};
+      if (rawBodyStr.trim()) {
+        try {
+          const parsed = JSON.parse(rawBodyStr);
+          payload = parsed && typeof parsed === 'object' ? parsed : {};
+        } catch {
+          return res.status(400).json({ error: 'Invalid JSON payload.' });
+        }
+      }
       const eventName = String(payload.event || eventHeader || 'webhook.inbound');
 
       await appendAutomationDeliveryLog({

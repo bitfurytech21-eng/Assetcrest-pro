@@ -16,27 +16,17 @@ import {
   Clock,
   Upload,
   UserCheck,
-  MapPin,
-  Eye,
   CheckCircle2,
-  XCircle,
   Users,
   KeyRound,
   Trash2,
-  Globe,
-  Compass,
-  TrendingUp,
   Search,
   Cloud,
-  RefreshCw,
-  Pause,
-  Play,
 } from 'lucide-react';
 import {
   ActiveInvestment,
   appendActivityLog,
   AssetCrestStore,
-  captureVisitorLocationForAdmin,
   CRYPTO_ASSETS,
   CryptoAssetSymbol,
   formatNowStamp,
@@ -51,32 +41,18 @@ import {
   VACATION_QUALIFICATION_USD,
 } from '@/src/backend/lib/assetcrest-store';
 import {
-  BOOTSTRAPPED_ADMIN_EMAIL,
-  cloudAdminApproveDeposit,
-  cloudAdminApproveWithdrawal,
-  cloudAdminDeclineDeposit,
-  cloudAdminDeclineWithdrawal,
   cloudChangePassword,
   cloudExecuteSwap,
   cloudInvestPlan,
-  cloudLogVisitorLocation,
   cloudLookupTransferRecipient,
   cloudSendTransfer,
-  cloudSettleRoiPlan,
   cloudSubmitKyc,
-  cloudToggleInvestmentSettings,
   cloudUpdateAvatar,
   cloudUpdateProfileAndJoint,
-  queuePendingLocationLog,
-  signOutCloud,
   type TransferDirectoryEntry,
 } from '@/src/backend/lib/neon-client';
-import {
-  applyRoiSettlementToStore,
-  computeRoiSettlementPlan,
-  formatCountdown,
-  getInvestmentRoiSnapshot,
-} from '@/src/backend/lib/roi-engine';
+import { getInvestmentRoiSnapshot } from '@/src/backend/lib/roi-engine';
+import { useLiveCryptoPrices } from '@/src/backend/lib/useLiveCryptoPrices';
 
 interface CommonViewProps {
   user: UserAccount;
@@ -177,10 +153,15 @@ export function TransferFundsView({
     if (isCloudMode) {
       let recipient = cloudRecipient;
       if (!recipient && recipientQuery.trim()) {
-        const found = await cloudLookupTransferRecipient(recipientQuery);
-        if (found && found.uid !== user.id) {
-          recipient = found;
-          setCloudRecipient(found);
+        try {
+          const found = await cloudLookupTransferRecipient(recipientQuery);
+          if (found && found.uid !== user.id) {
+            recipient = found;
+            setCloudRecipient(found);
+          }
+        } catch {
+          onNotify('Unable to verify recipient ID right now. Please try again.', 'error');
+          return;
         }
       }
       if (!recipient) {
@@ -311,7 +292,7 @@ export function TransferFundsView({
                   setRecipientQuery(e.target.value);
                   if (isCloudMode) setCloudRecipient(null);
                 }}
-                placeholder={isCloudMode ? 'e.g. MARCUS102AB' : 'e.g. marcus.vance@assetcrest.co'}
+                placeholder={isCloudMode ? 'e.g. AC102AB' : 'e.g. investor@example.com'}
                 className="flex-1 rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-2.5 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#2b4865]"
               />
               {isCloudMode && (
@@ -453,20 +434,27 @@ export function CryptoSwapView({
   const [fromSymbol, setFromSymbol] = useState<CryptoAssetSymbol>('USD');
   const [toSymbol, setToSymbol] = useState<CryptoAssetSymbol>('BTC');
   const [fromAmountInput, setFromAmountInput] = useState('');
+  const [swapping, setSwapping] = useState(false);
+  const { prices: livePrices, loading: pricesLoading, error: pricesError } = useLiveCryptoPrices();
 
   const getAssetBalance = (sym: CryptoAssetSymbol): number => {
     if (sym === 'USD') return user.accountBalance;
     return user.cryptoBalances[sym] ?? 0;
   };
 
-  const fromAsset = CRYPTO_ASSETS.find((a) => a.symbol === fromSymbol)!;
-  const toAsset = CRYPTO_ASSETS.find((a) => a.symbol === toSymbol)!;
+  const fromPrice = livePrices[fromSymbol];
+  const toPrice = livePrices[toSymbol];
+  const quotesReady =
+    typeof fromPrice === 'number' &&
+    fromPrice > 0 &&
+    typeof toPrice === 'number' &&
+    toPrice > 0;
 
   const parsedFrom = Math.max(0, Number(fromAmountInput) || 0);
-  const grossUsdValue = parsedFrom * fromAsset.usdPrice;
+  const grossUsdValue = quotesReady ? parsedFrom * fromPrice : 0;
   const feeUsd = grossUsdValue * 0.0025; // 0.25% platform conversion spread
   const netUsdValue = Math.max(0, grossUsdValue - feeUsd);
-  const estimatedReceive = toAsset.usdPrice > 0 ? netUsdValue / toAsset.usdPrice : 0;
+  const estimatedReceive = quotesReady && toPrice > 0 ? netUsdValue / toPrice : 0;
 
   const handleFlipPair = () => {
     const prevFrom = fromSymbol;
@@ -480,8 +468,13 @@ export function CryptoSwapView({
 
   const handleExecuteSwap = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (swapping) return;
     if (fromSymbol === toSymbol) {
       onNotify('Select two different assets to perform a swap.', 'error');
+      return;
+    }
+    if (!quotesReady) {
+      onNotify('Live exchange price feed is unavailable. Please wait and retry.', 'error');
       return;
     }
     if (!parsedFrom || parsedFrom <= 0) {
@@ -491,6 +484,27 @@ export function CryptoSwapView({
     const available = getAssetBalance(fromSymbol);
     if (parsedFrom > available) {
       onNotify(`Insufficient ${fromSymbol} balance available for swap.`, 'error');
+      return;
+    }
+
+    if (isCloudMode) {
+      setSwapping(true);
+      try {
+        const result = await cloudExecuteSwap({
+          fromSymbol,
+          toSymbol,
+          fromAmount: parsedFrom,
+        });
+        setFromAmountInput('');
+        onNotify(
+          `Swapped ${parsedFrom} ${fromSymbol} into ${result.toAmount.toFixed(6)} ${toSymbol} (Live Rate Synced).`,
+          'success'
+        );
+      } catch (err: any) {
+        onNotify(err?.message || 'Swap failed. Please verify available balance and live feed.', 'error');
+      } finally {
+        setSwapping(false);
+      }
       return;
     }
 
@@ -510,28 +524,7 @@ export function CryptoSwapView({
     }
 
     const method = `${parsedFrom} ${fromSymbol} → ${estimatedReceive.toFixed(6)} ${toSymbol}`;
-    const note = `Rate: 1 ${fromSymbol} = ${(fromAsset.usdPrice / toAsset.usdPrice).toFixed(6)} ${toSymbol}`;
-
-    if (isCloudMode) {
-      try {
-        await cloudExecuteSwap({
-          uid: user.id,
-          nextUsdBalance: nextUsd,
-          nextCryptoBalances: nextCrypto,
-          method,
-          usdAmount: Number(grossUsdValue.toFixed(2)),
-          note,
-        });
-        setFromAmountInput('');
-        onNotify(
-          `Swapped ${parsedFrom} ${fromSymbol} into ${estimatedReceive.toFixed(6)} ${toSymbol} (Synced to Cloud).`,
-          'success'
-        );
-      } catch {
-        onNotify('Cloud swap failed. Please verify available balance.', 'error');
-      }
-      return;
-    }
+    const note = `Live Rate: 1 ${fromSymbol} = ${(fromPrice / toPrice).toFixed(6)} ${toSymbol}`;
 
     const txRecord: TransactionRecord = {
       id: nextRecordId('SWP'),
@@ -673,9 +666,13 @@ export function CryptoSwapView({
           {/* Summary lines */}
           <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5 pt-1">
             <div className="flex justify-between">
-              <span>Reference Rate</span>
+              <span>Live Exchange Rate</span>
               <span className="font-mono tabular-nums text-slate-700 dark:text-slate-200">
-                1 {fromSymbol} = {(fromAsset.usdPrice / toAsset.usdPrice).toFixed(6)} {toSymbol}
+                {quotesReady
+                  ? `1 ${fromSymbol} = ${(fromPrice / toPrice).toFixed(6)} ${toSymbol}`
+                  : pricesLoading
+                    ? 'Fetching live quote…'
+                    : pricesError || 'Quote unavailable'}
               </span>
             </div>
             <div className="flex justify-between">
@@ -688,9 +685,10 @@ export function CryptoSwapView({
 
           <button
             type="submit"
-            className="w-full bg-[#2b4865] hover:bg-[#223a52] text-white text-sm font-medium py-2.5 rounded-md transition cursor-pointer"
+            disabled={!quotesReady || swapping}
+            className="w-full bg-[#2b4865] hover:bg-[#223a52] text-white text-sm font-medium py-2.5 rounded-md transition cursor-pointer disabled:opacity-60"
           >
-            Execute Swap ({fromSymbol} → {toSymbol})
+            {swapping ? 'Executing Swap...' : `Execute Swap (${fromSymbol} → ${toSymbol})`}
           </button>
         </form>
 
@@ -702,13 +700,22 @@ export function CryptoSwapView({
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {CRYPTO_ASSETS.map((asset) => {
               const bal = getAssetBalance(asset.symbol);
-              const usdVal = bal * asset.usdPrice;
+              const liveUnitPrice = livePrices[asset.symbol];
+              const usdVal = typeof liveUnitPrice === 'number' ? bal * liveUnitPrice : null;
               return (
                 <div key={asset.symbol} className="py-2.5 flex items-center justify-between text-xs">
                   <div>
                     <p className="font-bold text-slate-800 dark:text-slate-100">{asset.symbol}</p>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {asset.name} · ${asset.usdPrice.toLocaleString('en-US')}
+                      {asset.name} ·{' '}
+                      {typeof liveUnitPrice === 'number'
+                        ? `$${liveUnitPrice.toLocaleString('en-US', {
+                            minimumFractionDigits: liveUnitPrice < 10 ? 4 : 2,
+                            maximumFractionDigits: liveUnitPrice < 10 ? 4 : 2,
+                          })}`
+                        : pricesLoading
+                          ? 'Loading quote…'
+                          : 'Quote unavailable'}
                     </p>
                   </div>
                   <div className="text-right font-mono tabular-nums">
@@ -716,7 +723,12 @@ export function CryptoSwapView({
                       {bal.toLocaleString('en-US', { maximumFractionDigits: 6 })}
                     </p>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      ≈ ${usdVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      {usdVal !== null
+                        ? `≈ $${usdVal.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}`
+                        : '—'}
                     </p>
                   </div>
                 </div>
@@ -1700,7 +1712,7 @@ export function AccountProfileView({
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                New Password (min 6 characters)
+                New Password (min 8 characters)
               </label>
               <input
                 type="password"
@@ -1994,810 +2006,4 @@ export function KycVerificationView({
   );
 }
 
-// ============================================================================
-// 7. ADMIN DASHBOARD (KYC APPROVALS, RECEIPTS, WITHDRAWALS, LOCATION LOGS)
-// ============================================================================
-export function AdminDashboardView({
-  user,
-  store,
-  isCloudMode = false,
-  onNavigate,
-  onNotify,
-  onInspectReceipt,
-  onInspectKyc,
-}: CommonViewProps & {
-  onInspectReceipt: (tx: TransactionRecord) => void;
-  onInspectKyc: (target: UserAccount) => void;
-}) {
-  const [adminTab, setAdminTab] = useState<
-    'kyc' | 'deposits' | 'withdrawals' | 'yields' | 'locations' | 'users'
-  >('kyc');
 
-  if (user.role !== 'admin') {
-    return (
-      <div className="space-y-5">
-        <BreadcrumbHeader
-          title="Admin Portal"
-          crumb="Admin Portal"
-          onDashboard={() => onNavigate('dashboard')}
-        />
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-6 text-center space-y-3">
-          <Lock className="h-8 w-8 mx-auto text-amber-500" />
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-            Administrator Access Required
-          </h3>
-          {isCloudMode ? (
-            <>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                Cloud Admin controls are strictly restricted to the verified AssetCrest operator account (
-                <strong className="font-mono">{BOOTSTRAPPED_ADMIN_EMAIL}</strong>).
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  void signOutCloud().then(() => {
-                    onNotify('Signed out. Sign in with the Admin account to continue.', 'info');
-                  });
-                }}
-                className="bg-[#2b4865] hover:bg-[#223a52] text-white text-xs font-medium px-4 py-2 rounded-md cursor-pointer"
-              >
-                Sign Out to Switch Account
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-                Switch to the <strong>AssetCrest Admin</strong> profile from the top-right account menu to review KYC submissions, deposit receipts, withdrawals, yields, and visitor link locations.
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  const adminUser = store.users.find((u) => u.role === 'admin');
-                  if (adminUser) {
-                    updateAssetCrestStore((prev) => ({ ...prev, activeUserId: adminUser.id }));
-                    onNotify('Switched session to AssetCrest Admin.', 'success');
-                  }
-                }}
-                className="bg-[#2b4865] hover:bg-[#223a52] text-white text-xs font-medium px-4 py-2 rounded-md cursor-pointer"
-              >
-                Switch to Admin Operator
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  const kycUsers = store.users.filter((u) => u.kycSubmission || u.kycStatus !== 'Unverified');
-  const depositTransactions = store.transactions.filter((t) => t.type === 'Deposit');
-  const withdrawalTransactions = store.transactions.filter((t) => t.type === 'Withdrawal');
-  const activeInvestments = store.investments.filter((i) => i.status === 'Active');
-
-  const handleApproveDeposit = async (tx: TransactionRecord) => {
-    if (tx.status === 'Completed') return;
-    if (isCloudMode) {
-      const targetUser = store.users.find((u) => u.id === tx.userId);
-      if (!targetUser) {
-        onNotify('Target user profile not loaded yet.', 'error');
-        return;
-      }
-      try {
-        await cloudAdminApproveDeposit(tx, targetUser);
-        onNotify(`Approved deposit ${tx.id} and credited $${tx.amount.toLocaleString('en-US')}.`, 'success');
-      } catch {
-        onNotify('Failed to approve deposit in Cloud.', 'error');
-      }
-      return;
-    }
-
-    updateAssetCrestStore((prev) => ({
-      ...prev,
-      transactions: prev.transactions.map((t) =>
-        t.id === tx.id ? { ...t, status: 'Completed' } : t
-      ),
-      users: prev.users.map((u) =>
-        u.id === tx.userId
-          ? {
-              ...u,
-              accountBalance: Number((u.accountBalance + tx.amount).toFixed(2)),
-              totalDeposit: Number((u.totalDeposit + tx.amount).toFixed(2)),
-            }
-          : u
-      ),
-    }));
-    onNotify(`Approved deposit ${tx.id} and credited $${tx.amount.toLocaleString('en-US')}.`, 'success');
-  };
-
-  const handleRejectDeposit = async (tx: TransactionRecord) => {
-    if (tx.status !== 'Pending') return;
-    if (isCloudMode) {
-      try {
-        await cloudAdminDeclineDeposit(tx);
-        onNotify(`Cancelled deposit ${tx.id}.`, 'info');
-      } catch {
-        onNotify('Failed to cancel deposit in Cloud.', 'error');
-      }
-      return;
-    }
-
-    updateAssetCrestStore((prev) => ({
-      ...prev,
-      transactions: prev.transactions.map((t) =>
-        t.id === tx.id ? { ...t, status: 'Cancelled' } : t
-      ),
-    }));
-    onNotify(`Cancelled deposit ${tx.id}.`, 'info');
-  };
-
-  const handleApproveWithdrawal = async (tx: TransactionRecord) => {
-    if (tx.status !== 'Pending') return;
-    if (isCloudMode) {
-      try {
-        await cloudAdminApproveWithdrawal(tx);
-        onNotify(`Approved withdrawal ${tx.id} ($${tx.amount.toLocaleString('en-US')}).`, 'success');
-      } catch {
-        onNotify('Failed to approve withdrawal in Cloud.', 'error');
-      }
-      return;
-    }
-
-    updateAssetCrestStore((prev) => ({
-      ...prev,
-      transactions: prev.transactions.map((t) =>
-        t.id === tx.id ? { ...t, status: 'Completed' } : t
-      ),
-    }));
-    onNotify(`Approved withdrawal ${tx.id} ($${tx.amount.toLocaleString('en-US')}).`, 'success');
-  };
-
-  const handleDeclineWithdrawal = async (tx: TransactionRecord) => {
-    if (tx.status !== 'Pending') return;
-    if (isCloudMode) {
-      const targetUser = store.users.find((u) => u.id === tx.userId);
-      if (!targetUser) {
-        onNotify('Target user profile not found.', 'error');
-        return;
-      }
-      try {
-        await cloudAdminDeclineWithdrawal(tx, targetUser);
-        onNotify(`Declined withdrawal ${tx.id} and refunded $${tx.amount.toLocaleString('en-US')} to user balance.`, 'info');
-      } catch {
-        onNotify('Failed to refund withdrawal in Cloud.', 'error');
-      }
-      return;
-    }
-
-    updateAssetCrestStore((prev) => ({
-      ...prev,
-      transactions: prev.transactions.map((t) =>
-        t.id === tx.id ? { ...t, status: 'Cancelled' } : t
-      ),
-      users: prev.users.map((u) =>
-        u.id === tx.userId
-          ? { ...u, accountBalance: Number((u.accountBalance + tx.amount).toFixed(2)) }
-          : u
-      ),
-    }));
-    onNotify(`Declined withdrawal ${tx.id} and refunded $${tx.amount.toLocaleString('en-US')} to user balance.`, 'info');
-  };
-
-  const [roiClockMs, setRoiClockMs] = useState<number>(() => Date.now());
-  useEffect(() => {
-    if (adminTab !== 'yields') return;
-    const timer = window.setInterval(() => setRoiClockMs(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, [adminTab]);
-
-  const handleToggleAutoRoi = async (inv: ActiveInvestment) => {
-    const nextEnabled = inv.autoRoiEnabled === false;
-    if (isCloudMode) {
-      const ok = await cloudToggleInvestmentSettings(inv.id, { autoRoiEnabled: nextEnabled });
-      if (!ok) {
-        onNotify('Could not update Auto-ROI status in Cloud.', 'error');
-        return;
-      }
-      onNotify(
-        `${nextEnabled ? 'Resumed' : 'Paused'} automatic ROI accrual for ${inv.planName}.`,
-        'info'
-      );
-      return;
-    }
-
-    updateAssetCrestStore((prev) => ({
-      ...prev,
-      investments: prev.investments.map((item) =>
-        item.id === inv.id ? { ...item, autoRoiEnabled: nextEnabled } : item
-      ),
-    }));
-    onNotify(
-      `${nextEnabled ? 'Resumed' : 'Paused'} automatic ROI accrual for ${inv.planName}.`,
-      'info'
-    );
-  };
-
-  const handlePayoutInvestmentYield = async (inv: ActiveInvestment) => {
-    const existingTxIds = new Set(store.transactions.map((t) => t.id));
-    const plan = computeRoiSettlementPlan(store.investments, {
-      nowMs: Date.now(),
-      forceOneCycleForIds: new Set([inv.id]),
-      existingTxIds,
-    });
-    if (plan.settledCount === 0) {
-      onNotify('This plan has already completed all scheduled ROI cycles.', 'info');
-      return;
-    }
-
-    if (isCloudMode) {
-      try {
-        await cloudSettleRoiPlan(plan, store.users);
-        onNotify(
-          `Settled +$${plan.totalYieldCredited.toFixed(2)} ROI${
-            plan.maturedCount > 0 ? ' and unlocked matured principal' : ''
-          } for ${inv.planName}.`,
-          'success'
-        );
-      } catch {
-        onNotify('Failed to credit yield cycle in Cloud.', 'error');
-      }
-      return;
-    }
-
-    updateAssetCrestStore((prev) => applyRoiSettlementToStore(prev, plan));
-    onNotify(
-      `Settled +$${plan.totalYieldCredited.toFixed(2)} ROI${
-        plan.maturedCount > 0 ? ' and unlocked matured principal' : ''
-      } for ${inv.planName}.`,
-      'success'
-    );
-  };
-
-  const handleDistributeAllYields = async () => {
-    if (activeInvestments.length === 0) {
-      onNotify('No active investments to distribute yield for.', 'info');
-      return;
-    }
-
-    const existingTxIds = new Set(store.transactions.map((t) => t.id));
-    const plan = computeRoiSettlementPlan(store.investments, {
-      nowMs: Date.now(),
-      forceOneCycleForIds: new Set(activeInvestments.map((i) => i.id)),
-      existingTxIds,
-    });
-
-    if (plan.settledCount === 0) {
-      onNotify('All plans have completed their scheduled cycles.', 'info');
-      return;
-    }
-
-    if (isCloudMode) {
-      try {
-        const res = await cloudSettleRoiPlan(plan, store.users);
-        onNotify(
-          `Settled $${plan.totalYieldCredited.toFixed(2)} across ${res.settledCount} active plan(s)${
-            plan.maturedCount > 0 ? ` (${plan.maturedCount} matured)` : ''
-          }.`,
-          'success'
-        );
-      } catch {
-        onNotify('Failed to distribute batch yields in Cloud.', 'error');
-      }
-      return;
-    }
-
-    updateAssetCrestStore((prev) => applyRoiSettlementToStore(prev, plan));
-    onNotify(
-      `Settled $${plan.totalYieldCredited.toFixed(2)} across ${plan.settledCount} active plan(s)${
-        plan.maturedCount > 0 ? ` (${plan.maturedCount} matured)` : ''
-      }.`,
-      'success'
-    );
-  };
-
-  return (
-    <div className="space-y-5">
-      <BreadcrumbHeader
-        title="Admin Control Portal"
-        crumb="Admin Portal"
-        onDashboard={() => onNavigate('dashboard')}
-      />
-
-      {/* Admin Sub-tabs */}
-      <div className="flex flex-wrap gap-2">
-        {[
-          { id: 'kyc', label: `KYC Queue (${kycUsers.length})` },
-          { id: 'deposits', label: `Deposits (${depositTransactions.length})` },
-          { id: 'withdrawals', label: `Withdrawals (${withdrawalTransactions.length})` },
-          { id: 'yields', label: `Yield Payouts (${activeInvestments.length})` },
-          { id: 'locations', label: `Locations (${store.locationLogs.length})` },
-          { id: 'users', label: `Users (${store.users.length})` },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() =>
-              setAdminTab(
-                tab.id as 'kyc' | 'deposits' | 'withdrawals' | 'yields' | 'locations' | 'users'
-              )
-            }
-            className={`px-3.5 py-2 rounded-md text-xs font-semibold transition cursor-pointer ${
-              adminTab === tab.id
-                ? 'bg-[#2b4865] text-white'
-                : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* TAB A: KYC APPROVAL QUEUE */}
-      {adminTab === 'kyc' && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Investor</th>
-                <th className="px-4 py-3 font-semibold">Document</th>
-                <th className="px-4 py-3 font-semibold">Submitted</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {kycUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                    No KYC submissions yet.
-                  </td>
-                </tr>
-              ) : (
-                kycUsers.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-slate-800 dark:text-slate-100">{item.name}</p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.email}</p>
-                    </td>
-                    <td className="px-4 py-3 font-mono">
-                      {item.kycSubmission
-                        ? `${item.kycSubmission.documentType} · ${item.kycSubmission.documentNumber}`
-                        : '—'}
-                    </td>
-                    <td className="px-4 py-3 font-mono text-slate-500 dark:text-slate-400">
-                      {item.kycSubmission?.submittedAt || '—'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-0.5 rounded font-semibold ${
-                          item.kycStatus === 'Approved'
-                            ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
-                            : item.kycStatus === 'Pending'
-                            ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
-                            : 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300'
-                        }`}
-                      >
-                        {item.kycStatus}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {item.kycSubmission && (
-                        <button
-                          type="button"
-                          onClick={() => onInspectKyc(item)}
-                          className="bg-[#2b4865] hover:bg-[#223a52] text-white px-3 py-1.5 rounded inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          Inspect &amp; Decide
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* TAB B: DEPOSIT RECEIPTS */}
-      {adminTab === 'deposits' && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Deposit ID</th>
-                <th className="px-4 py-3 font-semibold">User</th>
-                <th className="px-4 py-3 font-semibold">Method</th>
-                <th className="px-4 py-3 font-semibold">Amount</th>
-                <th className="px-4 py-3 font-semibold">Receipt</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {depositTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                    No deposit transactions recorded.
-                  </td>
-                </tr>
-              ) : (
-                depositTransactions.map((tx) => {
-                  const owner = store.users.find((u) => u.id === tx.userId);
-                  return (
-                    <tr key={tx.id}>
-                      <td className="px-4 py-3 font-mono">{tx.id}</td>
-                      <td className="px-4 py-3">{owner?.name || tx.userId}</td>
-                      <td className="px-4 py-3">{tx.method}</td>
-                      <td className="px-4 py-3 font-mono tabular-nums font-bold">
-                        ${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          type="button"
-                          onClick={() => onInspectReceipt(tx)}
-                          className="text-[#2b4865] dark:text-sky-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                          {tx.proofName || 'View'}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`font-semibold ${
-                            tx.status === 'Completed'
-                              ? 'text-emerald-600'
-                              : tx.status === 'Pending'
-                              ? 'text-amber-600'
-                              : 'text-rose-600'
-                          }`}
-                        >
-                          {tx.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right space-x-1.5">
-                        {tx.status === 'Pending' && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => handleApproveDeposit(tx)}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <CheckCircle2 className="h-3 w-3" />
-                              Credit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRejectDeposit(tx)}
-                              className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <XCircle className="h-3 w-3" />
-                              Decline
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* TAB B2: WITHDRAWALS APPROVAL QUEUE */}
-      {adminTab === 'withdrawals' && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Withdrawal ID</th>
-                <th className="px-4 py-3 font-semibold">Investor</th>
-                <th className="px-4 py-3 font-semibold">Method &amp; Destination</th>
-                <th className="px-4 py-3 font-semibold">Amount</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {withdrawalTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                    No withdrawal requests submitted yet.
-                  </td>
-                </tr>
-              ) : (
-                withdrawalTransactions.map((tx) => {
-                  const owner = store.users.find((u) => u.id === tx.userId);
-                  return (
-                    <tr key={tx.id}>
-                      <td className="px-4 py-3 font-mono">{tx.id}</td>
-                      <td className="px-4 py-3">{owner?.name || tx.userId}</td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-slate-800 dark:text-slate-100">{tx.method}</p>
-                        {tx.note && (
-                          <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate max-w-xs">
-                            {tx.note}
-                          </p>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 font-mono tabular-nums font-bold">
-                        ${tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`font-semibold ${
-                            tx.status === 'Completed'
-                              ? 'text-emerald-600'
-                              : tx.status === 'Pending'
-                              ? 'text-amber-600'
-                              : 'text-rose-600'
-                          }`}
-                        >
-                          {tx.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right space-x-1.5">
-                        {tx.status === 'Pending' && (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => handleApproveWithdrawal(tx)}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <CheckCircle2 className="h-3 w-3" />
-                              Approve
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeclineWithdrawal(tx)}
-                              className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded inline-flex items-center gap-1 cursor-pointer"
-                            >
-                              <XCircle className="h-3 w-3" />
-                              Refund
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* TAB B3: AUTOMATIC ROI ENGINE & YIELD PAYOUTS */}
-      {adminTab === 'yields' && (
-        <div className="space-y-3">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300">
-              <RefreshCw className="h-4 w-4 text-emerald-600 shrink-0" />
-              <span>
-                <strong>Automatic ROI Engine Active</strong> — Credits daily returns every 24h to{' '}
-                <strong>Total Profit</strong> &amp; <strong>Account Balance</strong> (or compounds if enabled) and
-                returns principal at maturity.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={handleDistributeAllYields}
-              className="bg-[#2b4865] hover:bg-[#223a52] text-white text-xs font-medium px-3.5 py-2 rounded inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <TrendingUp className="h-3.5 w-3.5" />
-              Advance &amp; Settle 1 Cycle All
-            </button>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Investor</th>
-                  <th className="px-4 py-3 font-semibold">Plan &amp; Schedule</th>
-                  <th className="px-4 py-3 font-semibold">Principal / Accrued</th>
-                  <th className="px-4 py-3 font-semibold">Daily Yield &amp; Next Auto</th>
-                  <th className="px-4 py-3 font-semibold text-right">Engine Controls</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {store.investments.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                      No investor allocations yet.
-                    </td>
-                  </tr>
-                ) : (
-                  store.investments.map((inv) => {
-                    const owner = store.users.find((u) => u.id === inv.userId);
-                    const snap = getInvestmentRoiSnapshot(inv, roiClockMs);
-                    const autoOn = inv.autoRoiEnabled !== false;
-                    return (
-                      <tr key={inv.id}>
-                        <td className="px-4 py-3">{owner?.name || inv.userId}</td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-1.5">
-                            <p className="font-semibold text-slate-800 dark:text-slate-100">{inv.planName}</p>
-                            {inv.autoCompound && (
-                              <span className="px-1.5 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 text-[10px] font-semibold">
-                                Compound
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {inv.category} · {inv.dailyRate}/day · Cycle {snap.cyclesCompleted}/{inv.durationDays}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3 font-mono tabular-nums">
-                          <p className="font-semibold text-slate-800 dark:text-slate-100">
-                            ${inv.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </p>
-                          <p className="text-[11px] text-emerald-600 dark:text-emerald-400">
-                            Earned: +${snap.earnedSoFar.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3 font-mono tabular-nums">
-                          <p className="font-bold text-emerald-600 dark:text-emerald-400">
-                            +${snap.dailyYield.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                          </p>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                            {snap.isMatured
-                              ? 'Matured'
-                              : autoOn
-                              ? `Next in ${formatCountdown(snap.nextPayoutInMs)}`
-                              : 'Auto Paused'}
-                          </p>
-                        </td>
-                        <td className="px-4 py-3 text-right space-x-1.5">
-                          {!snap.isMatured ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => handleToggleAutoRoi(inv)}
-                                className="border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 px-2.5 py-1.5 rounded inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                {autoOn ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                                {autoOn ? 'Pause' : 'Resume'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handlePayoutInvestmentYield(inv)}
-                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                <CheckCircle2 className="h-3 w-3" />
-                                Settle Cycle
-                              </button>
-                            </>
-                          ) : (
-                            <span className="px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[11px] font-semibold">
-                              Completed
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB C: ADMIN-ONLY VISITOR LOCATION LOGS */}
-      {adminTab === 'locations' && (
-        <div className="space-y-3">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-4 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 text-xs text-slate-600 dark:text-slate-300">
-              <MapPin className="h-4 w-4 text-[#2b4865] dark:text-sky-400 shrink-0" />
-              <span>
-                Logs geolocation coordinates, timezone, and device telemetry whenever any referral tracking link (
-                <code className="font-mono">?ref=...</code>) is clicked. Visible exclusively to Admin.
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                captureVisitorLocationForAdmin(
-                  'ADMIN-TEST',
-                  `${window.location.origin}/?ref=${user.referralCode}`,
-                  (entry) => {
-                    if (isCloudMode) {
-                      void cloudLogVisitorLocation(user.id, entry);
-                    } else {
-                      queuePendingLocationLog(entry);
-                    }
-                  }
-                );
-                onNotify('Captured current browser click telemetry into Admin Location Log.', 'success');
-              }}
-              className="bg-[#2b4865] hover:bg-[#223a52] text-white text-xs font-medium px-3.5 py-2 rounded inline-flex items-center gap-1.5 cursor-pointer"
-            >
-              <Compass className="h-3.5 w-3.5" />
-              Capture Test Link Visit
-            </button>
-          </div>
-
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                <tr>
-                  <th className="px-4 py-3 font-semibold">Timestamp</th>
-                  <th className="px-4 py-3 font-semibold">Ref Code</th>
-                  <th className="px-4 py-3 font-semibold">Coordinates (Lat / Lng)</th>
-                  <th className="px-4 py-3 font-semibold">Timezone &amp; Accuracy</th>
-                  <th className="px-4 py-3 font-semibold">Device</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {store.locationLogs.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
-                      <Globe className="h-6 w-6 mx-auto mb-1 text-slate-400" />
-                      No referral link clicks captured yet. Share or open a <code className="font-mono">?ref=</code> link to record visitor location.
-                    </td>
-                  </tr>
-                ) : (
-                  store.locationLogs.map((log) => (
-                    <tr key={log.id}>
-                      <td className="px-4 py-3 font-mono tabular-nums">{log.timestamp}</td>
-                      <td className="px-4 py-3 font-mono font-bold text-[#2b4865] dark:text-sky-400">
-                        {log.refCode}
-                      </td>
-                      <td className="px-4 py-3 font-mono tabular-nums">
-                        {log.latitude}, {log.longitude}
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-semibold">{log.timezone}</p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">{log.accuracyLabel}</p>
-                      </td>
-                      <td className="px-4 py-3 text-[11px] text-slate-500 dark:text-slate-400 max-w-xs truncate">
-                        {log.deviceSummary}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB D: USER DIRECTORY */}
-      {adminTab === 'users' && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Member</th>
-                <th className="px-4 py-3 font-semibold">Ownership</th>
-                <th className="px-4 py-3 font-semibold">KYC</th>
-                <th className="px-4 py-3 font-semibold text-right">USD Balance</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {store.users.map((u) => (
-                <tr key={u.id}>
-                  <td className="px-4 py-3">
-                    <p className="font-semibold text-slate-800 dark:text-slate-100">{u.name}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">{u.email}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    {u.accountType}
-                    {u.jointDetails ? ` (${u.jointDetails.coOwnerName})` : ''}
-                  </td>
-                  <td className="px-4 py-3 font-semibold">{u.kycStatus}</td>
-                  <td className="px-4 py-3 text-right font-mono tabular-nums font-bold">
-                    ${u.accountBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}

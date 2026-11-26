@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from '@/src/backend/components/NextImageShim';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -10,8 +10,6 @@ import {
   KeyRound,
   CheckCircle2,
   ShieldCheck,
-  ArrowRight,
-  Sparkles,
   FileText,
   AlertCircle,
   Lock,
@@ -36,6 +34,7 @@ import {
 import {
   neonClaimAdmin,
   neonForgotPassword,
+  neonGetAdminStatus,
   neonLogin,
   neonRegister,
   neonResetPassword,
@@ -494,8 +493,6 @@ export function SignInPage({
   const [rememberMe, setRememberMe] = useState(initialRemember.remember);
   const [loginError, setLoginError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [showClaimAdmin, setShowClaimAdmin] = useState(false);
-  const [claimPassword, setClaimPassword] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -528,10 +525,7 @@ export function SignInPage({
         activityLogs: appendActivityLog(prev, {
           actorId: target.id,
           actorName: target.name,
-          action:
-            target.role === 'admin'
-              ? 'Admin dashboard logged in to account'
-              : 'Logged in to account',
+          action: 'Logged in to account',
           category: 'auth',
           detail: target.email,
         }),
@@ -542,30 +536,7 @@ export function SignInPage({
     } catch (err: any) {
       const errMsg = err?.message || 'Invalid email/username or password.';
       setLoginError(errMsg);
-      if (errMsg.toLowerCase().includes('claimed')) {
-        setShowClaimAdmin(true);
-      }
       onNotify(errMsg, 'error');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleClaimAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting) return;
-    setLoginError('');
-    setSubmitting(true);
-    try {
-      const adminUser = await neonClaimAdmin(claimPassword);
-      setShowClaimAdmin(false);
-      setClaimPassword('');
-      onNotify(`Administrator account claimed and signed in (${adminUser.email}).`, 'success');
-      onAuthSuccess();
-    } catch (err: any) {
-      const msg = err?.message || 'Failed to claim Admin password.';
-      setLoginError(msg);
-      onNotify(msg, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -664,33 +635,348 @@ export function SignInPage({
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
 
-        {showClaimAdmin && (
-          <form
-            onSubmit={handleClaimAdmin}
-            className="mt-6 p-4 rounded-lg border border-amber-200 bg-amber-50 space-y-3"
-          >
-            <p className="text-xs font-semibold text-amber-900">
-              First-Run Administrator Setup: Set an initial password (min 8 chars) to claim the Admin account.
-            </p>
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={claimPassword}
-              onChange={(e) => setClaimPassword(e.target.value)}
-              placeholder="New Admin Password (min 8 chars)"
-              className={inputClass}
-            />
+interface AdminSignInPageProps {
+  signedInInvestorEmail?: string | null;
+  onNotify: (msg: string, tone?: 'success' | 'info' | 'error') => void;
+  onAdminAuthSuccess: () => void;
+  onBackToInvestorPortal: () => void;
+  onForgotPassword: (prefillEmail?: string) => void;
+}
+
+export function AdminSignInPage({
+  signedInInvestorEmail = null,
+  onNotify,
+  onAdminAuthSuccess,
+  onBackToInvestorPortal,
+  onForgotPassword,
+}: AdminSignInPageProps) {
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const [adminStatus, setAdminStatus] = useState<{
+    adminEmail: string;
+    adminClaimed: boolean;
+    envPasswordConfigured: boolean;
+  } | null>(null);
+  const [claimEmail, setClaimEmail] = useState('');
+  const [claimPassword, setClaimPassword] = useState('');
+  const [claimConfirmPassword, setClaimConfirmPassword] = useState('');
+  const [showClaimPassword, setShowClaimPassword] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    neonGetAdminStatus()
+      .then((status) => {
+        if (!active) return;
+        setAdminStatus(status);
+        if (status.adminEmail) {
+          setClaimEmail(status.adminEmail);
+          setIdentifier((prev) => prev || status.adminEmail);
+        }
+      })
+      .catch(() => {
+        // non-blocking
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const needsFirstRunClaim = Boolean(
+    adminStatus && !adminStatus.adminClaimed && !adminStatus.envPasswordConfigured
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setLoginError('');
+    setSubmitting(true);
+
+    try {
+      const target = await neonLogin(identifier.trim(), password);
+      if (target.role !== 'admin') {
+        await signOutCloud().catch(() => {});
+        const roleError =
+          'This account does not have administrator privileges. Sign in with an administrator account or return to the Investor Portal.';
+        setLoginError(roleError);
+        onNotify(roleError, 'error');
+        return;
+      }
+
+      const stamp = formatNowStamp();
+      updateAssetCrestStore((prev) => ({
+        ...prev,
+        activeUserId: target.id,
+        users: prev.users.some((u) => u.id === target.id)
+          ? prev.users.map((u) => (u.id === target.id ? { ...target, lastLoginAt: stamp } : u))
+          : [...prev.users, { ...target, lastLoginAt: stamp }],
+        sessionLogs: appendSessionLog(prev, target),
+        activityLogs: appendActivityLog(prev, {
+          actorId: target.id,
+          actorName: target.name,
+          action: 'Signed in to /admin console',
+          category: 'auth',
+          detail: target.email,
+        }),
+      }));
+
+      onNotify(`Signed in to Admin Console (${target.email}).`, 'success');
+      onAdminAuthSuccess();
+    } catch (err: any) {
+      const errMsg = err?.message || 'Invalid administrator credentials.';
+      setLoginError(errMsg);
+      onNotify(errMsg, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleClaimAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setLoginError('');
+
+    if (claimPassword.length < 8) {
+      const msg = 'Administrator password must be at least 8 characters.';
+      setLoginError(msg);
+      onNotify(msg, 'error');
+      return;
+    }
+    if (claimPassword !== claimConfirmPassword) {
+      const msg = 'Administrator passwords do not match.';
+      setLoginError(msg);
+      onNotify(msg, 'error');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const targetEmail = (adminStatus?.adminEmail || claimEmail).trim().toLowerCase();
+      const adminUser = await neonClaimAdmin(claimPassword, targetEmail);
+      const stamp = formatNowStamp();
+      updateAssetCrestStore((prev) => ({
+        ...prev,
+        activeUserId: adminUser.id,
+        users: prev.users.some((u) => u.id === adminUser.id)
+          ? prev.users.map((u) => (u.id === adminUser.id ? { ...adminUser, lastLoginAt: stamp } : u))
+          : [...prev.users, { ...adminUser, lastLoginAt: stamp }],
+        sessionLogs: appendSessionLog(prev, adminUser),
+        activityLogs: appendActivityLog(prev, {
+          actorId: adminUser.id,
+          actorName: adminUser.name,
+          action: 'Claimed initial administrator access on /admin',
+          category: 'auth',
+          detail: adminUser.email,
+        }),
+      }));
+      setClaimPassword('');
+      setClaimConfirmPassword('');
+      onNotify(`Administrator account activated (${adminUser.email}).`, 'success');
+      onAdminAuthSuccess();
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to activate administrator account.';
+      setLoginError(msg);
+      onNotify(msg, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const inputClass =
+    'w-full h-12 px-4 rounded-xl border border-[#c9cbd8] bg-white text-base text-[#1e293b] placeholder:text-[#8b95a5] focus:outline-none focus:border-[#345485] focus:ring-2 focus:ring-[#345485]/15 transition-colors';
+
+  return (
+    <div className="min-h-screen bg-white text-[#141824] flex flex-col">
+      <AssetCrestAuthBanner fullWidth />
+
+      <div className="w-full max-w-[540px] mx-auto px-6 sm:px-8 pt-10 sm:pt-14 pb-14 flex-1 flex flex-col justify-start">
+        <div className="text-center mb-8 space-y-2">
+          <div className="mx-auto h-12 w-12 rounded-xl bg-[#e8f1f8] text-[#284577] flex items-center justify-center">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#141824] tracking-tight">
+            Admin Console Sign In
+          </h1>
+          <p className="text-xs sm:text-sm text-[#64748b]">
+            AssetCrest Platform Administration · Restricted Operator Access
+          </p>
+        </div>
+
+        {signedInInvestorEmail && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <span>
+              Currently signed in as investor <strong className="font-mono">{signedInInvestorEmail}</strong>. Sign in with an administrator account to access <span className="font-mono">/admin</span>.
+            </span>
+            <button
+              type="button"
+              onClick={onBackToInvestorPortal}
+              className="text-xs font-semibold text-[#284577] hover:underline shrink-0 text-left cursor-pointer"
+            >
+              Return to Portal
+            </button>
+          </div>
+        )}
+
+        {loginError && (
+          <div className="mb-6">
+            <ErrorAlertBanner message={loginError} onDismiss={() => setLoginError('')} />
+          </div>
+        )}
+
+        {needsFirstRunClaim ? (
+          <form onSubmit={handleClaimAdmin} className="space-y-4 rounded-xl border border-[#dbe4ef] bg-[#f8fbff] p-5 sm:p-6">
+            <div className="space-y-1">
+              <h2 className="text-base font-bold text-[#141824]">
+                First-Run Administrator Setup
+              </h2>
+              <p className="text-xs text-[#475569] leading-relaxed">
+                No administrator password has been claimed yet. Configure the primary operator password below to initialize <span className="font-mono">/admin</span> access.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+                Administrator Email
+              </label>
+              <input
+                type="email"
+                required
+                readOnly={Boolean(adminStatus?.adminEmail)}
+                value={adminStatus?.adminEmail || claimEmail}
+                onChange={(e) => setClaimEmail(e.target.value)}
+                placeholder="admin@assetcrestonline.com"
+                className={`${inputClass} ${adminStatus?.adminEmail ? 'bg-slate-100 text-slate-600' : ''}`}
+              />
+            </div>
+
+            <div className="relative">
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+                Administrator Password (min 8 chars)
+              </label>
+              <input
+                type={showClaimPassword ? 'text' : 'password'}
+                required
+                minLength={8}
+                autoComplete="new-password"
+                value={claimPassword}
+                onChange={(e) => setClaimPassword(e.target.value)}
+                placeholder="Choose strong admin password"
+                className={`${inputClass} pr-12`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowClaimPassword((v) => !v)}
+                aria-label={showClaimPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-1 bottom-0.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-[#8b95a5] hover:text-[#334155] cursor-pointer"
+              >
+                {showClaimPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+              </button>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+                Confirm Administrator Password
+              </label>
+              <input
+                type={showClaimPassword ? 'text' : 'password'}
+                required
+                minLength={8}
+                autoComplete="new-password"
+                value={claimConfirmPassword}
+                onChange={(e) => setClaimConfirmPassword(e.target.value)}
+                placeholder="Repeat admin password"
+                className={inputClass}
+              />
+            </div>
+
             <button
               type="submit"
               disabled={submitting}
-              className="w-full h-11 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium transition cursor-pointer disabled:opacity-60"
+              className="w-full h-12 rounded-xl bg-[#345485] hover:bg-[#2a4570] text-white text-base font-medium transition cursor-pointer disabled:opacity-60"
             >
-              {submitting ? 'Claiming Admin...' : 'Set Admin Password & Sign In'}
+              {submitting ? 'Activating Admin Access...' : 'Set Admin Password & Sign In'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+                Administrator Email or Username
+              </label>
+              <input
+                type="text"
+                required
+                autoComplete="username"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="Administrator email or username"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="relative">
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5">
+                Administrator Password
+              </label>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter administrator password"
+                className={`${inputClass} pr-12`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-1 bottom-0.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-[#8b95a5] hover:text-[#334155] transition-colors cursor-pointer"
+              >
+                {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
+              </button>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => onForgotPassword(identifier.includes('@') ? identifier.trim() : '')}
+                className="text-sm text-[#284577] hover:underline font-medium cursor-pointer"
+              >
+                Forgot Password ?
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full h-12 rounded-xl bg-[#345485] hover:bg-[#2a4570] active:scale-[0.99] text-white text-base font-medium transition cursor-pointer disabled:opacity-60"
+            >
+              {submitting ? 'Verifying Admin Access...' : 'Sign In to Admin Console'}
             </button>
           </form>
         )}
+
+        <div className="mt-8 pt-6 border-t border-slate-200 flex items-center justify-between text-xs text-[#64748b]">
+          <button
+            type="button"
+            onClick={onBackToInvestorPortal}
+            className="text-[#284577] hover:underline font-medium cursor-pointer"
+          >
+            Back to Investor Portal
+          </button>
+          <a href="/" className="hover:text-[#141824] transition-colors">
+            Main Website
+          </a>
+        </div>
       </div>
     </div>
   );
@@ -699,6 +985,7 @@ export function SignInPage({
 interface AuthModalProps {
   open: boolean;
   initialMode?: 'login' | 'register' | 'forgot';
+  initialEmail?: string;
   onClose: () => void;
   onAuthSuccess?: () => void;
   onSwitchToRegisterPage?: () => void;
@@ -711,6 +998,7 @@ interface AuthModalProps {
 export function AuthModal({
   open,
   initialMode = 'login',
+  initialEmail = '',
   onClose,
   onAuthSuccess,
   onSwitchToRegisterPage,
@@ -724,12 +1012,12 @@ export function AuthModal({
   const [authError, setAuthError] = useState('');
 
   // Login state
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginEmail, setLoginEmail] = useState(initialEmail);
   const [loginPassword, setLoginPassword] = useState('');
 
   // Forgot password state
   const [forgotStep, setForgotStep] = useState<'email' | 'verify'>('email');
-  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotEmail, setForgotEmail] = useState(initialEmail);
   const [enteredResetCode, setEnteredResetCode] = useState('');
   const [resetNewPassword, setResetNewPassword] = useState('');
   const [resetConfirmPassword, setResetConfirmPassword] = useState('');
@@ -788,36 +1076,6 @@ export function AuthModal({
     } finally {
       setCloudBusy(false);
     }
-  };
-
-  const handleQuickSwitch = (user: UserAccount) => {
-    setAuthError('');
-    if (user.accountStatus === 'Blocked') {
-      const errMsg = `${user.name} is currently blocked. Unblock from Manage Users before switching.`;
-      setAuthError(errMsg);
-      onNotify(errMsg, 'error');
-      return;
-    }
-    const stamp = formatNowStamp();
-    updateAssetCrestStore((prev) => ({
-      ...prev,
-      activeUserId: user.id,
-      users: prev.users.map((u) => (u.id === user.id ? { ...u, lastLoginAt: stamp } : u)),
-      sessionLogs: appendSessionLog(prev, user),
-      activityLogs: appendActivityLog(prev, {
-        actorId: user.id,
-        actorName: user.name,
-        action:
-          user.role === 'admin'
-            ? 'Admin dashboard logged in to account'
-            : 'Logged in to account',
-        category: 'auth',
-        detail: user.email,
-      }),
-    }));
-    onNotify(`Switched active session to ${user.name}.`, 'success');
-    onAuthSuccess?.();
-    onClose();
   };
 
   const handleRequestResetCode = async (e: React.FormEvent) => {
@@ -1042,44 +1300,6 @@ export function AuthModal({
                   {cloudBusy ? 'Signing In...' : 'Sign In to Account'}
                 </button>
               </form>
-
-              {!isCloudMode && store.users.length > 0 && (
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2.5">
-                  <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                    Quick Local Preview Account Switcher
-                  </p>
-                  <div className="space-y-2">
-                    {store.users.map((u) => (
-                      <button
-                        key={u.id}
-                        type="button"
-                        onClick={() => handleQuickSwitch(u)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-left text-xs transition cursor-pointer ${
-                          store.activeUserId === u.id
-                            ? 'border-[#2b4865] bg-[#2b4865]/5 dark:border-sky-400 dark:bg-sky-500/10'
-                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
-                            <span>{u.name}</span>
-                            {u.role === 'admin' && (
-                              <span className="ac-badge ac-badge-warning">ADMIN</span>
-                            )}
-                            {u.accountType === 'Joint' && (
-                              <span className="ac-badge ac-badge-info">JOINT</span>
-                            )}
-                          </div>
-                          <p className="text-slate-600 dark:text-slate-300">{u.email}</p>
-                        </div>
-                        <span className="font-mono tabular-nums font-semibold text-[#2b4865] dark:text-sky-300">
-                          ${u.accountBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </>
           )}
 
@@ -1116,7 +1336,7 @@ export function AuthModal({
                       required
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder="bitfurytech21@gmail.com"
+                      placeholder="you@example.com"
                       className="ac-input"
                     />
                   </div>
@@ -1186,113 +1406,6 @@ export function AuthModal({
         </div>
       </motion.div>
     </div>
-  );
-}
-
-interface WelcomeModalProps {
-  user: UserAccount | null;
-  onDismiss: () => void;
-  onNavigate: (tab: PageTab) => void;
-}
-
-export function WelcomeRegistrationModal({ user, onDismiss, onNavigate }: WelcomeModalProps) {
-  if (!user) return null;
-
-  return (
-    <AnimatePresence>
-      <div className="ac-modal-backdrop">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.94, y: 14 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94 }}
-          className="ac-modal-panel max-w-md"
-        >
-          <div className="bg-[var(--ac-bg-header)] border-b border-[var(--ac-header-border)] text-white p-6 text-center space-y-2 relative">
-            <div className="mx-auto h-12 w-12 rounded-xl bg-white/15 flex items-center justify-center">
-              <Sparkles className="h-6 w-6 text-amber-300" />
-            </div>
-            <h3 className="ac-section-title text-white">Welcome to AssetCrest, {user.name}!</h3>
-            <p className="text-xs text-slate-200">
-              {user.accountType === 'Joint' && user.jointDetails
-                ? `Your Joint Investor Account with ${user.jointDetails.coOwnerName} is now active and secured.`
-                : 'Your Individual Investor Account has been created and secured.'}
-            </p>
-          </div>
-
-          <div className="p-5 space-y-4 text-sm text-slate-700 dark:text-slate-200">
-            <p className="leading-relaxed">
-              We are delighted to have you on board. Complete these quick steps to unlock your full AssetCrest experience:
-            </p>
-            <div className="space-y-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  onDismiss();
-                  onNavigate('deposit');
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-[#2b4865] dark:hover:border-sky-400 transition text-left cursor-pointer"
-              >
-                <div>
-                  <p className="font-semibold text-slate-900 dark:text-slate-100">
-                    1. Fund Your Account
-                  </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-300">
-                    Deposit via 8 crypto rails and upload your payment receipt
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-[#2b4865] dark:text-sky-400 shrink-0" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  onDismiss();
-                  onNavigate('kyc');
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-[#2b4865] dark:hover:border-sky-400 transition text-left cursor-pointer"
-              >
-                <div>
-                  <p className="font-semibold text-slate-900 dark:text-slate-100">
-                    2. Pass KYC Verification
-                  </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-300">
-                    Required before making any withdrawals from your wallet
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-[#2b4865] dark:text-sky-400 shrink-0" />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  onDismiss();
-                  onNavigate('vacation-portal');
-                }}
-                className="w-full flex items-center justify-between p-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-[#2b4865] dark:hover:border-sky-400 transition text-left cursor-pointer"
-              >
-                <div>
-                  <p className="font-semibold text-slate-900 dark:text-slate-100">
-                    3. Explore Vacation ($5,000+) &amp; Real Estate Portals
-                  </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-300">
-                    Access specialized wealth &amp; lifestyle yield tiers
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 text-[#2b4865] dark:text-sky-400 shrink-0" />
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={onDismiss}
-              className="ac-btn ac-btn-primary ac-btn-md w-full"
-            >
-              Go to My Dashboard
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    </AnimatePresence>
   );
 }
 

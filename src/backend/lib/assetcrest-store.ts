@@ -231,235 +231,19 @@ export interface AssetCrestStore {
   cryptoWallets: CryptoWalletRecord[];
 }
 
-export interface PaymentMethodOption {
-  id: string;
-  label: string;
-  subtitle: string;
-  networkType: string;
-  address: string;
-  symbol: Exclude<CryptoAssetSymbol, 'USD'>;
-}
-
-export const PAYMENT_METHODS: PaymentMethodOption[] = [
-  {
-    id: 'usdc-bep20',
-    label: 'USDC (BEP20)',
-    subtitle: 'Pay via usdc (bep20)',
-    networkType: 'BEP20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    symbol: 'USDC',
-  },
-  {
-    id: 'eth',
-    label: 'Ethereum',
-    subtitle: 'Pay via ethereum',
-    networkType: 'ERC20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    symbol: 'ETH',
-  },
-  {
-    id: 'btc',
-    label: 'Bitcoin',
-    subtitle: 'Pay via bitcoin',
-    networkType: 'BTC',
-    address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-    symbol: 'BTC',
-  },
-  {
-    id: 'usdt-bep20',
-    label: 'USDT (BEP20)',
-    subtitle: 'Pay via usdt (bep20)',
-    networkType: 'BEP20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    symbol: 'USDT',
-  },
-  {
-    id: 'usdt-trc20',
-    label: 'USDT (TRC20)',
-    subtitle: 'Pay via usdt (trc20)',
-    networkType: 'TRC20',
-    address: 'TX9aK3vPq8L2mN5xR7cW4yH1zF6dB8sQ3p',
-    symbol: 'USDT',
-  },
-  {
-    id: 'bnb',
-    label: 'BNB',
-    subtitle: 'Pay via bnb',
-    networkType: 'BEP20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    symbol: 'BNB',
-  },
-  {
-    id: 'sol',
-    label: 'SOL',
-    subtitle: 'Pay via solana',
-    networkType: 'SOL',
-    address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
-    symbol: 'SOL',
-  },
-  {
-    id: 'xrp',
-    label: 'Ripple',
-    subtitle: 'Pay via ripple',
-    networkType: 'XRP',
-    address: 'rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh',
-    symbol: 'XRP',
-  },
-];
-
-export const DEFAULT_CRYPTO_WALLETS: CryptoWalletRecord[] = [
-  {
-    id: 'wal-btc',
-    cryptocurrency: 'Bitcoin',
-    symbol: 'BTC',
-    network: 'BTC Mainnet',
-    address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
-    label: 'Bitcoin Treasury Vault',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 250000,
-    instructions: 'Send only native BTC over Bitcoin Mainnet. Minimum 2 network confirmations before uploading receipt.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: 'admin@assetcrest.co',
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-eth',
-    cryptocurrency: 'Ethereum',
-    symbol: 'ETH',
-    network: 'ERC20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    label: 'Ethereum Custody Desk',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 250000,
-    instructions: 'Transfer ETH exclusively via Ethereum Mainnet (ERC20). Retain transaction hash or screenshot for verification.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: 'admin@assetcrest.co',
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-usdt-trc20',
-    cryptocurrency: 'USDT',
-    symbol: 'USDT',
-    network: 'TRC20',
-    address: 'TX9aK3vPq8L2mN5xR7cW4yH1zF6dB8sQ3p',
-    label: 'USDT (TRC20) Settlement',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 500000,
-    instructions: 'Send Tether USD strictly on the TRON (TRC20) network. Sending via other chains may result in permanent loss.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: 'admin@assetcrest.co',
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-usdt-bep20',
-    cryptocurrency: 'USDT',
-    symbol: 'USDT',
-    network: 'BEP20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    label: 'USDT (BEP20) Settlement',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 500000,
-    instructions: 'Send USDT over BNB Smart Chain (BEP20) only and upload your payment confirmation screenshot.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: 'admin@assetcrest.co',
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-usdc-bep20',
-    cryptocurrency: 'USDC',
-    symbol: 'USDC',
-    network: 'BEP20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    label: 'USDC (BEP20) Primary',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 500000,
-    instructions: 'Send USDC via BNB Smart Chain (BEP20). Include TxID or receipt screenshot in the confirmation step.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: 'admin@assetcrest.co',
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-bnb',
-    cryptocurrency: 'BNB',
-    symbol: 'BNB',
-    network: 'BEP20',
-    address: '0xD0E2f9e3c73A4aaDF4436F2b7cef9255b8a41E92',
-    label: 'BNB Smart Chain Desk',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 150000,
-    instructions: 'Send BNB via BNB Smart Chain (BEP20) only.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: 'admin@assetcrest.co',
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-sol',
-    cryptocurrency: 'Solana',
-    symbol: 'SOL',
-    network: 'SOL',
-    address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
-    label: 'Solana Institutional Wallet',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 150000,
-    instructions: 'Transfer SOL on the native Solana network.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: 'admin@assetcrest.co',
-    assignedUserIds: [],
-  },
-  {
-    id: 'wal-xrp',
-    cryptocurrency: 'Ripple',
-    symbol: 'XRP',
-    network: 'XRP Ledger',
-    address: 'rEb8TK3gBgk5auZkwc6sHnwrGVJH8DuaLh',
-    label: 'Ripple (XRP) Ledger Vault',
-    status: 'Active',
-    minDeposit: 50,
-    maxDeposit: 150000,
-    instructions: 'Send XRP over the XRP Ledger. Attach your transaction hash screenshot.',
-    createdAt: '2026-10-01 09:00',
-    updatedAt: '2026-10-01 09:00',
-    updatedByAdminName: 'AssetCrest Admin',
-    updatedByAdminEmail: 'admin@assetcrest.co',
-    assignedUserIds: [],
-  },
-];
-
 export const CRYPTO_ASSETS: {
   symbol: CryptoAssetSymbol;
   name: string;
-  usdPrice: number;
   network: string;
 }[] = [
-  { symbol: 'USD', name: 'US Dollar Wallet', usdPrice: 1, network: 'Internal USD' },
-  { symbol: 'USDC', name: 'USD Coin', usdPrice: 1, network: 'BEP20' },
-  { symbol: 'USDT', name: 'Tether USD', usdPrice: 1, network: 'BEP20 / TRC20' },
-  { symbol: 'BTC', name: 'Bitcoin', usdPrice: 94250, network: 'BTC Mainnet' },
-  { symbol: 'ETH', name: 'Ethereum', usdPrice: 3180, network: 'ERC20' },
-  { symbol: 'BNB', name: 'BNB Smart Chain', usdPrice: 635, network: 'BEP20' },
-  { symbol: 'SOL', name: 'Solana', usdPrice: 218, network: 'Solana' },
-  { symbol: 'XRP', name: 'Ripple', usdPrice: 1.42, network: 'XRP Ledger' },
+  { symbol: 'USD', name: 'US Dollar Wallet', network: 'Internal USD' },
+  { symbol: 'USDC', name: 'USD Coin', network: 'BEP20' },
+  { symbol: 'USDT', name: 'Tether USD', network: 'BEP20 / TRC20' },
+  { symbol: 'BTC', name: 'Bitcoin', network: 'BTC Mainnet' },
+  { symbol: 'ETH', name: 'Ethereum', network: 'ERC20' },
+  { symbol: 'BNB', name: 'BNB Smart Chain', network: 'BEP20' },
+  { symbol: 'SOL', name: 'Solana', network: 'Solana' },
+  { symbol: 'XRP', name: 'Ripple', network: 'XRP Ledger' },
 ];
 
 export const STANDARD_PLAN_FEATURES = [
@@ -891,15 +675,30 @@ function readStoreFromStorage(): AssetCrestStore {
       return cachedStore;
     }
 
-    // Remove known legacy sample investors from this browser-only cache.
+    // Remove all demo / legacy preview accounts from this browser-only cache.
     // Persistent Neon database users are intentionally not modified.
-    const legacyDemoIds = new Set(['usr-annabella', 'usr-marcus', 'usr-elena']);
-    const legacyDemoNames = new Set(['annabella menor', 'marcus vance', 'elena vance']);
+    const legacyDemoIds = new Set(['usr-admin', 'usr-annabella', 'usr-marcus', 'usr-elena']);
+    const legacyDemoNames = new Set([
+      'annabella menor',
+      'marcus vance',
+      'elena vance',
+      'amkelechi.2',
+      'assetcrest admin',
+    ]);
+    const legacyDemoEmails = new Set([
+      'bitfurytech21@gmail.com',
+      'annarmenor@gmail.com',
+      'marcus.vance@assetcrest.co',
+      'elena.vance@assetcrest.co',
+      'admin@assetcrest.co',
+    ]);
     const retainedUsers = parsed.users
-      .filter((user) =>
-        !legacyDemoIds.has(String(user.id || '').toLowerCase()) &&
-        !legacyDemoNames.has(String(user.name || '').trim().toLowerCase())
-      )
+      .filter((user) => {
+        const id = String(user.id || '').toLowerCase();
+        const name = String(user.name || '').trim().toLowerCase();
+        const email = String(user.email || '').trim().toLowerCase();
+        return !legacyDemoIds.has(id) && !legacyDemoNames.has(name) && !legacyDemoEmails.has(email);
+      })
       .map((user) => ({ ...user, password: '' }));
     const retainedUserIds = new Set(retainedUsers.map((user) => user.id));
     const keepOwnedRecords = <T extends { userId?: string }>(items: T[] | undefined): T[] =>
@@ -923,7 +722,7 @@ function readStoreFromStorage(): AssetCrestStore {
       cryptoWallets:
         Array.isArray(parsed.cryptoWallets) && parsed.cryptoWallets.length > 0
           ? parsed.cryptoWallets
-          : DEFAULT_CRYPTO_WALLETS,
+          : [],
     });
     try {
       const normalizedJson = JSON.stringify(cachedStore);

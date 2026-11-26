@@ -517,7 +517,10 @@ export async function getAdminSetupStatus(): Promise<{
   };
 }
 
-export async function claimAdminPassword(password: string): Promise<PublicUserAccount> {
+export async function claimAdminPassword(
+  password: string,
+  adminEmailInput?: string
+): Promise<PublicUserAccount> {
   await ensureNeonSchemaAndSeed();
   if (process.env.ADMIN_PASSWORD?.trim()) {
     throw new Error('Administrator password is already managed by server environment configuration.');
@@ -526,8 +529,9 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
     throw new Error('Administrator password must be at least 8 characters long.');
   }
 
-  if (!BOOTSTRAPPED_ADMIN_EMAIL) {
-    throw new Error('ADMIN_EMAIL must be configured before an administrator account can be claimed.');
+  const candidateEmail = BOOTSTRAPPED_ADMIN_EMAIL || (adminEmailInput || '').trim().toLowerCase();
+  if (!candidateEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidateEmail)) {
+    throw new Error('A valid administrator email address is required to claim the admin account.');
   }
   const nextHash = hashPassword(password);
 
@@ -536,12 +540,18 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
     if (admin && admin.passwordHash) {
       throw new Error('Administrator account has already been claimed.');
     }
+    if (
+      !admin &&
+      memoryState.users.some((u) => u.email.toLowerCase() === candidateEmail && u.role !== 'admin')
+    ) {
+      throw new Error('An investor account already uses this email address.');
+    }
     if (!admin) {
       admin = {
         id: 'usr-admin',
         username: 'admin',
         name: 'AssetCrest Admin',
-        email: BOOTSTRAPPED_ADMIN_EMAIL,
+        email: candidateEmail,
         password: '',
         passwordHash: nextHash,
         role: 'admin',
@@ -560,6 +570,7 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
       };
       memoryState.users.push(admin);
     } else {
+      admin.email = candidateEmail;
       admin.passwordHash = nextHash;
       admin.lastLoginAt = formatStamp();
     }
@@ -573,13 +584,21 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
   }
 
   if (!existing) {
+    const emailConflict = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.email, candidateEmail))
+      .limit(1);
+    if (emailConflict.length > 0) {
+      throw new Error('An account already exists with this email address.');
+    }
     const inserted = await db
       .insert(users)
       .values({
         id: 'usr-admin',
         username: 'admin',
         name: 'AssetCrest Admin',
-        email: BOOTSTRAPPED_ADMIN_EMAIL,
+        email: candidateEmail,
         passwordHash: nextHash,
         role: 'admin',
         accountType: 'Individual',
@@ -602,6 +621,7 @@ export async function claimAdminPassword(password: string): Promise<PublicUserAc
   const updated = await db
     .update(users)
     .set({
+      email: candidateEmail,
       passwordHash: nextHash,
       lastLoginAt: formatStamp(),
       updatedAt: new Date(),
@@ -1436,40 +1456,130 @@ export async function claimTransferRequestInNeon(params: {
 
 export async function executeSwapInNeon(params: {
   userId: string;
-  nextUsdBalance: number;
-  nextCryptoBalances: DbCryptoBalances;
-  method: string;
+  fromSymbol: 'USD' | 'USDC' | 'USDT' | 'BTC' | 'ETH' | 'BNB' | 'SOL' | 'XRP';
+  toSymbol: 'USD' | 'USDC' | 'USDT' | 'BTC' | 'ETH' | 'BNB' | 'SOL' | 'XRP';
+  fromAmount: number;
+  prices: Record<'USD' | 'USDC' | 'USDT' | 'BTC' | 'ETH' | 'BNB' | 'SOL' | 'XRP', number>;
+}): Promise<{
+  id: string;
+  fromAmount: number;
+  toAmount: number;
   usdAmount: number;
   note: string;
-}): Promise<string> {
+}> {
   await ensureNeonSchemaAndSeed();
+  const { fromSymbol, toSymbol, prices } = params;
+  if (fromSymbol === toSymbol) {
+    throw new Error('Select two different assets to perform a swap.');
+  }
+  const fromAmount = Number(params.fromAmount);
+  if (!Number.isFinite(fromAmount) || fromAmount <= 0) {
+    throw new Error('Swap amount must be positive.');
+  }
+
+  const fromPrice = Number(prices[fromSymbol]);
+  const toPrice = Number(prices[toSymbol]);
+  if (!Number.isFinite(fromPrice) || fromPrice <= 0 || !Number.isFinite(toPrice) || toPrice <= 0) {
+    throw new Error('Live exchange price quote is unavailable for selected pair.');
+  }
+
+  const grossUsdValue = fromAmount * fromPrice;
+  const feeUsd = grossUsdValue * 0.0025;
+  const netUsdValue = Math.max(0, grossUsdValue - feeUsd);
+  const estimatedReceiveRaw = netUsdValue / toPrice;
+  const estimatedReceive =
+    toSymbol === 'USD'
+      ? Number(estimatedReceiveRaw.toFixed(2))
+      : Number(estimatedReceiveRaw.toFixed(8));
+  if (estimatedReceive <= 0) {
+    throw new Error('Swap amount is too small after conversion spread.');
+  }
+
+  const usdAmount = Number(grossUsdValue.toFixed(2));
+  const method = `${fromAmount} ${fromSymbol} → ${estimatedReceive.toFixed(toSymbol === 'USD' ? 2 : 6)} ${toSymbol}`;
+  const note = `Live Rate: 1 ${fromSymbol} = ${(fromPrice / toPrice).toFixed(6)} ${toSymbol}`;
   const swapTxId = nextNeonId('SWP');
   const stamp = formatStamp();
 
   if (!isDatabaseConfigured) {
     const user = memoryState.users.find((u) => u.id === params.userId);
     if (!user) throw new Error('User not found.');
-    user.accountBalance = Number(params.nextUsdBalance.toFixed(2));
-    user.cryptoBalances = { ...params.nextCryptoBalances };
+    const available =
+      fromSymbol === 'USD' ? user.accountBalance : (user.cryptoBalances[fromSymbol] ?? 0);
+    if (fromAmount > available) {
+      throw new Error(`Insufficient ${fromSymbol} balance available for swap.`);
+    }
+
+    const nextCrypto = { ...user.cryptoBalances };
+    let nextUsd = user.accountBalance;
+
+    if (fromSymbol === 'USD') {
+      nextUsd = Number((nextUsd - fromAmount).toFixed(2));
+    } else {
+      nextCrypto[fromSymbol] = Number((nextCrypto[fromSymbol] - fromAmount).toFixed(8));
+    }
+
+    if (toSymbol === 'USD') {
+      nextUsd = Number((nextUsd + estimatedReceive).toFixed(2));
+    } else {
+      nextCrypto[toSymbol] = Number((nextCrypto[toSymbol] + estimatedReceive).toFixed(8));
+    }
+
+    user.accountBalance = nextUsd;
+    user.cryptoBalances = nextCrypto;
     memoryState.transactions.unshift({
       id: swapTxId,
       userId: params.userId,
       type: 'Swap',
-      method: params.method.slice(0, 180),
-      amount: Number(params.usdAmount.toFixed(2)),
+      method: method.slice(0, 180),
+      amount: usdAmount,
       status: 'Completed',
       date: stamp,
-      note: params.note.slice(0, 280),
+      note: note.slice(0, 280),
     });
-    return swapTxId;
+    return { id: swapTxId, fromAmount, toAmount: estimatedReceive, usdAmount, note };
   }
 
   await db.transaction(async (tx) => {
+    const lockedRes = await tx.execute(
+      sql`SELECT id, account_balance, crypto_balances FROM users WHERE id = ${params.userId} FOR UPDATE`
+    );
+    const lockedRow = lockedRes.rows[0] as
+      | { id: string; account_balance: string | number; crypto_balances: DbCryptoBalances }
+      | undefined;
+    if (!lockedRow) {
+      throw new Error('User not found.');
+    }
+
+    const currentUsd = Number(lockedRow.account_balance || 0);
+    const currentCrypto: DbCryptoBalances = {
+      ...EMPTY_BALANCES,
+      ...(lockedRow.crypto_balances || {}),
+    };
+
+    const available = fromSymbol === 'USD' ? currentUsd : (currentCrypto[fromSymbol] ?? 0);
+    if (fromAmount > available) {
+      throw new Error(`Insufficient ${fromSymbol} balance available for swap.`);
+    }
+
+    let nextUsd = currentUsd;
+    if (fromSymbol === 'USD') {
+      nextUsd = Number((nextUsd - fromAmount).toFixed(2));
+    } else {
+      currentCrypto[fromSymbol] = Number((currentCrypto[fromSymbol] - fromAmount).toFixed(8));
+    }
+
+    if (toSymbol === 'USD') {
+      nextUsd = Number((nextUsd + estimatedReceive).toFixed(2));
+    } else {
+      currentCrypto[toSymbol] = Number((currentCrypto[toSymbol] + estimatedReceive).toFixed(8));
+    }
+
     await tx
       .update(users)
       .set({
-        accountBalance: Number(params.nextUsdBalance.toFixed(2)),
-        cryptoBalances: params.nextCryptoBalances,
+        accountBalance: nextUsd,
+        cryptoBalances: currentCrypto,
         updatedAt: new Date(),
       })
       .where(eq(users.id, params.userId));
@@ -1478,15 +1588,15 @@ export async function executeSwapInNeon(params: {
       id: swapTxId,
       userId: params.userId,
       type: 'Swap',
-      method: params.method.slice(0, 180),
-      amount: Number(params.usdAmount.toFixed(2)),
+      method: method.slice(0, 180),
+      amount: usdAmount,
       status: 'Completed',
       date: stamp,
-      note: params.note.slice(0, 280),
+      note: note.slice(0, 280),
     });
   });
 
-  return swapTxId;
+  return { id: swapTxId, fromAmount, toAmount: estimatedReceive, usdAmount, note };
 }
 
 export async function investPlanInNeon(params: {
@@ -2199,7 +2309,7 @@ export async function logVisitorLocationInNeon(
     id,
     reporterUserId: reporterUserId || null,
     refCode: (log.refCode || 'DIRECT').toUpperCase().slice(0, 40),
-    clickedUrl: (log.clickedUrl || 'https://assetcrest.co').slice(0, 400),
+    clickedUrl: (log.clickedUrl || '/').slice(0, 400),
     latitude: (log.latitude || 'Unknown').slice(0, 64),
     longitude: (log.longitude || 'Unknown').slice(0, 64),
     accuracyLabel: (log.accuracyLabel || 'Browser telemetry').slice(0, 120),

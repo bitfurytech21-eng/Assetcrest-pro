@@ -20,6 +20,7 @@ import {
   TransactionRecord,
   UserAccount,
 } from '@/src/backend/lib/assetcrest-store';
+import { useLiveCryptoPrices } from '@/src/backend/lib/useLiveCryptoPrices';
 
 // Module-level memory so count-up runs once per metric per session load
 const animatedStatKeys = new Set<string>();
@@ -209,6 +210,7 @@ export function DashboardAnalyticsCharts({
   investments: ActiveInvestment[];
   isDark: boolean;
 }) {
+  const { prices: livePrices } = useLiveCryptoPrices();
   const primaryLineColor = isDark ? '#38bdf8' : '#2b4865';
   const yieldLineColor = isDark ? '#34d399' : '#059669';
   const mutedTickColor = isDark ? '#94a3b8' : '#64748b';
@@ -218,9 +220,10 @@ export function DashboardAnalyticsCharts({
     return CRYPTO_ASSETS.reduce((sum, asset) => {
       if (asset.symbol === 'USD') return sum;
       const qty = user.cryptoBalances[asset.symbol] ?? 0;
-      return sum + qty * asset.usdPrice;
+      const unitPrice = livePrices[asset.symbol] ?? 0;
+      return sum + qty * unitPrice;
     }, 0);
-  }, [user.cryptoBalances]);
+  }, [user.cryptoBalances, livePrices]);
 
   const activePrincipal = useMemo(
     () => investments.filter((i) => i.status === 'Active').reduce((acc, i) => acc + i.amount, 0),

@@ -403,13 +403,36 @@ function AboutPage() {
       <img src={media('2017/04/blog-post-06-1280x854.jpg')} alt="Digital finance and investment" loading="lazy" className="w-full shadow-xl" />
     </div></section>
     <section className="bg-[#f4f6f8] px-6 py-20"><div className="mx-auto max-w-7xl"><SectionHeading eyebrow="Our principles" title="What guides our work" /><div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{principles.map(([title,copy])=><article key={title} className="bg-white p-8 shadow-sm"><h3 className="mb-3 text-xl font-bold text-[#1b4962]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></article>)}</div></div></section>
+    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-7xl">
+      <SectionHeading eyebrow="Our people" title="Meet the team" />
+      <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          ['Calvin Durant','2019/04/img-people-06.jpg'],
+          ['Caitlin Thomas','2019/04/img-people-05.jpg'],
+          ['Amely Norwood','2019/04/img-people-07.jpg'],
+          ['Darryl Penn','2019/04/img-people-08.jpg'],
+        ].map(([name,image])=><article key={name} className="text-center"><img src={media(image)} alt={name} loading="lazy" className="aspect-[4/5] w-full object-cover" /><h3 className="mt-4 text-lg font-bold text-[#294760]">{name}</h3><a href="/register" className="mt-2 inline-block text-sm font-semibold text-[#d9576a]">Read more</a></article>)}
+      </div>
+      <div className="mt-16 border-t border-slate-200 pt-12">
+        <SectionHeading eyebrow="Our partners" title="Partner brands" />
+        <div className="grid grid-cols-2 items-center gap-8 sm:grid-cols-3 lg:grid-cols-5">
+          {['logo-hotel-berg.png','logo-hotel-california.png','logo-estato.png','logo-addison.png','logo-urbanist.png','logo-bold-news.png','logo-celeste.png','logo-applauz.png','logo-bello.png'].map(file=><img key={file} src={media('2019/04/'+file)} alt={file.replace('logo-','').replace('.png','').replaceAll('-',' ')} loading="lazy" className="mx-auto max-h-16 max-w-full object-contain" />)}
+        </div>
+      </div>
+    </div></section>
   </>;
 }
 
 function HistoryPage() {
   return <>
     <PageHero eyebrow="Our journey" title="Company history" image="2019/04/bgn-cases.png" />
-    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-4xl"><SectionHeading eyebrow="Milestones" title="A timeline of the company" copy="The milestones below reflect the timeline published on the reference website; they have not been independently verified." />
+    <section className="bg-white px-6 py-20"><div className="mx-auto max-w-4xl">
+      <div className="mb-12 space-y-5 text-base leading-8 text-slate-600">
+        <p>AssetCrest was founded on the vision of creating a platform where digital finance could be accessible, secure, and profitable for everyone. What began as a small team of innovators has evolved into a trusted leader in blockchain-based investment solutions. Rooted in a dedication to transparency, performance, and investor empowerment, AssetCrest has built a community that now spans across the globe, with thousands of users relying on our expertise in digital finance.</p>
+        <p>Starting from humble beginnings in 1999, AssetCrest pioneered digital finance at a time when digital trading was still in its infancy. By blending our passion for technology with a commitment to ethical investment, we steadily grew our platform, attracting both individual investors and large institutions. With each milestone, our team worked to improve security, scalability, and user experience.</p>
+      </div>
+      <div className="mb-12 grid grid-cols-2 gap-4 sm:grid-cols-4">{['Client Satisfaction','Precise Investment','Business Uprise','Projects Success'].map(label=><div key={label} className="border border-slate-200 p-5 text-center text-sm font-bold text-[#294760]">{label}</div>)}</div>
+      <SectionHeading eyebrow="Milestones" title="A timeline of the company" copy="The milestones below reflect the timeline published on the reference website; they have not been independently verified." />
       <div className="relative space-y-8 before:absolute before:bottom-0 before:left-[17px] before:top-2 before:w-px before:bg-[#e5a0aa] sm:before:left-[23px]">
         {milestones.map(([date,title,copy,image])=><article key={date} className="relative grid gap-5 pl-12 sm:grid-cols-[150px_1fr] sm:gap-8 sm:pl-16">
           <span className="absolute left-0 top-1 flex h-9 w-9 items-center justify-center rounded-full border-4 border-white bg-[#e94d65] text-[0px] shadow sm:h-12 sm:w-12" />

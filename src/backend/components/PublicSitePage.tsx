@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Menu, X, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const media = (file: string) => `/reference-assets/${file}`;
 
@@ -71,7 +71,7 @@ const milestones = [
 function Logo() {
   return (
     <a href="/" aria-label="AssetCrest home" className="inline-flex items-center">
-      <img src={media('2024/12/logo-new.png')} alt="AssetCrest" className="h-[58px] w-auto max-w-[245px] object-contain sm:h-[100px] sm:max-w-[480px]" />
+      <img src={media('2024/12/logo-new.png')} alt="AssetCrest" className="h-[58px] w-auto max-w-[245px] object-contain sm:h-[80px] sm:max-w-[360px] lg:h-[100px] lg:max-w-[480px]" />
     </a>
   );
 }
@@ -80,8 +80,8 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
     <header className="relative z-40 bg-white">
-      <div className="mx-auto flex h-[104px] max-w-[1440px] items-center justify-start gap-7 px-6 sm:h-[150px] sm:gap-10 sm:px-10 lg:h-[190px] lg:gap-12 lg:px-[7%]">
-        <button type="button" onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} className="flex h-12 w-[54px] shrink-0 flex-col items-center justify-center gap-[7px] text-[#171717] sm:h-[84px] sm:w-[105px] sm:gap-[14px]">
+      <div className="mx-auto flex h-[104px] max-w-[1440px] items-center justify-start gap-7 px-6 sm:h-[150px] sm:gap-10 sm:px-10 lg:h-[229px] lg:gap-12 lg:px-[7%]">
+        <button type="button" onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} className="flex h-12 w-[54px] shrink-0 flex-col items-center justify-center gap-[7px] text-[#171717] sm:h-[100px] sm:w-[105px] sm:gap-[33px]">
           {menuOpen ? <X className="h-10 w-10 sm:h-14 sm:w-14" strokeWidth={2.2} /> : <><span className="h-[4px] w-full bg-[#171717] sm:h-[6px]" /><span className="h-[4px] w-full bg-[#171717] sm:h-[6px]" /><span className="h-[4px] w-full bg-[#171717] sm:h-[6px]" /></>}
         </button>
         <Logo />
@@ -261,8 +261,7 @@ function HomePage() {
       </div>
     </section>
 
-    <section aria-label="Live cryptocurrency market prices" className="overflow-hidden bg-white py-10 sm:py-16">
-      <div className="mx-auto mb-3 max-w-7xl px-6 text-center"><p className="text-[11px] font-bold uppercase tracking-[.22em] text-[#e94d65]">Live cryptocurrency market</p></div>
+    <section aria-label="Live cryptocurrency market prices" className="overflow-hidden bg-white py-6 sm:py-10">
       <div className="assetcrest-ticker-viewport">
         <div className="assetcrest-ticker-track">
           {[0, 1].map(copy => <div key={copy} className="flex shrink-0 items-center gap-10 pr-10 sm:gap-16 sm:pr-16">
@@ -333,7 +332,7 @@ function HomePage() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-12 max-w-2xl"><p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-[#e94d65]">Great reviews for our services</p><h2 className="text-4xl font-extrabold leading-tight text-white sm:text-6xl">Trusted by some<br /><span className="text-[#e94d65]">Biggest Names</span></h2></div>
         <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-          <img src={media(activeTestimonial.image)} alt={activeTestimonial.name} loading="lazy" className="h-44 w-44 rounded-full bg-white object-cover sm:h-52 sm:w-52" />
+          <img src={media(activeTestimonial.image)} alt={activeTestimonial.name} loading="lazy" className="h-32 w-32 rounded-full bg-white object-cover sm:h-52 sm:w-52" />
           <h3 className="mt-9 max-w-3xl text-3xl font-extrabold leading-tight text-[#e94d65] sm:text-4xl">{activeTestimonial.title}</h3>
           <p className="mt-8 max-w-4xl text-base leading-8 text-white sm:text-2xl sm:leading-[1.65]">{activeTestimonial.quote}</p>
           <div className="mt-8 flex items-center gap-1 text-3xl text-white" aria-label="Five stars">★★★★★</div>

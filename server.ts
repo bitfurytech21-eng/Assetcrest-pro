@@ -12,7 +12,8 @@ import { renderTradingPage } from "./src/trading/tradingPage.ts";
 import { handleApkPackagePost } from "./src/api/apkPackage.ts";
 import { fetchLiveCryptoPricesUsd } from "./src/lib/market-prices.ts";
 
-// Optional separate marketing-site origin. Never default to this Render service.\nconst HOME_UPSTREAM_URL = (
+// Optional separate marketing-site origin. Never default to this Render service.
+const HOME_UPSTREAM_URL = (
   process.env.HOME_UPSTREAM_URL?.trim() || ""
 ).replace(/\/+$/, "");
 

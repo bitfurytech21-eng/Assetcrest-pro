@@ -448,7 +448,7 @@ function SupportShortcut() {
   </a>;
 }
 
-export default function PublicSitePage() {xport default function PublicSitePage() {
+export default function PublicSitePage() {
   const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\/+$/, '') || '/';
   let page: React.ReactNode;
   switch (pathname) {

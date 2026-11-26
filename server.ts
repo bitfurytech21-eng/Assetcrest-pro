@@ -19,8 +19,11 @@ const HOME_UPSTREAM_URL = (
 
 function isPortalAppPath(pathname: string): boolean {
   const p = pathname.toLowerCase();
-  // The public homepage is bundled in this repository; never send / or /home to an upstream proxy.
-  if (p === "/" || p === "/home") return true;
+  // Public marketing pages are bundled in this repository and must never be sent to an upstream proxy.
+  if ([
+    "/", "/home", "/about-us", "/company-history", "/investment-plans",
+    "/our-process", "/offer", "/contact-us",
+  ].includes(p)) return true;
   if (p === "/app" || p.startsWith("/app/")) return true;
   if (p === "/admin" || p.startsWith("/admin/")) return true;
   if (
@@ -368,6 +371,41 @@ app.all("/api/*", (_req, res) => {
 // Serve PWA manifest, service worker, icons, and .well-known assets (without overriding GET /)
 app.use(express.static(path.resolve("public"), { index: false }));
 app.use("/app", express.static(path.resolve("public"), { index: false, redirect: false }));
+
+// Same-origin, allowlisted image proxy for the migrated public marketing site.
+// Only public media files under the source site's WordPress uploads directory are served.
+app.get(/^\\/reference-assets\\/(.+)$/, async (req, res) => {
+  const assetPath = String(req.params[0] || "");
+  const allowedExtension = /\\.(?:png|jpe?g|webp|gif|svg)$/i.test(assetPath);
+  if (!allowedExtension || assetPath.includes("..") || assetPath.includes("\\\\") || assetPath.startsWith("/")) {
+    res.status(400).type("text/plain").send("Invalid public asset path");
+    return;
+  }
+  const encodedPath = assetPath.split("/").map((part) => encodeURIComponent(part)).join("/");
+  try {
+    const upstream = await fetch("https://assetcrest.co/wp-content/uploads/" + encodedPath, {
+      headers: { Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8" },
+      signal: AbortSignal.timeout(12000),
+    });
+    if (!upstream.ok) {
+      res.status(upstream.status).type("text/plain").send("Public asset unavailable");
+      return;
+    }
+    const contentType = upstream.headers.get("content-type") || "application/octet-stream";
+    if (!contentType.startsWith("image/")) {
+      res.status(415).type("text/plain").send("Unsupported public asset type");
+      return;
+    }
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
+    const body = Buffer.from(await upstream.arrayBuffer());
+    res.setHeader("Content-Length", String(body.length));
+    res.status(200).send(body);
+  } catch (error: any) {
+    console.error("[AssetCrest] Public asset proxy failed:", assetPath, error?.message || error);
+    res.status(502).type("text/plain").send("Public asset temporarily unavailable");
+  }
+});
 
 // Live Trading View routes
 app.get(["/trading", "/live-trading", "/app/trading", "/app/live-trading", "/markets"], (req, res) => {

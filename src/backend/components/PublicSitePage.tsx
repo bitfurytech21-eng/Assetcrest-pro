@@ -122,25 +122,38 @@ function Footer() {
   return (
     <footer className="bg-[#172d40] text-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-6 py-14 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="lg:col-span-1">
+        <div>
           <div className="mb-5 inline-flex bg-white p-2"><Logo /></div>
-          <p className="max-w-xs text-sm leading-7 text-slate-300">A digital-finance experience focused on accessible information, technology and investor resources.</p>
+          <p className="max-w-xs text-sm leading-7 text-slate-300">AssetCrest's public information covers digital assets, financial markets, real estate and emerging investment themes.</p>
+          <a href="/about-us/" className="mt-5 inline-flex text-sm font-bold text-[#ff9aaa] hover:text-white">About the company →</a>
         </div>
         <div>
           <h3 className="mb-4 text-base font-bold">Explore</h3>
           <div className="grid gap-3 text-sm text-slate-300">{navItems.map(item => <a key={item.href} href={item.href} className="hover:text-white">{item.label}</a>)}</div>
         </div>
         <div>
-          <h3 className="mb-4 text-base font-bold">Account</h3>
-          <div className="grid gap-3 text-sm text-slate-300"><a href="/register" className="hover:text-white">Create an account</a><a href="/login" className="hover:text-white">Client login</a><a href="/app" className="hover:text-white">Investor portal</a></div>
+          <h3 className="mb-4 text-base font-bold">Client access</h3>
+          <div className="grid gap-3 text-sm text-slate-300">
+            <a href="/register" className="hover:text-white">Create an account</a>
+            <a href="/login" className="hover:text-white">Client login</a>
+            <a href="/app" className="hover:text-white">Investor portal</a>
+            <a href="/our-process/" className="hover:text-white">How the process works</a>
+          </div>
+          <p className="mt-5 text-xs leading-6 text-slate-400">For account-specific support, use the secure client portal. Never share passwords or verification codes.</p>
         </div>
         <div>
-          <h3 className="mb-4 text-base font-bold">Contact</h3>
-          <p className="text-sm leading-7 text-slate-300">For account assistance, sign in to the secure client portal or use the support channel provided by the company.</p>
-          <a href="/login" className="mt-4 inline-flex border border-white/40 px-4 py-2 text-sm font-semibold hover:bg-white hover:text-[#172d40]">Contact support</a>
+          <h3 className="mb-4 text-base font-bold">Our location</h3>
+          <img src={media('2019/04/img-footer-map.png')} alt="Location map image from the original AssetCrest website" loading="lazy" className="mb-4 h-28 w-full bg-white/5 object-contain" />
+          <p className="text-sm leading-7 text-slate-300">Moor House, 120 London Wall, London EC2Y 5ET, United Kingdom</p>
+          <a href="/contact-us/" className="mt-4 inline-flex border border-white/40 px-4 py-2 text-sm font-semibold hover:bg-white hover:text-[#172d40]">Contact information</a>
         </div>
       </div>
-      <div className="border-t border-white/15 px-6 py-5 text-center text-xs text-slate-300">© {new Date().getFullYear()} AssetCrest. All rights reserved.</div>
+      <div className="border-t border-white/15 px-6 py-5">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-center text-xs text-slate-300 sm:flex-row sm:text-left">
+          <span>© {new Date().getFullYear()} AssetCrest. All rights reserved.</span>
+          <a href="#top" className="font-semibold hover:text-white">Back to top ↑</a>
+        </div>
+      </div>
     </footer>
   );
 }
@@ -340,7 +353,6 @@ function HomePage() {
           {visibleTestimonials.map((item) => <article key={item.name} className="flex h-full flex-col border border-slate-200 bg-white p-7 shadow-sm">
             <div className="mb-5 flex items-center gap-4"><img src={media(item.image)} alt="" loading="lazy" className="h-16 w-16 rounded-full object-cover" /><div><p className="font-bold text-[#1b4962]">{item.name}</p><p className="text-xs text-slate-500">{item.country}</p></div></div>
             <h3 className="mb-3 text-lg font-bold text-[#1b4962]">{item.title}</h3><p className="flex-1 text-sm leading-7 text-slate-600">{item.quote}</p>
-            <div className="mt-6 flex gap-1 text-[#e94d65]" aria-label="Testimonial shown on source website">★★★★★</div>
           </article>)}
         </div>
         <div className="mt-9 flex items-center justify-center gap-4">

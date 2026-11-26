@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
+import { X, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight, MessageCircle, Clock3, MapPin, Facebook, Twitter } from 'lucide-react';
 
 const media = (file: string) => `/reference-assets/${file}`;
 
@@ -101,41 +101,46 @@ function Header() {
 
 function Footer() {
   return (
-    <footer className="bg-[#1b4962] text-white">
-      <div className="mx-auto grid max-w-7xl gap-12 px-6 py-16 md:grid-cols-3">
-        <section>
-          <p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-[#e94d65]">AssetCrest</p>
-          <h2 className="mb-5 text-2xl font-extrabold">Headquarters</h2>
-          <p className="text-sm leading-8 text-slate-200">At AssetCrest, we strive for transparency, security, and innovation. Our mission is to provide investors with high-quality financial information, backed by real-time market data, advanced technology, and a deep understanding of global financial markets.</p>
-          <a href="/about-us/" className="mt-6 inline-flex text-sm font-bold text-[#ff9aaa] hover:text-white">About AssetCrest →</a>
-        </section>
-        <section>
-          <p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-[#e94d65]">Our locations</p>
-          <h2 className="mb-5 text-2xl font-extrabold">Where to find us?</h2>
-          <img src={media('2019/04/img-footer-map.png')} alt="Map image displayed on the original AssetCrest website" loading="lazy" className="mb-5 h-36 w-full bg-white/5 object-contain" />
-          <p className="text-sm leading-7 text-slate-200">Moor House, 120 London Wall, London EC2Y 5ET, United Kingdom</p>
-        </section>
-        <section>
-          <p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-[#e94d65]">Get in touch</p>
-          <h2 className="mb-5 text-2xl font-extrabold">AssetCrest Social links</h2>
-          <p className="text-sm leading-8 text-slate-200">For questions about the platform or your account, use the official contact page or sign in to the secure client portal.</p>
-          <p className="mt-4 text-sm leading-7 text-slate-300">Leveraging seamless performance metrics offline to maximize long-term potential.</p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <a href="/contact-us/" className="bg-[#e94d65] px-5 py-3 text-sm font-bold text-white hover:bg-[#d83f58]">Contact us</a>
-            <a href="/login" className="border border-white/60 px-5 py-3 text-sm font-bold text-white hover:bg-white hover:text-[#1b4962]">Client login</a>
+    <>
+      <section className="bg-white px-6 pb-12 pt-16 text-center sm:pb-14 sm:pt-20">
+        <div className="mx-auto max-w-4xl">
+          <h2 className="text-3xl font-bold text-[#171717] sm:text-4xl">Contact</h2>
+          <div className="mt-16 flex flex-row justify-center gap-4 sm:mt-20 sm:gap-8">
+            <a href="/register" className="flex min-h-[72px] min-w-0 flex-1 items-center justify-center bg-[#191919] px-2 py-4 text-xl font-bold text-white shadow-[0_5px_0_rgba(0,0,0,.12)] transition hover:bg-[#303030] sm:min-h-[104px] sm:min-w-[270px] sm:flex-none sm:px-10 sm:py-5 sm:text-3xl">Register</a>
+            <a href="/login" className="flex min-h-[72px] min-w-0 flex-1 items-center justify-center bg-[#d9576a] px-2 py-4 text-xl font-bold text-white shadow-[0_5px_0_rgba(150,38,58,.2)] transition hover:bg-[#c94a60] sm:min-h-[104px] sm:min-w-[270px] sm:flex-none sm:px-10 sm:py-5 sm:text-3xl">Login</a>
           </div>
-        </section>
-      </div>
-      <div className="border-t border-white/20 px-6 py-6">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 text-center sm:flex-row sm:text-left">
-          <p className="text-xs text-slate-300">© {new Date().getFullYear()} AssetCrest. All rights reserved.</p>
-          <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-x-5 gap-y-3 text-[11px] font-bold uppercase tracking-wide text-slate-200">
-            {navItems.map(item => <a key={item.href} href={item.href} className="hover:text-[#ff9aaa]">{item.label}</a>)}
-            <a href="#top" className="hover:text-[#ff9aaa]">Back to top</a>
-          </nav>
         </div>
-      </div>
-    </footer>
+      </section>
+      <footer className="bg-[#1b3d55] px-6 py-12 text-white sm:py-16">
+        <div className="mx-auto max-w-6xl">
+          <div className="border-y border-white/15 py-12 text-center sm:py-16">
+            <section className="flex flex-col items-center">
+              <Clock3 className="h-14 w-14 text-[#df6075] sm:h-16 sm:w-16" strokeWidth={2.5} />
+              <h2 className="mt-5 text-2xl font-medium text-white sm:text-3xl">Monday - Friday</h2>
+              <p className="mt-3 text-xl text-slate-400 sm:text-2xl">8AM - 9PM</p>
+            </section>
+            <section className="mt-16 flex flex-col items-center sm:mt-20">
+              <MapPin className="h-14 w-14 fill-[#df6075] text-[#df6075] sm:h-16 sm:w-16" strokeWidth={1.5} />
+              <h2 className="mt-5 text-2xl font-medium text-white sm:text-3xl">Offices</h2>
+              <p className="mt-3 max-w-4xl text-lg leading-relaxed text-slate-400 sm:text-2xl">Moor House, 120 London Wall, London<br className="hidden sm:block" /> EC2Y 5ET, United Kingdom</p>
+            </section>
+          </div>
+          <section className="pt-12 text-center sm:pt-16">
+            <h2 className="text-2xl font-medium text-white sm:text-3xl">Visit our social pages</h2>
+            <div className="mt-8 flex items-center justify-center gap-7 text-[#df6075]">
+              <a href="https://www.facebook.com/" aria-label="Facebook" className="transition hover:text-white"><Facebook className="h-8 w-8 fill-current" /></a>
+              <a href="https://twitter.com/" aria-label="Twitter" className="transition hover:text-white"><Twitter className="h-8 w-8 fill-current" /></a>
+            </div>
+          </section>
+          <div className="mt-12 border-t border-white/15 pt-6 text-center text-xs text-slate-400">
+            <p>© {new Date().getFullYear()} AssetCrest. All rights reserved.</p>
+            <nav aria-label="Footer navigation" className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-3 text-[11px] font-bold uppercase tracking-wide text-slate-300">
+              {navItems.map(item => <a key={item.href} href={item.href} className="hover:text-[#ff9aaa]">{item.label}</a>)}
+            </nav>
+          </div>
+        </div>
+      </footer>
+    </>
   );
 }
 
@@ -270,10 +275,10 @@ function HomePage() {
           <h2 className="text-3xl font-extrabold leading-tight text-[#1b4962] sm:text-5xl">Future of <span className="text-[#e94d65]">Finance</span></h2>
           <p className="mt-5 text-base leading-8 text-slate-600">At AssetCrest, we specialize in delivering cutting-edge investment opportunities in cryptocurrency markets, real estate, and digital assets. Our mission is to provide innovative, secure, and transparent trading solutions tailored to meet the needs of both new and seasoned investors. With a robust platform and expert guidance, we empower you to grow your financial future in a rapidly evolving digital economy.</p>
         </div>
-        <div className="grid gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
-          {sectors.map(({ title, copy, Icon }) => <article key={title} className="flex items-start gap-6 sm:gap-8">
-            <div className="flex h-[100px] w-[100px] shrink-0 items-center justify-center text-[#d9576a] sm:h-[130px] sm:w-[130px]"><Icon className="h-[78px] w-[78px] sm:h-[108px] sm:w-[108px]" strokeWidth={1.35} /></div>
-            <div className="min-w-0 flex-1"><h3 className="mb-3 text-2xl font-extrabold leading-tight text-[#294760] sm:text-3xl">{title}</h3><p className="text-base leading-8 text-[#191919] sm:text-lg">{copy}</p></div>
+        <div className="grid grid-cols-1 gap-x-10 gap-y-12 md:grid-cols-2 xl:grid-cols-2">
+          {sectors.map(({ title, copy, Icon }) => <article key={title} className="flex items-start gap-5 sm:gap-8">
+            <div className="flex h-[92px] w-[92px] shrink-0 items-center justify-center text-[#d9576a] sm:h-[120px] sm:w-[120px]"><Icon className="h-[76px] w-[76px] sm:h-[100px] sm:w-[100px]" strokeWidth={1.35} /></div>
+            <div className="min-w-0 flex-1"><h3 className="mb-3 text-[26px] font-extrabold leading-tight text-[#294760] sm:text-3xl">{title}</h3><p className="text-[17px] leading-[1.75] text-[#191919] sm:text-lg sm:leading-8">{copy}</p></div>
           </article>)}
         </div>
         <div className="mt-12 text-center"><a href="/register" className="inline-flex bg-[#e94d65] px-8 py-4 text-base font-bold text-white hover:bg-[#d83f58]">Register</a></div>
@@ -295,15 +300,15 @@ function HomePage() {
         </div>
         <div className="mt-16 grid gap-14 sm:grid-cols-3 sm:gap-8">
           {circles.map(({ title, copy, Icon }) => <article key={title} className="flex flex-col items-center text-center">
-            <div className="relative flex h-[250px] w-[250px] items-center justify-center sm:h-[270px] sm:w-[270px]">
+            <div className="relative flex h-[min(88vw,390px)] w-[min(88vw,390px)] items-center justify-center sm:h-[min(38vw,500px)] sm:w-[min(38vw,500px)]">
               <svg viewBox="0 0 220 220" className="h-full w-full -rotate-90" role="img" aria-label="96 percent progress ring">
-                <circle cx="110" cy="110" r="101" fill="none" stroke="#f1f1f1" strokeWidth="5" />
-                <circle cx="110" cy="110" r="101" fill="none" stroke="#e94d65" strokeWidth="5" strokeLinecap="butt" strokeDasharray="608 635" />
+                <circle cx="110" cy="110" r="101" fill="none" stroke="#f1f1f1" strokeWidth="8" />
+                <circle cx="110" cy="110" r="101" fill="none" stroke="#e94d65" strokeWidth="8" strokeLinecap="butt" strokeDasharray="608 635" />
               </svg>
-              <Icon className="absolute h-14 w-14 text-[#294760]" strokeWidth={1.6} />
+              <Icon className="absolute h-16 w-16 text-[#294760] sm:h-20 sm:w-20" strokeWidth={1.6} />
             </div>
-            <h3 className="mt-7 text-3xl font-extrabold text-[#294760]">{title}</h3>
-            <p className="mt-5 max-w-sm text-base leading-8 text-[#242424]">{copy}</p>
+            <h3 className="mt-8 text-3xl font-extrabold text-[#294760] sm:text-4xl">{title}</h3>
+            <p className="mt-5 max-w-lg text-lg leading-[1.75] text-[#242424] sm:text-xl">{copy}</p>
           </article>)}
         </div>
       </div>

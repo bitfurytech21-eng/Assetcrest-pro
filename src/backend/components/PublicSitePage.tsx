@@ -71,7 +71,7 @@ const milestones = [
 function Logo() {
   return (
     <a href="/" aria-label="AssetCrest home" className="inline-flex items-center">
-      <img src={media('2024/12/logo-new.png')} alt="AssetCrest" className="h-14 w-auto max-w-[245px] object-contain sm:h-[68px]" />
+      <img src={media('2024/12/logo-new.png')} alt="AssetCrest" className="h-[58px] w-auto max-w-[245px] object-contain sm:h-[100px] sm:max-w-[480px]" />
     </a>
   );
 }
@@ -81,8 +81,8 @@ function Header() {
   return (
     <header className="relative z-40 bg-white">
       <div className="mx-auto flex h-[104px] max-w-[1440px] items-center justify-start gap-7 px-6 sm:h-[150px] sm:gap-10 sm:px-10 lg:h-[190px] lg:gap-12 lg:px-[7%]">
-        <button type="button" onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} className="flex h-12 w-12 shrink-0 items-center justify-center text-[#171717] sm:h-[72px] sm:w-[105px]">
-          {menuOpen ? <X className="h-10 w-10 sm:h-14 sm:w-14" strokeWidth={2.2} /> : <Menu className="h-10 w-10 sm:h-14 sm:w-14" strokeWidth={2.2} />}
+        <button type="button" onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} className="flex h-12 w-[54px] shrink-0 flex-col items-center justify-center gap-[7px] text-[#171717] sm:h-[84px] sm:w-[105px] sm:gap-[14px]">
+          {menuOpen ? <X className="h-10 w-10 sm:h-14 sm:w-14" strokeWidth={2.2} /> : <><span className="h-[4px] w-full bg-[#171717] sm:h-[6px]" /><span className="h-[4px] w-full bg-[#171717] sm:h-[6px]" /><span className="h-[4px] w-full bg-[#171717] sm:h-[6px]" /></>}
         </button>
         <Logo />
       </div>

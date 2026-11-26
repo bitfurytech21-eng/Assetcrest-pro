@@ -622,3 +622,61 @@ textarea:focus-visible,
     animation: none;
   }
 }
+
+/* AssetCrest partner logo carousel — horizontal, responsive and accessible */
+.assetcrest-partners-viewport {
+  width: 100%;
+  overflow: hidden;
+  background: #fff;
+}
+.assetcrest-partners-track {
+  display: flex;
+  width: max-content;
+  animation: assetcrest-partners-scroll 42s linear infinite;
+  will-change: transform;
+}
+.assetcrest-partners-viewport:hover .assetcrest-partners-track,
+.assetcrest-partners-viewport:focus-within .assetcrest-partners-track {
+  animation-play-state: paused;
+}
+.assetcrest-partners-group {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: clamp(2.5rem, 6vw, 6rem);
+  padding: 0 clamp(1.25rem, 3vw, 3rem);
+}
+.assetcrest-partner-logo {
+  display: flex;
+  width: clamp(145px, 18vw, 220px);
+  height: 100px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+.assetcrest-partner-logo img {
+  display: block;
+  max-width: 100%;
+  max-height: 62px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  opacity: .82;
+  transition: opacity 180ms ease;
+}
+.assetcrest-partner-logo img:hover {
+  opacity: 1;
+}
+@keyframes assetcrest-partners-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (max-width: 640px) {
+  .assetcrest-partners-group { gap: 2rem; }
+  .assetcrest-partner-logo { width: 138px; height: 82px; }
+  .assetcrest-partner-logo img { max-height: 48px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .assetcrest-partners-track { animation: none; }
+}
+

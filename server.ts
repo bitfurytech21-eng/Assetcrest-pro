@@ -18,7 +18,7 @@ const HOME_UPSTREAM_URL = (
 ).replace(/\/+$/, "");
 
 function isPortalAppPath(pathname: string): boolean {
-  const p = pathname.toLowerCase();
+  const p = pathname.toLowerCase().replace(/\\/+$/, "") || "/";
   // Public marketing pages are bundled in this repository and must never be sent to an upstream proxy.
   if ([
     "/", "/home", "/about-us", "/company-history", "/investment-plans",

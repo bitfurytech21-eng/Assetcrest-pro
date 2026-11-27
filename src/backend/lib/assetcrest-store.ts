@@ -661,10 +661,12 @@ function normalizeStoreRecordIds(s: AssetCrestStore): AssetCrestStore {
 }
 
 function readStoreFromStorage(): AssetCrestStore {
+  // Account, balance, transaction and investment records must be loaded from authenticated
+  // server APIs backed by Neon. This object is an in-memory UI cache only.
   if (typeof window === 'undefined') return DEFAULT_SEED_STORE;
   if (cachedStore) return cachedStore;
   try {
-    const raw = window.localStorage.getItem(STORE_KEY);
+    const raw = null; // Deliberately do not read the legacy account-bearing localStorage blob.
     if (!raw) {
       cachedStore = DEFAULT_SEED_STORE;
       return cachedStore;
@@ -743,13 +745,7 @@ export function updateAssetCrestStore(updater: (prev: AssetCrestStore) => AssetC
   const current = readStoreFromStorage();
   const next = normalizeStoreRecordIds(updater(current));
   cachedStore = next;
-  if (typeof window !== 'undefined') {
-    try {
-      window.localStorage.setItem(STORE_KEY, JSON.stringify(next));
-    } catch {
-      // Ignore quota errors if localStorage is full
-    }
-  }
+  // Keep transient state in memory only. Persist authoritative user data through Neon APIs.
   storeListeners.forEach((listener) => listener());
 }
 

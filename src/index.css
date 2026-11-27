@@ -894,3 +894,20 @@ textarea:focus-visible,
     scroll-behavior: auto !important;
   }
 }
+
+
+/* Slow, continuous compass-needle motion in the homepage statistics icon */
+.assetcrest-compass-needle {
+  transform-box: view-box;
+  transform-origin: 60px 60px;
+  animation: assetcrest-compass-turn 18s linear infinite;
+}
+@keyframes assetcrest-compass-turn {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .assetcrest-compass-needle {
+    animation: none;
+  }
+}

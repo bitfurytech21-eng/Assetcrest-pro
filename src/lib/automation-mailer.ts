@@ -354,6 +354,8 @@ export async function dispatchEmailWithSettings(params: {
       if (res.ok) {
         status = 'Sent';
         delivered = true;
+        errorMessage = undefined;
+        httpStatus = undefined;
       } else {
         status = 'Failed';
         errorMessage = res.error;

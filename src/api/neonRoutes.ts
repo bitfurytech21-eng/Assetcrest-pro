@@ -62,6 +62,7 @@ import {
   sendTestTemplateEmail,
   sendTestWebhookEndpoint,
   verifyInboundWebhookHmac,
+  verifyResendWebhookSignature,
 } from '../lib/automation-mailer.ts';
 import {
   clearSessionCookie,
@@ -198,6 +199,25 @@ export function createNeonApiRouter(): Router {
       const user = await authenticateUserInNeon(identifier, password);
       const token = await createSessionForUser(user.id);
       setSessionCookie(req, res, token);
+      const forwardedFor = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+      const ipAddress = forwardedFor || req.socket.remoteAddress || 'Unavailable';
+      void dispatchPortalAutomation({
+        eventKey: 'auth.login',
+        recipientEmail: user.email,
+        variables: {
+          name: user.name,
+          email: user.email,
+          ipAddress,
+          userAgent: String(req.headers['user-agent'] || 'Unavailable').slice(0, 240),
+        },
+        webhookData: {
+          userId: user.id,
+          email: user.email,
+          ipAddress,
+          userAgent: String(req.headers['user-agent'] || 'Unavailable').slice(0, 240),
+          signedInAt: new Date().toISOString(),
+        },
+      });
       res.json({ token, user });
     } catch (err) {
       sendError(res, err, 401);
@@ -1369,6 +1389,63 @@ export function createNeonApiRouter(): Router {
   );
 
   // =========================================================================
+  // RESEND DELIVERY WEBHOOK RECEIVER (/api/webhooks/resend)
+  // Configure this exact URL in Resend. The raw body is required for Svix verification.
+  router.post('/webhooks/resend', async (req: Request, res: Response) => {
+    try {
+      const secret = process.env.RESEND_WEBHOOK_SECRET?.trim() || '';
+      if (!secret) {
+        return res.status(503).json({ error: 'Resend webhook signing secret is not configured.' });
+      }
+
+      const rawBody = Buffer.isBuffer(req.body)
+        ? req.body.toString('utf8')
+        : typeof req.body === 'string'
+          ? req.body
+          : '';
+      const messageId = String(req.headers['svix-id'] || '');
+      const timestamp = String(req.headers['svix-timestamp'] || '');
+      const signature = String(req.headers['svix-signature'] || '');
+
+      if (!verifyResendWebhookSignature(secret, messageId, timestamp, signature, rawBody)) {
+        return res.status(401).json({ error: 'Invalid Resend webhook signature.' });
+      }
+
+      let event: Record<string, any>;
+      try {
+        event = JSON.parse(rawBody);
+      } catch {
+        return res.status(400).json({ error: 'Invalid JSON payload.' });
+      }
+
+      const eventType = String(event.type || 'unknown');
+      const data = event.data && typeof event.data === 'object' ? event.data : {};
+      const recipient = Array.isArray(data.to) ? data.to.join(', ') : String(data.to || data.email || 'unknown');
+      const emailId = String(data.email_id || data.id || 'unknown');
+
+      await appendAutomationDeliveryLog({
+        kind: 'webhook',
+        eventKey: `resend.${eventType}`,
+        target: recipient,
+        subjectOrMethod: `Resend email event (${emailId})`,
+        status: eventType === 'email.delivered' ? 'Delivered' : eventType === 'email.bounced' || eventType === 'email.failed' || eventType === 'email.complained' ? 'Failed' : 'Queued',
+        httpStatus: 200,
+        payloadPreview: JSON.stringify({
+          type: eventType,
+          email_id: data.email_id,
+          to: data.to,
+          subject: data.subject,
+          created_at: event.created_at,
+          bounce: data.bounce,
+        }).slice(0, 900),
+      });
+
+      return res.status(200).json({ ok: true, received: eventType });
+    } catch (err) {
+      sendError(res, err, 500);
+    }
+  });
+
   // INBOUND SIGNED WEBHOOK RECEIVER (/api/webhooks/inbound)
   // =========================================================================
   router.post('/webhooks/inbound', async (req: Request, res: Response) => {

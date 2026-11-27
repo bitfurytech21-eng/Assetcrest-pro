@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { requireAdmin, requireAuth, AuthRequest } from "./src/middleware/auth.ts";
 import { getUsers, getUserById } from "./src/db/users.ts";
-import { createPool, disableDatabaseFallback, isDatabaseConfigured } from "./src/db/index.ts";
+import { createPool, isDatabaseConfigured } from "./src/db/index.ts";
 import { getMemoryUserById, ensureNeonSchemaAndSeed, getAdminSetupStatus } from "./src/db/neonRepo.ts";
 import { ensureAutomationSchemaAndSeed } from "./src/db/automationRepo.ts";
 import { createNeonApiRouter } from "./src/api/neonRoutes.ts";

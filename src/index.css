@@ -866,3 +866,31 @@ textarea:focus-visible,
     animation-duration: .01ms !important;
   }
 }
+
+
+/* Stats section diagonal corner texture */
+.assetcrest-stats-section {
+  border-top-color: #E5E5E5;
+}
+.assetcrest-stats-stripes {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0,
+    transparent 13px,
+    rgba(229, 229, 229, .62) 13px,
+    rgba(229, 229, 229, .62) 14px
+  );
+  clip-path: polygon(40% 100%, 100% 100%, 100% 0);
+  opacity: .55;
+}
+@media (max-width: 767px) {
+  .assetcrest-stats-stripes {
+    width: 68%;
+    opacity: .35;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .assetcrest-stats-section * {
+    scroll-behavior: auto !important;
+  }
+}

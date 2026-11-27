@@ -325,7 +325,7 @@ export async function dispatchEmailWithSettings(params: {
 
   const resendConfigured = Boolean(process.env.RESEND_API_KEY?.trim());
   const tryResend = settings.mode === 'auto' && resendConfigured;
-  const trySmtp = settings.mode === 'smtp' || (settings.mode === 'auto' && !resendConfigured && canSmtp);
+  const trySmtp = settings.mode === 'smtp' || (settings.mode === 'auto' && canSmtp);
   let smtpFailed = false;
   let delivered = false;
   let attemptedDelivery = false;
@@ -342,11 +342,11 @@ export async function dispatchEmailWithSettings(params: {
       status = 'Failed';
       errorMessage = res.error || 'Resend delivery failed';
       // A definitive HTTP rejection can safely fall through to an explicitly configured relay.
-      smtpFailed = Boolean(res.httpStatus);
+      smtpFailed = true;
     }
   }
 
-  if (!delivered && trySmtp) {
+  if (!delivered && trySmtp && (!tryResend || smtpFailed)) {
     attemptedDelivery = true;
     try {
       const res = await deliverViaSmtp(settings, params.toEmail, params.subject, params.html, params.text);

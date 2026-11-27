@@ -3,86 +3,45 @@ import { Pool } from 'pg';
 import * as schema from './schema.ts';
 
 declare global {
+  // Reuse one PostgreSQL pool across hot reloads in development.
   var _postgresPool: Pool | undefined;
 }
 
 const connectionString = process.env.DATABASE_URL?.trim() || '';
-export const isDatabaseConfigured = Boolean(connectionString);
+if (!connectionString) {
+  throw new Error(
+    '[AssetCrest] DATABASE_URL is required. Configure the Neon PostgreSQL connection string in the server environment; the application will not start with an in-memory database.'
+  );
+}
+
+export const isDatabaseConfigured = true;
 
 function shouldUseSsl(url: string): boolean {
-  if (!url) return false;
   if (url.includes('sslmode=disable')) return false;
   if (url.includes('localhost') || url.includes('127.0.0.1')) return false;
   return true;
 }
 
-const createMockPool = () =>
-  ({
-    query: async () => ({ rows: [] }),
-    connect: async () => ({
-      query: async () => ({ rows: [] }),
-      release: () => {},
-    }),
-    on: () => {},
-  }) as unknown as Pool;
-
-export const createPool = () => {
-  if (!isDatabaseConfigured) {
-    if (process.env.NODE_ENV === 'production' && !global._postgresPool) {
-      console.warn('[AssetCrest] DATABASE_URL is not set; using in-memory fallback pool.');
-    }
-    if (!global._postgresPool) {
-      global._postgresPool = createMockPool();
-    }
-    return global._postgresPool;
-  }
-
+export const createPool = (): Pool => {
   if (!global._postgresPool) {
-    try {
-      global._postgresPool = new Pool({
-        connectionString,
-        ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: true } : false,
-        max: 10,
-        connectionTimeoutMillis: 15000,
-      });
+    const pool = new Pool({
+      connectionString,
+      ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: true } : false,
+      max: 10,
+      connectionTimeoutMillis: 15000,
+      idleTimeoutMillis: 30000,
+    });
 
-      global._postgresPool.on('error', (err) => {
-        console.error('Unexpected error on idle Neon PostgreSQL pool client:', err);
-      });
-    } catch (err) {
-      console.warn('[AssetCrest] Neon pool initialization failed — using fallback pool:', err);
-      global._postgresPool = createMockPool();
-    }
+    pool.on('error', (err) => {
+      console.error('[AssetCrest] Unexpected error on idle Neon PostgreSQL pool client:', err);
+    });
+
+    global._postgresPool = pool;
   }
   return global._postgresPool;
 };
 
+// Drizzle is always backed by the configured Neon PostgreSQL pool.
+// Connection errors are allowed to propagate; there is deliberately no mock pool or no-op proxy.
 const pool = createPool();
-
-let db: ReturnType<typeof drizzle<typeof schema>>;
-try {
-  if (!isDatabaseConfigured) {
-    throw new Error('Neon DATABASE_URL not configured');
-  }
-  db = drizzle(pool, { schema });
-} catch (err) {
-  if (isDatabaseConfigured) {
-    console.warn('[AssetCrest] Drizzle initialization failed — using fallback db proxy:', err);
-  }
-  const noOp = {
-    findMany: async () => [],
-    findFirst: async () => null,
-    findUnique: async () => null,
-    create: async (d: any) => d?.data ?? {},
-    update: async (d: any) => d?.data ?? {},
-    delete: async () => ({}),
-  };
-  db = new Proxy({} as any, {
-    get: (_, prop) =>
-      prop === 'query'
-        ? new Proxy({}, { get: () => noOp })
-        : async () => [],
-  });
-}
-
-export { db };
+export const db = drizzle(pool, { schema });

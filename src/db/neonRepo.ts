@@ -1456,10 +1456,10 @@ export async function claimTransferRequestInNeon(params: {
 
 export async function executeSwapInNeon(params: {
   userId: string;
-  fromSymbol: 'USD' | 'USDC' | 'USDT' | 'BTC' | 'ETH' | 'BNB' | 'SOL' | 'XRP';
-  toSymbol: 'USD' | 'USDC' | 'USDT' | 'BTC' | 'ETH' | 'BNB' | 'SOL' | 'XRP';
+  fromSymbol: 'USD' | 'USDC' | 'USDT' | 'BTC' | 'ETH' | 'BNB' | 'SOL' | 'XRP' | 'DOGE';
+  toSymbol: 'USD' | 'USDC' | 'USDT' | 'BTC' | 'ETH' | 'BNB' | 'SOL' | 'XRP' | 'DOGE';
   fromAmount: number;
-  prices: Record<'USD' | 'USDC' | 'USDT' | 'BTC' | 'ETH' | 'BNB' | 'SOL' | 'XRP', number>;
+  prices: Record<'USD' | 'USDC' | 'USDT' | 'BTC' | 'ETH' | 'BNB' | 'SOL' | 'XRP' | 'DOGE', number>;
 }): Promise<{
   id: string;
   fromAmount: number;

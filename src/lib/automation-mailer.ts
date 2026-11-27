@@ -279,15 +279,17 @@ export async function dispatchEmailWithSettings(params: {
   let errorMessage: string | undefined;
 
   const trySmtp = settings.mode === 'smtp' || (settings.mode === 'auto' && canSmtp);
-  const tryWebhook =
-    settings.mode === 'webhook' || (settings.mode === 'auto' && !canSmtp && canWebhook);
-
   let smtpFailed = false;
+  let delivered = false;
+  let attemptedDelivery = false;
+
   if (trySmtp) {
+    attemptedDelivery = true;
     try {
       const res = await deliverViaSmtp(settings, params.toEmail, params.subject, params.html, params.text);
       if (res.ok) {
         status = 'Sent';
+        delivered = true;
       } else {
         status = 'Failed';
         errorMessage = res.error;
@@ -300,8 +302,16 @@ export async function dispatchEmailWithSettings(params: {
     }
   }
 
-  // In auto mode only, use the configured relay if SMTP delivery fails.
-  if ((!trySmtp || (settings.mode === 'auto' && smtpFailed)) && tryWebhook && settings.emailWebhookUrl) {
+  // Auto mode must try a configured relay when SMTP is unavailable or fails.
+  // Do not send a second copy when SMTP has already accepted the message.
+  const shouldTryRelay =
+    !delivered &&
+    settings.mode !== 'smtp' &&
+    (settings.mode === 'webhook' || settings.mode === 'auto') &&
+    (!trySmtp || smtpFailed);
+
+  if (shouldTryRelay && canWebhook) {
+    attemptedDelivery = true;
     const res = await deliverViaEmailWebhook(
       settings.emailWebhookUrl,
       settings.emailWebhookSecret,
@@ -311,13 +321,16 @@ export async function dispatchEmailWithSettings(params: {
     httpStatus = res.httpStatus;
     if (res.ok) {
       status = 'Sent';
+      delivered = true;
       errorMessage = undefined;
     } else {
       status = 'Failed';
       errorMessage = res.error || errorMessage;
     }
-  } else if (!trySmtp && !tryWebhook) {
-    // Also check if any active webhook endpoint has deliveryMode === 'email_relay'
+  }
+
+  // A configured email_relay endpoint is the final automatic fallback.
+  if (!delivered && settings.mode === 'auto' && (!trySmtp || smtpFailed)) {
     const webhooks = await listRawWebhookEndpoints();
     const relayHook = webhooks.find(
       (w) =>
@@ -326,6 +339,7 @@ export async function dispatchEmailWithSettings(params: {
         (w.subscribedEvents.includes('*') || w.subscribedEvents.includes(params.eventKey))
     );
     if (relayHook) {
+      attemptedDelivery = true;
       const res = await deliverViaEmailWebhook(
         relayHook.url,
         relayHook.signingSecret,
@@ -337,15 +351,19 @@ export async function dispatchEmailWithSettings(params: {
       await recordWebhookTriggerStatus(relayHook.id, res.httpStatus || 0).catch(() => {});
       if (res.ok) {
         status = 'Sent';
+        delivered = true;
+        errorMessage = undefined;
       } else {
         status = 'Failed';
-        errorMessage = res.error;
+        errorMessage = res.error || errorMessage;
       }
-    } else {
-      status = 'Queued';
-      errorMessage =
-        'Template rendered and logged. Configure SMTP or Email Relay Webhook in Admin Console to deliver externally.';
     }
+  }
+
+  if (!attemptedDelivery) {
+    status = 'Queued';
+    errorMessage =
+      'No active SMTP or email relay provider is configured. Configure SMTP or an Email Relay Webhook to deliver externally.';
   }
 
   return appendAutomationDeliveryLog({

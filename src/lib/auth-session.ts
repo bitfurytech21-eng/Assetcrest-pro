@@ -194,8 +194,8 @@ export function setSessionCookie(req: Request, res: Response, token: string): vo
     'Path=/',
     `Max-Age=${maxAge}`,
     'HttpOnly',
-    https ? 'SameSite=None' : 'SameSite=Lax',
-    ...(https ? ['Secure', 'Partitioned'] : []),
+    'SameSite=Lax',
+    ...(https ? ['Secure'] : []),
   ];
   res.setHeader('Set-Cookie', attrs.join('; '));
 }
@@ -214,7 +214,8 @@ export function clearSessionCookie(req: Request, res: Response): void {
 }
 
 export function verifyMutationOriginOrHeader(req: Request): boolean {
-  if (req.headers['x-requested-with']) return true;
+  // A caller-controlled X-Requested-With header is not proof of a same-origin request.
+  // Cookie-authenticated mutations must carry a matching Origin header.
   const origin = req.headers.origin;
   if (!origin) return false;
   try {

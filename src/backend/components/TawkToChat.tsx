@@ -6,8 +6,10 @@ import { useEffect } from 'react';
  */
 export default function TawkToChat() {
   useEffect(() => {
-    const propertyId = import.meta.env.VITE_TAWK_PROPERTY_ID?.trim();
-    const widgetId = import.meta.env.VITE_TAWK_WIDGET_ID?.trim();
+    // Public embed IDs supplied for the official AssetCrest Tawk.to property.
+    // Environment variables may override these defaults for staging or a replacement widget.
+    const propertyId = (import.meta.env.VITE_TAWK_PROPERTY_ID || '6b08ea3c7b5efd3cb09191e5').trim();
+    const widgetId = (import.meta.env.VITE_TAWK_WIDGET_ID || '1k8dd5vd3').trim();
 
     if (!propertyId || !widgetId) return;
 

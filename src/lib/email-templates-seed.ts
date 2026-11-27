@@ -31,6 +31,12 @@ export const PORTAL_AUTOMATION_EVENTS: Array<{
     description: 'Triggered automatically when a new investor signs up via /register or SignUp modal.',
   },
   {
+    eventKey: 'auth.login',
+    label: 'Successful Login Security Alert',
+    category: 'Authentication',
+    description: 'Triggered after a successful sign-in; contains timestamp and session context only.',
+  },
+  {
     eventKey: 'auth.password_reset',
     label: 'Password Reset OTP',
     category: 'Authentication',
@@ -198,6 +204,32 @@ export const DEFAULT_EMAIL_TEMPLATES: EmailTemplateDefinition[] = [
     textBody:
       'Welcome to AssetCrest, {{name}}!\n\nYour account (@{{username}}) is active.\nEmail: {{email}}\nCountry: {{country}}\nReferral Code: {{referralCode}}\n\nAccess your dashboard: {{dashboardUrl}}',
     variables: ['name', 'username', 'email', 'country', 'referralCode', 'dashboardUrl'],
+  },
+  {
+    id: 'tpl-auth-login',
+    eventKey: 'auth.login',
+    name: 'Successful Login Security Alert',
+    category: 'Authentication',
+    enabled: true,
+    subject: 'New sign-in to your AssetCrest account',
+    preheader: 'A successful sign-in was recorded for your account.',
+    htmlBody: wrapSection(
+      'New sign-in detected',
+      'Account Security',
+      `<p style="margin:0 0 14px 0;font-size:14px;line-height:1.6;color:#334155;">Hello {{name}}, a successful sign-in to your AssetCrest account was recorded.</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px;font-size:13px;color:#1e293b;">
+        <tr><td style="padding:4px 0;"><strong>Account:</strong> {{email}}</td></tr>
+        <tr><td style="padding:4px 0;"><strong>Time:</strong> {{timestamp}}</td></tr>
+        <tr><td style="padding:4px 0;"><strong>IP address:</strong> {{ipAddress}}</td></tr>
+        <tr><td style="padding:4px 0;"><strong>Device:</strong> {{userAgent}}</td></tr>
+      </table>
+      <p style="margin:14px 0 0 0;font-size:13px;line-height:1.6;color:#64748b;">If this was not you, change your password and contact our support team. Do not share your password or verification codes with anyone.</p>`,
+      'Review Account',
+      '{{dashboardUrl}}'
+    ),
+    textBody:
+      'New sign-in detected for {{email}} at {{timestamp}}. IP: {{ipAddress}}. Device: {{userAgent}}. If this was not you, change your password and contact support. {{dashboardUrl}}',
+    variables: ['name', 'email', 'timestamp', 'ipAddress', 'userAgent', 'dashboardUrl'],
   },
   {
     id: 'tpl-auth-password-reset',

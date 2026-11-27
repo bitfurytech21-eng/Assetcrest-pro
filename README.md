@@ -14,16 +14,12 @@ Self-hosted AssetCrest Investor Portal, Live TradingView terminal, and automated
 
 The application already mounts `src/backend/components/TawkToChat.tsx` globally, so one widget is available across public pages and the investor portal. The loader stays inactive until both Tawk.to widget identifiers are configured; it does not create a fake chat window or duplicate a second provider widget.
 
-1. Register/sign in to [Tawk.to](https://www.tawk.to/) using **customersupport@assetcrestonline.com** as the account/developer email.
-2. In the Tawk.to dashboard, add the website/property **https://assetcrestonline.com/**.
-3. Open **Administration → Channels → Chat Widget** (the exact menu label can vary by dashboard version) and copy the **Property ID** and **Widget ID** from the install snippet.
-4. In the Render service for AssetCrest, add these environment variables:
-   - `VITE_TAWK_PROPERTY_ID` = the Tawk.to Property ID
-   - `VITE_TAWK_WIDGET_ID` = the Tawk.to Widget ID
-5. Save the variables and trigger a new deployment so Vite includes them in the client build.
-6. Visit `https://assetcrestonline.com/` and a portal page in a fresh browser session. Confirm the Tawk.to chat launcher appears once and that a test message reaches the Tawk.to inbox.
+1. The supplied official embed snippet identifies the AssetCrest widget as Property ID `6b08ea3c7b5efd3cb09191e5` and Widget ID `1k8dd5vd3`.
+2. The loader uses those public identifiers by default, so no additional Tawk.to dashboard access or Render variable entry is required for the production widget. Optional `VITE_TAWK_PROPERTY_ID` and `VITE_TAWK_WIDGET_ID` values can override them for another environment.
+3. The Tawk.to account/developer email is **customersupport@assetcrestonline.com**, and the website/property URL is **https://assetcrestonline.com/**.
+4. After deploying, visit `https://assetcrestonline.com/` and an investor portal page in a fresh browser session. Confirm the chat launcher appears once and that a test message reaches the Tawk.to inbox.
 
-The email address and website URL identify the Tawk.to account and property during account setup; they are not substitutes for the two widget IDs. The widget IDs are public embed identifiers, not passwords or API secrets. Do not put a Tawk.to account password or private API key in Vite variables or commit them to GitHub.
+The widget IDs are public embed identifiers, not passwords or API secrets. Do not put a Tawk.to account password or private API key in Vite variables or commit them to GitHub.
 
 ## Deploying to Render
 

@@ -539,6 +539,7 @@ export function createNeonApiRouter(): Router {
         'BNB',
         'SOL',
         'XRP',
+        'DOGE',
       ]);
       const fromSymbol = String(body.fromSymbol || '').toUpperCase() as CryptoMarketSymbol;
       const toSymbol = String(body.toSymbol || '').toUpperCase() as CryptoMarketSymbol;

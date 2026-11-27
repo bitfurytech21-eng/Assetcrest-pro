@@ -79,7 +79,7 @@ function Logo() {
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\\/+$/, '') || '/';
+  const pathname = typeof window === 'undefined' ? '/' : `/${window.location.pathname.split('/').filter(Boolean).join('/')}`;
   return (
     <header id="top" className="assetcrest-site-header relative z-40 bg-white shadow-[0_3px_18px_rgba(27,73,98,.07)]">
       <div className="bg-[#1b4962] text-white">
@@ -108,8 +108,8 @@ function Header() {
       <nav id="assetcrest-primary-navigation" aria-label="Main navigation" className={`border-t border-slate-100 bg-white ${menuOpen ? 'block' : 'hidden'} sm:block`}>
         <div className="mx-auto flex max-w-[1240px] flex-col px-5 sm:flex-row sm:items-center sm:justify-center sm:px-8">
           {navItems.map(item => {
-            const active = pathname === item.href.replace(/\\/+$/, '') || (item.href === '/' && pathname === '/');
-            return <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)} aria-current={active ? 'page' : undefined} className={`site-nav-link ${active ? 'is-active' : ''}`}>{item.label}</a>;
+            const targetPath = `/${item.href.split('/').filter(Boolean).join('/')}`;
+            return <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)} aria-current={pathname === targetPath ? 'page' : undefined} className={`site-nav-link ${pathname === targetPath ? 'is-active' : ''}`}>{item.label}</a>;
           })}
           <div className="grid grid-cols-2 gap-2 py-3 sm:hidden">
             <a href="/register" onClick={() => setMenuOpen(false)} className="site-action site-action-primary justify-center">Register</a>

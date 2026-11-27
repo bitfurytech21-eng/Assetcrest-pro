@@ -528,7 +528,6 @@ export const DEFAULT_SEED_STORE: AssetCrestStore = {
 export const DEFAULT_INVESTMENT_PLANS: InvestmentPlanConfig[] = DEFAULT_SEED_STORE.investmentPlans;
 export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = DEFAULT_SEED_STORE.platformSettings;
 
-const STORE_KEY = 'assetcrest_portal_store_v2';
 const THEME_KEY = 'assetcrest_theme_mode_v1';
 
 let idCounter = 2000;
@@ -578,6 +577,7 @@ export function appendSessionLog(
 }
 
 let cachedStore: AssetCrestStore | null = null;
+let legacyBrowserStoreCleared = false;
 const storeListeners = new Set<() => void>();
 
 const LEGACY_SEED_PLAN_IDS = new Set([
@@ -661,95 +661,26 @@ function normalizeStoreRecordIds(s: AssetCrestStore): AssetCrestStore {
 }
 
 function readStoreFromStorage(): AssetCrestStore {
+  // Remove the obsolete browser copy once. Account and financial data must come from
+  // authenticated API endpoints backed by Neon, never from localStorage.
   if (typeof window === 'undefined') return DEFAULT_SEED_STORE;
-  if (cachedStore) return cachedStore;
-  try {
-    const raw = window.localStorage.getItem(STORE_KEY);
-    if (!raw) {
-      cachedStore = DEFAULT_SEED_STORE;
-      return cachedStore;
-    }
-    const parsed = JSON.parse(raw) as Partial<AssetCrestStore>;
-    if (!parsed || !Array.isArray(parsed.users)) {
-      cachedStore = DEFAULT_SEED_STORE;
-      return cachedStore;
-    }
-
-    // Remove all demo / legacy preview accounts from this browser-only cache.
-    // Persistent Neon database users are intentionally not modified.
-    const legacyDemoIds = new Set(['usr-admin', 'usr-annabella', 'usr-marcus', 'usr-elena']);
-    const legacyDemoNames = new Set([
-      'annabella menor',
-      'marcus vance',
-      'elena vance',
-      'amkelechi.2',
-      'assetcrest admin',
-    ]);
-    const legacyDemoEmails = new Set([
-      'bitfurytech21@gmail.com',
-      'annarmenor@gmail.com',
-      'marcus.vance@assetcrest.co',
-      'elena.vance@assetcrest.co',
-      'admin@assetcrest.co',
-    ]);
-    const retainedUsers = parsed.users
-      .filter((user) => {
-        const id = String(user.id || '').toLowerCase();
-        const name = String(user.name || '').trim().toLowerCase();
-        const email = String(user.email || '').trim().toLowerCase();
-        return !legacyDemoIds.has(id) && !legacyDemoNames.has(name) && !legacyDemoEmails.has(email);
-      })
-      .map((user) => ({ ...user, password: '' }));
-    const retainedUserIds = new Set(retainedUsers.map((user) => user.id));
-    const keepOwnedRecords = <T extends { userId?: string }>(items: T[] | undefined): T[] =>
-      Array.isArray(items) ? items.filter((item) => Boolean(item.userId && retainedUserIds.has(item.userId))) : [];
-
-    const migratedPlans = migrateInvestmentPlans(parsed.investmentPlans);
-    cachedStore = normalizeStoreRecordIds({
-      activeUserId: parsed.activeUserId && retainedUserIds.has(parsed.activeUserId) ? parsed.activeUserId : null,
-      welcomeModalUserId: parsed.welcomeModalUserId && retainedUserIds.has(parsed.welcomeModalUserId) ? parsed.welcomeModalUserId : null,
-      users: retainedUsers,
-      transactions: keepOwnedRecords(parsed.transactions),
-      investments: keepOwnedRecords(parsed.investments),
-      locationLogs: Array.isArray(parsed.locationLogs) ? parsed.locationLogs : [],
-      tickets: keepOwnedRecords(parsed.tickets),
-      investmentPlans: migratedPlans,
-      sessionLogs: keepOwnedRecords(parsed.sessionLogs),
-      activityLogs: Array.isArray(parsed.activityLogs) ? parsed.activityLogs.filter((item) => retainedUserIds.has(item.actorId)) : [],
-      platformSettings: parsed.platformSettings
-        ? { ...DEFAULT_PLATFORM_SETTINGS, ...parsed.platformSettings }
-        : DEFAULT_PLATFORM_SETTINGS,
-      cryptoWallets:
-        Array.isArray(parsed.cryptoWallets) && parsed.cryptoWallets.length > 0
-          ? parsed.cryptoWallets
-          : [],
-    });
+  if (!legacyBrowserStoreCleared) {
     try {
-      const normalizedJson = JSON.stringify(cachedStore);
-      if (normalizedJson !== raw) {
-        window.localStorage.setItem(STORE_KEY, normalizedJson);
-      }
+      window.localStorage.removeItem('assetcrest_portal_store_v2');
     } catch {
-      // Ignore quota errors
+      // Storage may be unavailable; the application still never reads or writes this key.
     }
-    return cachedStore;
-  } catch {
-    cachedStore = DEFAULT_SEED_STORE;
-    return cachedStore;
+    legacyBrowserStoreCleared = true;
   }
+  if (!cachedStore) cachedStore = DEFAULT_SEED_STORE;
+  return cachedStore;
 }
 
 export function updateAssetCrestStore(updater: (prev: AssetCrestStore) => AssetCrestStore): void {
   const current = readStoreFromStorage();
   const next = normalizeStoreRecordIds(updater(current));
   cachedStore = next;
-  if (typeof window !== 'undefined') {
-    try {
-      window.localStorage.setItem(STORE_KEY, JSON.stringify(next));
-    } catch {
-      // Ignore quota errors if localStorage is full
-    }
-  }
+  // Keep transient state in memory only. Persist authoritative user data through Neon APIs.
   storeListeners.forEach((listener) => listener());
 }
 

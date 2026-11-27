@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { requireAdmin, requireAuth, AuthRequest } from "./src/middleware/auth.ts";
 import { getUsers, getUserById } from "./src/db/users.ts";
-import { createPool, disableDatabaseFallback, isDatabaseConfigured } from "./src/db/index.ts";
+import { createPool, isDatabaseConfigured } from "./src/db/index.ts";
 import { getMemoryUserById, ensureNeonSchemaAndSeed, getAdminSetupStatus } from "./src/db/neonRepo.ts";
 import { ensureAutomationSchemaAndSeed } from "./src/db/automationRepo.ts";
 import { createNeonApiRouter } from "./src/api/neonRoutes.ts";
@@ -227,14 +227,27 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check reports connected PostgreSQL or active in-memory store.
+// Health check reports the real persistence engine. Production never advertises memory as a healthy database.
 app.get("/api/health", async (req, res) => {
   const origin = getRequestOrigin(req);
   if (!isDatabaseConfigured) {
+    if (isProduction) {
+      res.status(503).json({
+        status: "degraded",
+        engine: "neon-postgresql",
+        database: "not-configured",
+        dbReady: false,
+        target: origin,
+        appTarget: `${origin}/app`,
+        upstream: "self-hosted",
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
     res.status(200).json({
       status: "ok",
-      engine: "in-memory",
-      database: "mock",
+      engine: "in-memory-development",
+      database: "development-only",
       dbReady: true,
       target: origin,
       appTarget: `${origin}/app`,
@@ -441,23 +454,17 @@ app.get(["/trading", "/live-trading", "/app/trading", "/app/live-trading", "/mar
 });
 
 async function startServer() {
+  if (isProduction && !isDatabaseConfigured) {
+    throw new Error("[AssetCrest] DATABASE_URL is required in production. Refusing to start with volatile account or financial data.");
+  }
+
   if (isDatabaseConfigured) {
-    try {
-      const pool = createPool();
-      await pool.query("SELECT 1;");
-      await ensureNeonSchemaAndSeed();
-      await ensureAutomationSchemaAndSeed();
-    } catch (err: any) {
-      console.warn(
-        "[AssetCrest] PostgreSQL unavailable; falling back to in-memory store:",
-        err?.message || err
-      );
-      disableDatabaseFallback();
-      await ensureNeonSchemaAndSeed();
-      await ensureAutomationSchemaAndSeed();
-    }
+    const pool = createPool();
+    await pool.query("SELECT 1;");
+    await ensureNeonSchemaAndSeed();
+    await ensureAutomationSchemaAndSeed();
   } else {
-    console.warn("[AssetCrest] DATABASE_URL not configured — starting with in-memory store.");
+    console.warn("[AssetCrest] Development-only in-memory store enabled; never use this mode for production data.");
     await ensureNeonSchemaAndSeed();
     await ensureAutomationSchemaAndSeed();
   }
@@ -470,8 +477,8 @@ async function startServer() {
   } else {
     console.log(
       isDatabaseConfigured
-        ? "[AssetCrest] PostgreSQL connection and required schemas are ready."
-        : "[AssetCrest] In-memory store is ready."
+        ? "[AssetCrest] Neon PostgreSQL connection and required schemas are ready."
+        : "[AssetCrest] Development-only in-memory store is ready."
     );
   }
 

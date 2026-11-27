@@ -11,6 +11,9 @@ const connectionString = process.env.DATABASE_URL?.trim() || '';
 export let isDatabaseConfigured = Boolean(connectionString);
 
 export function disableDatabaseFallback(): void {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('[AssetCrest] Neon is mandatory in production; refusing to disable database persistence.');
+  }
   isDatabaseConfigured = false;
 }
 
@@ -22,7 +25,7 @@ function shouldUseSsl(url: string): boolean {
 
 export const createPool = (): Pool => {
   if (!connectionString) {
-    throw new Error('[AssetCrest] DATABASE_URL is not configured; using in-memory store.');
+    throw new Error('[AssetCrest] DATABASE_URL is required. Configure the Neon PostgreSQL connection string.');
   }
   if (!global._postgresPool) {
     const pool = new Pool({
@@ -48,11 +51,16 @@ let dbInstance: DrizzleDb | null = null;
 try {
   if (connectionString) {
     dbInstance = drizzle(createPool(), { schema });
+  } else if (process.env.NODE_ENV === 'production') {
+    throw new Error('[AssetCrest] DATABASE_URL is required in production. Startup aborted to protect account and financial data.');
   } else {
-    console.warn('[AssetCrest] DATABASE_URL not set — running with built-in in-memory store.');
+    console.warn('[AssetCrest] DATABASE_URL not set — development-only in-memory compatibility mode.');
   }
 } catch (err) {
-  console.warn('[AssetCrest] Failed to initialize PostgreSQL pool — falling back to in-memory store.', err);
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('[AssetCrest] Neon pool initialization failed in production; startup aborted.', { cause: err });
+  }
+  console.warn('[AssetCrest] Failed to initialize PostgreSQL pool — development fallback enabled.', err);
   isDatabaseConfigured = false;
 }
 

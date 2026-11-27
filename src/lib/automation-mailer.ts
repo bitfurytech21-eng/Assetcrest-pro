@@ -118,6 +118,42 @@ export function isSafeWebhookTarget(rawUrl: string): { ok: boolean; reason?: str
   }
 }
 
+/**
+ * Verify Resend's Svix-signed webhook using the untouched request body.
+ * Resend secrets are base64-encoded values prefixed with "whsec_".
+ */
+export function verifyResendWebhookSignature(
+  secret: string,
+  messageId: string,
+  timestamp: string,
+  signatureHeader: string,
+  rawBody: string
+): boolean {
+  if (!secret || !messageId || !timestamp || !signatureHeader || !rawBody) return false;
+  const timestampNumber = Number(timestamp);
+  if (!Number.isFinite(timestampNumber) || Math.abs(Date.now() / 1000 - timestampNumber) > 300) {
+    return false;
+  }
+
+  try {
+    const encodedSecret = secret.startsWith('whsec_') ? secret.slice(6) : secret;
+    const key = Buffer.from(encodedSecret, 'base64');
+    if (!key.length) return false;
+    const signedContent = `${messageId}.${timestamp}.${rawBody}`;
+    const expected = crypto.createHmac('sha256', key).update(signedContent).digest('base64');
+    const expectedBuffer = Buffer.from(expected);
+    return signatureHeader.split(' ').some((part) => {
+      const [version, value] = part.split(',', 2);
+      if (version !== 'v1' || !value) return false;
+      const suppliedBuffer = Buffer.from(value);
+      return suppliedBuffer.length === expectedBuffer.length &&
+        crypto.timingSafeEqual(suppliedBuffer, expectedBuffer);
+    });
+  } catch {
+    return false;
+  }
+}
+
 export function signWebhookPayload(secret: string, timestampSec: string, rawBody: string): string {
   if (!secret) return '';
   const hmac = crypto

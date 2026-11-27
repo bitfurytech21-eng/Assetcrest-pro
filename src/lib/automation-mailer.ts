@@ -325,7 +325,7 @@ export async function dispatchEmailWithSettings(params: {
 
   const resendConfigured = Boolean(process.env.RESEND_API_KEY?.trim());
   // An explicit Resend API key selects Resend as the primary provider unless webhook-only mode was chosen.
-  const tryResend = settings.mode !== 'webhook' && resendConfigured;
+  const tryResend = settings.mode === 'auto' && resendConfigured;
   const trySmtp = settings.mode === 'smtp' || (settings.mode === 'auto' && canSmtp);
   let smtpFailed = false;
   let delivered = false;

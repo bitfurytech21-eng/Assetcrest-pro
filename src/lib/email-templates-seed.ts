@@ -109,6 +109,12 @@ export const PORTAL_AUTOMATION_EVENTS: Array<{
     description: 'Triggered on Standard, Vacation Portal, or Real Estate plan subscription.',
   },
   {
+    eventKey: 'roi.pending',
+    label: 'ROI Pending Settlement',
+    category: 'Investments',
+    description: 'Triggered after a plan is activated to confirm ROI is awaiting a verified settlement; no return is represented as credited.',
+  },
+  {
     eventKey: 'transfer.received',
     label: 'P2P Transfer Credited',
     category: 'Treasury',
@@ -560,6 +566,33 @@ export const DEFAULT_EMAIL_TEMPLATES: EmailTemplateDefinition[] = [
     textBody:
       'Ticket {{ticketId}} logged for {{targetDeskEmail}}\nFrom: {{senderEmail}}\nSubject: {{subject}}\n\n{{message}}',
     variables: ['ticketId', 'senderEmail', 'targetDeskEmail', 'subject', 'message', 'dashboardUrl'],
+  },
+  {
+    id: 'tpl-roi-pending',
+    eventKey: 'roi.pending',
+    name: 'ROI Pending Settlement Notice',
+    category: 'Investments',
+    enabled: true,
+    subject: 'Your investment ROI is pending settlement',
+    preheader: 'Your investment is active; returns have not yet been credited.',
+    htmlBody: wrapSection(
+      'ROI Pending Settlement',
+      'ROI Pending',
+      `<p style="margin:0 0 12px 0;font-size:14px;line-height:1.6;color:#334155;">Hello {{name}}, your investment plan <strong>{{planName}}</strong> is active. Any applicable return calculation and credit remain pending the platform's verified settlement process.</p>
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px;font-size:13px;color:#1e293b;">
+        <tr><td style="padding:4px 0;"><strong>Investment reference:</strong> <span style="font-family:monospace;">{{investmentId}}</span></td></tr>
+        <tr><td style="padding:4px 0;"><strong>Plan:</strong> {{planName}}</td></tr>
+        <tr><td style="padding:4px 0;"><strong>Indicative plan rate:</strong> {{dailyRate}}</td></tr>
+        <tr><td style="padding:4px 0;"><strong>Duration:</strong> {{durationDays}} days</td></tr>
+        <tr><td style="padding:4px 0;"><strong>Status:</strong> {{status}}</td></tr>
+      </table>
+      <p style="margin:12px 0 0 0;font-size:12px;line-height:1.6;color:#64748b;">This is a status notification only. It is not confirmation of accrued profit, a payout, or a balance credit.</p>`,
+      'View Investment',
+      '{{dashboardUrl}}'
+    ),
+    textBody:
+      'Your plan {{planName}} ({{investmentId}}) is active. ROI status: {{status}}. Any return calculation and credit remain pending verified settlement. This is not confirmation of a payout or balance credit. Dashboard: {{dashboardUrl}}',
+    variables: ['name', 'investmentId', 'planName', 'dailyRate', 'durationDays', 'status', 'dashboardUrl'],
   },
   {
     id: 'tpl-roi-settled',

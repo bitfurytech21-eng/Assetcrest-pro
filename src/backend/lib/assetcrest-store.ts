@@ -577,6 +577,7 @@ export function appendSessionLog(
 }
 
 let cachedStore: AssetCrestStore | null = null;
+let legacyBrowserStoreCleared = false;
 const storeListeners = new Set<() => void>();
 
 const LEGACY_SEED_PLAN_IDS = new Set([
@@ -660,9 +661,17 @@ function normalizeStoreRecordIds(s: AssetCrestStore): AssetCrestStore {
 }
 
 function readStoreFromStorage(): AssetCrestStore {
-  // This is a transient UI cache only. Account and financial data are fetched from
-  // authenticated API endpoints and persisted by the Neon-backed server.
+  // Remove the obsolete browser copy once. Account and financial data must come from
+  // authenticated API endpoints backed by Neon, never from localStorage.
   if (typeof window === 'undefined') return DEFAULT_SEED_STORE;
+  if (!legacyBrowserStoreCleared) {
+    try {
+      window.localStorage.removeItem('assetcrest_portal_store_v2');
+    } catch {
+      // Storage may be unavailable; the application still never reads or writes this key.
+    }
+    legacyBrowserStoreCleared = true;
+  }
   if (!cachedStore) cachedStore = DEFAULT_SEED_STORE;
   return cachedStore;
 }

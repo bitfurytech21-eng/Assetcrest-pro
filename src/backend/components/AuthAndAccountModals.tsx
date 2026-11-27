@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from '@/src/backend/components/NextImageShim';
+import { OfficialLogoMark } from '@/src/backend/components/OfficialLogo';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
@@ -412,13 +413,7 @@ export function AssetCrestAuthBanner({ fullWidth = false, large = false }: { ful
       }`}
     >
       <a href="/" className="inline-flex items-center gap-2.5 select-none">
-        <svg width="72" height="72" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-          <polygon points="32,4 58,19 58,45 32,60 6,45 6,19" fill="#991b1b" />
-          <polygon points="32,4 58,19 32,34 6,19" fill="#dc2626" />
-          <polygon points="32,34 58,19 58,45 32,60" fill="#7f1d1d" />
-          <polygon points="6,19 32,34 32,60 6,45" fill="#b91c1c" />
-          <polygon points="32,15 48,45 38,45 32,31 26,45 16,45" fill="#ffffff" />
-        </svg>
+        <OfficialLogoMark className="h-[68px] w-[68px] sm:h-[76px] sm:w-[76px]" variant="blend" />
         <span className="text-[30px] sm:text-[42px] tracking-[0.02em] leading-none inline-flex items-baseline">
           <span className="font-normal text-[#dc5264]">ΛSSET</span>
           <span className="font-bold text-[#9f2638]">CREST</span>

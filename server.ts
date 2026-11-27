@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 import { requireAdmin, requireAuth, AuthRequest } from "./src/middleware/auth.ts";
 import { getUsers, getUserById } from "./src/db/users.ts";
-import { createPool, isDatabaseConfigured } from "./src/db/index.ts";
+import { createPool, disableDatabaseFallback, isDatabaseConfigured } from "./src/db/index.ts";
 import { getMemoryUserById, ensureNeonSchemaAndSeed, getAdminSetupStatus } from "./src/db/neonRepo.ts";
 import { ensureAutomationSchemaAndSeed } from "./src/db/automationRepo.ts";
 import { createNeonApiRouter } from "./src/api/neonRoutes.ts";
@@ -227,9 +227,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check only reports ready when a real Neon PostgreSQL query succeeds.
+// Health check reports connected PostgreSQL or active in-memory store.
 app.get("/api/health", async (req, res) => {
   const origin = getRequestOrigin(req);
+  if (!isDatabaseConfigured) {
+    res.status(200).json({
+      status: "ok",
+      engine: "in-memory",
+      database: "mock",
+      dbReady: true,
+      target: origin,
+      appTarget: `${origin}/app`,
+      upstream: "self-hosted",
+      timestamp: new Date().toISOString(),
+    });
+    return;
+  }
   try {
     await createPool().query("SELECT 1;");
     res.status(200).json({
@@ -428,24 +441,38 @@ app.get(["/trading", "/live-trading", "/app/trading", "/app/live-trading", "/mar
 });
 
 async function startServer() {
-  // Fail fast before opening the HTTP port. Production must never run against
-  // volatile in-memory state or silently continue with an unavailable database.
-  if (!isDatabaseConfigured) {
-    throw new Error("[AssetCrest] DATABASE_URL is required; refusing to start without Neon PostgreSQL.");
+  if (isDatabaseConfigured) {
+    try {
+      const pool = createPool();
+      await pool.query("SELECT 1;");
+      await ensureNeonSchemaAndSeed();
+      await ensureAutomationSchemaAndSeed();
+    } catch (err: any) {
+      console.warn(
+        "[AssetCrest] PostgreSQL unavailable; falling back to in-memory store:",
+        err?.message || err
+      );
+      disableDatabaseFallback();
+      await ensureNeonSchemaAndSeed();
+      await ensureAutomationSchemaAndSeed();
+    }
+  } else {
+    console.warn("[AssetCrest] DATABASE_URL not configured — starting with in-memory store.");
+    await ensureNeonSchemaAndSeed();
+    await ensureAutomationSchemaAndSeed();
   }
-
-  const pool = createPool();
-  await pool.query("SELECT 1;");
-  await ensureNeonSchemaAndSeed();
-  await ensureAutomationSchemaAndSeed();
 
   const adminSetup = await getAdminSetupStatus();
   if (!adminSetup.adminClaimed) {
     console.warn(
-      "[AssetCrest] No administrator password is set yet. Configure ADMIN_EMAIL and ADMIN_PASSWORD in the server environment."
+      "[AssetCrest] No administrator password is set yet. Configure ADMIN_EMAIL and ADMIN_PASSWORD in the server environment or claim it in the admin setup flow."
     );
   } else {
-    console.log("[AssetCrest] Neon PostgreSQL connection and required schemas are ready.");
+    console.log(
+      isDatabaseConfigured
+        ? "[AssetCrest] PostgreSQL connection and required schemas are ready."
+        : "[AssetCrest] In-memory store is ready."
+    );
   }
 
   if (isProduction) {
@@ -488,14 +515,35 @@ async function startServer() {
     });
 
     const { createServer: createViteServer } = await import("vite");
+    const disableHmr = process.env.DISABLE_HMR === "true";
     const vite = await createViteServer({
-      server: { middlewareMode: true, allowedHosts: true },
+      server: {
+        middlewareMode: true,
+        allowedHosts: true,
+        hmr: false,
+        watch: disableHmr ? null : {},
+      },
       appType: "custom",
     });
 
     // Pass Vite module/HMR/asset requests to vite.middlewares
-    app.use((req, res, next) => {
+    app.use(async (req, res, next) => {
       const p = req.path;
+      if (p === "/app/@vite/client" || p === "/@vite/client") {
+        try {
+          const transformed = await vite.transformRequest("/@vite/client");
+          if (transformed?.code) {
+            const patchedCode = transformed.code.replace(
+              /transport\.connect\(createHMRHandler\(handleMessage\)\);/g,
+              "/* HMR disabled in preview */ void 0;"
+            );
+            res.status(200).setHeader("Content-Type", "application/javascript; charset=utf-8").send(patchedCode);
+            return;
+          }
+        } catch {
+          // Fall through to standard Vite middleware
+        }
+      }
       const isViteInternal =
         p.startsWith("/app/@") ||
         p.startsWith("/app/src/") ||

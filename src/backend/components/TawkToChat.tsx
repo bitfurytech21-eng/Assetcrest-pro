@@ -6,12 +6,21 @@ import { useEffect } from 'react';
  */
 export default function TawkToChat() {
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     // Public embed IDs supplied for the official AssetCrest Tawk.to property.
     // Environment variables may override these defaults for staging or a replacement widget.
     const propertyId = (import.meta.env.VITE_TAWK_PROPERTY_ID || '6b08ea3c7b5efd3cb09191e5').trim();
     const widgetId = (import.meta.env.VITE_TAWK_WIDGET_ID || '1k8dd5vd3').trim();
 
     if (!propertyId || !widgetId) return;
+
+    const w = window as unknown as {
+      Tawk_API?: Record<string, unknown>;
+      Tawk_LoadStart?: Date;
+    };
+    w.Tawk_API = w.Tawk_API || {};
+    w.Tawk_LoadStart = w.Tawk_LoadStart || new Date();
 
     const scriptId = 'assetcrest-tawkto-widget';
     if (document.getElementById(scriptId)) return;
@@ -21,7 +30,10 @@ export default function TawkToChat() {
     script.async = true;
     script.src = `https://embed.tawk.to/${encodeURIComponent(propertyId)}/${encodeURIComponent(widgetId)}`;
     script.charset = 'UTF-8';
-    script.setAttribute('crossorigin', '*');
+    script.crossOrigin = 'anonymous';
+    script.onerror = () => {
+      script.remove();
+    };
     document.body.appendChild(script);
 
     return () => {

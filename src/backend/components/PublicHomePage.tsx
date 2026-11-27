@@ -1,16 +1,10 @@
 import React from 'react';
+import { OfficialLogoMark } from '@/src/backend/components/OfficialLogo';
 
 function AssetCrestLogo() {
   return (
     <a href="/" aria-label="AssetCrest home" className="inline-flex items-center gap-3">
-      <svg viewBox="0 0 88 78" role="img" aria-label="AssetCrest" className="h-14 w-16 shrink-0">
-        <polygon points="22,2 60,2 82,39 60,76 22,76 1,39" fill="#a51f35" />
-        <polygon points="22,2 41,2 22,39 1,39" fill="#d64253" />
-        <polygon points="41,2 60,2 82,39 60,39" fill="#4d101b" />
-        <polygon points="22,76 1,39 22,39 41,58 60,39 82,39 60,76" fill="#7f1729" />
-        <polygon points="22,39 41,18 60,39 49,39 41,31 33,39" fill="#ffffff" />
-        <polygon points="22,39 33,39 41,53 49,39 60,39 41,68" fill="#ffffff" />
-      </svg>
+      <OfficialLogoMark className="h-14 w-14 sm:h-16 sm:w-16" variant="light" />
       <span className="text-[clamp(1.6rem,4vw,2.7rem)] font-bold tracking-[-0.055em] text-[#a83a4b]">ASSETCREST</span>
     </a>
   );

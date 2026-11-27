@@ -52,7 +52,7 @@ export function renderTradingPage(selectedSymbolId?: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>${currentSymbol.symbol} - Live Trading View | AssetCrest</title>
   <meta name="description" content="AssetCrest institutional-grade live TradingView terminal. Advanced charting, technical analysis indicators, live order book, and execution.">
-  <link rel="icon" type="image/png" href="/icon-192.png">
+  <link rel="icon" type="image/jpeg" href="/assets/aistudio/IMG_8418_a25e751f.jpeg">
   
   <!-- AssetCrest Brand Fonts: Sarabun & Roboto -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -175,11 +175,33 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       text-decoration: none;
     }
 
+    .logo-mark-box {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: #ffffff;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
     .logo-img {
-      height: 26px;
-      width: auto;
+      width: 100%;
+      height: 100%;
       display: block;
-      object-fit: contain;
+      object-fit: cover;
+      transform: scale(1.52) translate(-15.8%, -6.1%);
+      transform-origin: center;
+    }
+
+    .logo-wordmark {
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+      line-height: 1;
     }
 
     .logo-badge {
@@ -950,8 +972,12 @@ export function renderTradingPage(selectedSymbolId?: string): string {
       .logo-badge {
         display: none; /* Hide LIVE TERMINAL badge on mobile to prevent overflow */
       }
-      .logo-img {
-        height: 22px;
+      .logo-mark-box {
+        width: 24px;
+        height: 24px;
+      }
+      .logo-wordmark {
+        font-size: 14px;
       }
       .market-selector-btn {
         padding: 5px 8px;
@@ -1015,10 +1041,10 @@ export function renderTradingPage(selectedSymbolId?: string): string {
   <header class="terminal-header">
     <div class="brand-section">
       <a href="/" class="logo-container" title="AssetCrest Home">
-        <img class="logo-img" src="/icon.svg" alt="AssetCrest" onerror="this.onerror=null;this.style.display='none';document.getElementById('fallbackBrand').style.display='inline';">
-        <span id="fallbackBrand" style="display:none; font-weight:800; font-size:18px; color:#ffffff;">
-          <span style="color:#e94d65;">Asset</span>Crest
+        <span class="logo-mark-box">
+          <img class="logo-img" src="/assets/aistudio/IMG_8418_a25e751f.jpeg" alt="AssetCrest" onerror="this.onerror=null;this.parentElement.style.display='none';">
         </span>
+        <span class="logo-wordmark">ASSET<span style="color:#e94d65;">CREST</span></span>
       </a>
 
       <span class="logo-badge">
@@ -1485,8 +1511,18 @@ export function renderTradingPage(selectedSymbolId?: string): string {
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- TradingView Library & Static Logic -->
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js" crossorigin="anonymous"></script>
   <script>
+    window.addEventListener('error', function (event) {
+      if (
+        event.message === 'Script error.' &&
+        !event.error &&
+        (!event.filename || !event.filename.startsWith(window.location.origin))
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    }, true);
     const MARKETS = ${marketsJson};
     let activeSymbol = MARKETS.find(m => m.id === '${currentSymbol.id}') || MARKETS[0];
     let orderSide = 'buy';

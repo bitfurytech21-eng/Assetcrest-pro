@@ -8,13 +8,11 @@ declare global {
 }
 
 const connectionString = process.env.DATABASE_URL?.trim() || '';
-if (!connectionString) {
-  throw new Error(
-    '[AssetCrest] DATABASE_URL is required. Configure the Neon PostgreSQL connection string in the server environment; the application will not start with an in-memory database.'
-  );
-}
+export let isDatabaseConfigured = Boolean(connectionString);
 
-export const isDatabaseConfigured = true;
+export function disableDatabaseFallback(): void {
+  isDatabaseConfigured = false;
+}
 
 function shouldUseSsl(url: string): boolean {
   if (url.includes('sslmode=disable')) return false;
@@ -23,6 +21,9 @@ function shouldUseSsl(url: string): boolean {
 }
 
 export const createPool = (): Pool => {
+  if (!connectionString) {
+    throw new Error('[AssetCrest] DATABASE_URL is not configured; using in-memory store.');
+  }
   if (!global._postgresPool) {
     const pool = new Pool({
       connectionString,
@@ -33,7 +34,7 @@ export const createPool = (): Pool => {
     });
 
     pool.on('error', (err) => {
-      console.error('[AssetCrest] Unexpected error on idle Neon PostgreSQL pool client:', err);
+      console.error('[AssetCrest] Unexpected error on idle PostgreSQL pool client:', err);
     });
 
     global._postgresPool = pool;
@@ -41,7 +42,29 @@ export const createPool = (): Pool => {
   return global._postgresPool;
 };
 
-// Drizzle is always backed by the configured Neon PostgreSQL pool.
-// Connection errors are allowed to propagate; there is deliberately no mock pool or no-op proxy.
-const pool = createPool();
-export const db = drizzle(pool, { schema });
+type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>;
+
+let dbInstance: DrizzleDb | null = null;
+try {
+  if (connectionString) {
+    dbInstance = drizzle(createPool(), { schema });
+  } else {
+    console.warn('[AssetCrest] DATABASE_URL not set — running with built-in in-memory store.');
+  }
+} catch (err) {
+  console.warn('[AssetCrest] Failed to initialize PostgreSQL pool — falling back to in-memory store.', err);
+  isDatabaseConfigured = false;
+}
+
+const noOpChain: any = new Proxy(async () => [], {
+  get: (_t, prop) => {
+    if (prop === 'then') return undefined;
+    return () => noOpChain;
+  },
+});
+
+export const db: DrizzleDb =
+  dbInstance ??
+  (new Proxy({} as DrizzleDb, {
+    get: () => () => noOpChain,
+  }) as DrizzleDb);

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useSyncExternalStore, useCallback } from 'react';
 import Image from '@/src/backend/components/NextImageShim';
+import { OfficialLogoMark } from '@/src/backend/components/OfficialLogo';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Menu,
@@ -1782,15 +1783,10 @@ export default function AssetCrestPortal() {
           onClick={() => navigateTo('dashboard')}
           className="flex items-center gap-2 cursor-pointer"
         >
-          <svg width="28" height="28" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-            <polygon points="32,4 58,19 58,45 32,60 6,45 6,19" fill="#991b1b" />
-            <polygon points="32,4 58,19 32,34 6,19" fill="#dc2626" />
-            <polygon points="32,34 58,19 58,45 32,60" fill="#7f1d1d" />
-            <polygon points="32,16 46,44 37,44 32,32 27,44 18,44" fill="#1e293b" />
-          </svg>
+          <OfficialLogoMark className="h-7 w-7" variant="badge" />
           <span className="text-lg font-extrabold tracking-tight leading-none">
-            <span className="text-slate-900 dark:text-white">ASSET</span>
-            <span className="text-[#c53030] dark:text-rose-400">CREST</span>
+            <span className="text-white">ASSET</span>
+            <span className="text-[#ef4444]">CREST</span>
           </span>
         </button>
 

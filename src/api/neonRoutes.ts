@@ -377,28 +377,6 @@ export function createNeonApiRouter(): Router {
         });
       }
 
-      // Notify the investor that ROI accrual is pending its next verified settlement.
-      // This is a status notice only; it does not claim that any return has been calculated or credited.
-      void dispatchPortalAutomation({
-        eventKey: 'roi.pending',
-        recipientEmail: owner?.email || req.user.email,
-        variables: {
-          name: owner?.name || req.user.name,
-          investmentId: id,
-          planName,
-          dailyRate,
-          durationDays,
-          status: 'Pending settlement',
-        },
-        webhookData: {
-          investmentId: id,
-          userId: req.user.id,
-          category,
-          planName,
-          status: 'pending',
-        },
-      });
-
       res.status(201).json({ id });
     } catch (err) {
       sendError(res, err, 400);
@@ -649,6 +627,28 @@ export function createNeonApiRouter(): Router {
           amount,
           dailyRate,
           durationDays,
+        },
+      });
+
+      // Notify the investor that ROI accrual is pending its next verified settlement.
+      // This is a status notice only; it does not claim that any return has been calculated or credited.
+      void dispatchPortalAutomation({
+        eventKey: 'roi.pending',
+        recipientEmail: owner?.email || req.user.email,
+        variables: {
+          name: owner?.name || req.user.name,
+          investmentId: id,
+          planName,
+          dailyRate,
+          durationDays,
+          status: 'Pending settlement',
+        },
+        webhookData: {
+          investmentId: id,
+          userId: req.user.id,
+          category,
+          planName,
+          status: 'pending',
         },
       });
 

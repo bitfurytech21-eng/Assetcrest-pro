@@ -1504,29 +1504,29 @@ export async function executeSwapInNeon(params: {
   if (!isDatabaseConfigured) {
     const user = memoryState.users.find((u) => u.id === params.userId);
     if (!user) throw new Error('User not found.');
+    const nextCrypto: Record<string, number> = { ...user.cryptoBalances };
     const available =
-      fromSymbol === 'USD' ? user.accountBalance : (user.cryptoBalances[fromSymbol] ?? 0);
+      fromSymbol === 'USD' ? user.accountBalance : (nextCrypto[fromSymbol] ?? 0);
     if (fromAmount > available) {
       throw new Error(`Insufficient ${fromSymbol} balance available for swap.`);
     }
 
-    const nextCrypto = { ...user.cryptoBalances };
     let nextUsd = user.accountBalance;
 
     if (fromSymbol === 'USD') {
       nextUsd = Number((nextUsd - fromAmount).toFixed(2));
     } else {
-      nextCrypto[fromSymbol] = Number((nextCrypto[fromSymbol] - fromAmount).toFixed(8));
+      nextCrypto[fromSymbol] = Number(((nextCrypto[fromSymbol] ?? 0) - fromAmount).toFixed(8));
     }
 
     if (toSymbol === 'USD') {
       nextUsd = Number((nextUsd + estimatedReceive).toFixed(2));
     } else {
-      nextCrypto[toSymbol] = Number((nextCrypto[toSymbol] + estimatedReceive).toFixed(8));
+      nextCrypto[toSymbol] = Number(((nextCrypto[toSymbol] ?? 0) + estimatedReceive).toFixed(8));
     }
 
     user.accountBalance = nextUsd;
-    user.cryptoBalances = nextCrypto;
+    user.cryptoBalances = nextCrypto as unknown as DbCryptoBalances;
     memoryState.transactions.unshift({
       id: swapTxId,
       userId: params.userId,
@@ -1552,7 +1552,7 @@ export async function executeSwapInNeon(params: {
     }
 
     const currentUsd = Number(lockedRow.account_balance || 0);
-    const currentCrypto: DbCryptoBalances = {
+    const currentCrypto: Record<string, number> = {
       ...EMPTY_BALANCES,
       ...(lockedRow.crypto_balances || {}),
     };
@@ -1566,20 +1566,20 @@ export async function executeSwapInNeon(params: {
     if (fromSymbol === 'USD') {
       nextUsd = Number((nextUsd - fromAmount).toFixed(2));
     } else {
-      currentCrypto[fromSymbol] = Number((currentCrypto[fromSymbol] - fromAmount).toFixed(8));
+      currentCrypto[fromSymbol] = Number(((currentCrypto[fromSymbol] ?? 0) - fromAmount).toFixed(8));
     }
 
     if (toSymbol === 'USD') {
       nextUsd = Number((nextUsd + estimatedReceive).toFixed(2));
     } else {
-      currentCrypto[toSymbol] = Number((currentCrypto[toSymbol] + estimatedReceive).toFixed(8));
+      currentCrypto[toSymbol] = Number(((currentCrypto[toSymbol] ?? 0) + estimatedReceive).toFixed(8));
     }
 
     await tx
       .update(users)
       .set({
         accountBalance: nextUsd,
-        cryptoBalances: currentCrypto,
+        cryptoBalances: currentCrypto as unknown as DbCryptoBalances,
         updatedAt: new Date(),
       })
       .where(eq(users.id, params.userId));

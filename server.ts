@@ -380,7 +380,14 @@ app.use("/app", express.static(path.resolve("public"), { index: false, redirect:
 // Same-origin, allowlisted image proxy for the migrated public marketing site.
 // Only public media files under the source site's WordPress uploads directory are served.
 app.get("/reference-assets/*", async (req, res) => {
-  const assetPath = String(req.params[0] || "");
+  const encodedRequestPath = req.path.slice("/reference-assets/".length);
+  let assetPath = "";
+  try {
+    assetPath = decodeURIComponent(encodedRequestPath);
+  } catch {
+    res.status(400).type("text/plain").send("Invalid public asset path");
+    return;
+  }
   const allowedExtension = /\.(?:png|jpe?g|webp|gif|svg)$/i.test(assetPath);
   if (!allowedExtension || assetPath.includes("..") || assetPath.includes("\\") || assetPath.startsWith("/")) {
     res.status(400).type("text/plain").send("Invalid public asset path");

@@ -244,7 +244,7 @@ function StatsSection() {
 }
 
 function HomePage() {
-  const [slide, setSlide] = useState(1);
+  const [slide, setSlide] = useState(0);
   const [marketPrices, setMarketPrices] = useState<Record<string, number>>({});
   const [marketChanges, setMarketChanges] = useState<Record<string, number>>({});
   const [marketUpdatedAt, setMarketUpdatedAt] = useState('');
@@ -270,6 +270,14 @@ function HomePage() {
     loadMarket();
     const id = window.setInterval(loadMarket, 30000);
     return () => { active = false; window.clearInterval(id); };
+  }, []);
+
+  // Match the reference homepage's rotating three-panel hero carousel.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setSlide(currentSlide => (currentSlide + 1) % slides.length);
+    }, 7000);
+    return () => window.clearInterval(id);
   }, []);
 
   const current = slides[slide];

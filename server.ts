@@ -227,30 +227,34 @@ app.use((req, res, next) => {
   next();
 });
 
-// Real functioning health check endpoint (checks Neon PostgreSQL connection)
+// Health check only reports ready when a real Neon PostgreSQL query succeeds.
 app.get("/api/health", async (req, res) => {
-  let dbStatus = isDatabaseConfigured ? "connected" : "fallback-memory (set DATABASE_URL for Neon)";
-  if (isDatabaseConfigured) {
-    try {
-      const pool = createPool();
-      await pool.query("SELECT 1;");
-    } catch (err: any) {
-      dbStatus = "disconnected: " + (err.message || "error");
-    }
-  }
-
   const origin = getRequestOrigin(req);
-  const dbReady = !isDatabaseConfigured || dbStatus === "connected";
-  res.status(200).json({
-    status: isDatabaseConfigured && dbStatus === "connected" ? "ok" : "degraded",
-    engine: isDatabaseConfigured ? "neon-postgresql" : "in-memory-fallback",
-    database: dbStatus,
-    dbReady,
-    target: origin,
-    appTarget: `${origin}/app`,
-    upstream: "self-hosted",
-    timestamp: new Date().toISOString(),
-  });
+  try {
+    await createPool().query("SELECT 1;");
+    res.status(200).json({
+      status: "ok",
+      engine: "neon-postgresql",
+      database: "connected",
+      dbReady: true,
+      target: origin,
+      appTarget: `${origin}/app`,
+      upstream: "self-hosted",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    console.error("[AssetCrest] Neon health check failed:", err?.message || err);
+    res.status(503).json({
+      status: "degraded",
+      engine: "neon-postgresql",
+      database: "disconnected",
+      dbReady: false,
+      target: origin,
+      appTarget: `${origin}/app`,
+      upstream: "self-hosted",
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Protected user profile endpoint (Neon session verified)
@@ -417,37 +421,27 @@ app.get(["/trading", "/live-trading", "/app/trading", "/app/live-trading", "/mar
 });
 
 async function startServer() {
-  if (isProduction) {
-    if (!isDatabaseConfigured) {
-      console.warn("[AssetCrest] DATABASE_URL not configured in production; starting with in-memory fallback.");
-      await ensureNeonSchemaAndSeed().catch((err) =>
-        console.warn("[AssetCrest] In-memory seed warning:", err)
-      );
-      await ensureAutomationSchemaAndSeed().catch((err) =>
-        console.warn("[AssetCrest] Automation memory seed warning:", err)
-      );
-    } else {
-      try {
-        const pool = createPool();
-        await pool.query("SELECT 1;");
-        await ensureNeonSchemaAndSeed();
-        await ensureAutomationSchemaAndSeed();
-        const adminSetup = await getAdminSetupStatus();
-        if (!adminSetup.adminClaimed) {
-          console.warn(
-            "[AssetCrest] No administrator password is set yet. Visit the portal Sign In screen (/api/auth/claim-admin) or set ADMIN_PASSWORD."
-          );
-        } else {
-          console.log("[AssetCrest] Neon PostgreSQL, required schemas, and administrator setup checks passed.");
-        }
-      } catch (err) {
-        console.warn(
-          "[AssetCrest] Startup database initialization deferred (server will still bind port):",
-          err
-        );
-      }
-    }
+  // Fail fast before opening the HTTP port. Production must never run against
+  // volatile in-memory state or silently continue with an unavailable database.
+  if (!isDatabaseConfigured) {
+    throw new Error("[AssetCrest] DATABASE_URL is required; refusing to start without Neon PostgreSQL.");
+  }
 
+  const pool = createPool();
+  await pool.query("SELECT 1;");
+  await ensureNeonSchemaAndSeed();
+  await ensureAutomationSchemaAndSeed();
+
+  const adminSetup = await getAdminSetupStatus();
+  if (!adminSetup.adminClaimed) {
+    console.warn(
+      "[AssetCrest] No administrator password is set yet. Configure ADMIN_EMAIL and ADMIN_PASSWORD in the server environment."
+    );
+  } else {
+    console.log("[AssetCrest] Neon PostgreSQL connection and required schemas are ready.");
+  }
+
+  if (isProduction) {
     // Serve Vite-built SPA assets and copied public files under both /app and /
     const distDir = path.resolve("dist");
     if (fs.existsSync(distDir)) {

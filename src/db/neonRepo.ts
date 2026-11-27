@@ -388,18 +388,29 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
       END $assetcrest_migration$;
     `);
 
-    // If an administrator password is explicitly configured in production, create only
-    // the admin identity with zero funds. Never provision demo balances or wallet addresses.
+    // ADMIN_EMAIL and ADMIN_PASSWORD are the production source of truth for the
+    // single primary administrator. Keep an existing admin identity synchronized
+    // on deploy; do not create a second account or touch any financial fields.
     if (process.env.NODE_ENV === 'production' && process.env.ADMIN_PASSWORD?.trim()) {
+      if (!BOOTSTRAPPED_ADMIN_EMAIL) {
+        throw new Error('ADMIN_EMAIL is required when ADMIN_PASSWORD is configured.');
+      }
       const configuredAdmins = await db
-        .select({ id: users.id })
+        .select({ id: users.id, email: users.email })
         .from(users)
         .where(eq(users.role, 'admin'))
         .limit(1);
-      if (configuredAdmins.length === 0) {
-        if (!BOOTSTRAPPED_ADMIN_EMAIL) {
-          throw new Error('ADMIN_EMAIL is required when bootstrapping the first production administrator.');
-        }
+      const existingAdmin = configuredAdmins[0];
+      const emailConflict = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.email, BOOTSTRAPPED_ADMIN_EMAIL), existingAdmin ? sql`id <> ${existingAdmin.id}` : sql`true`))
+        .limit(1);
+      if (emailConflict.length > 0) {
+        throw new Error('ADMIN_EMAIL is already assigned to a different account. Resolve the email conflict before deploying.');
+      }
+
+      if (!existingAdmin) {
         await db.insert(users).values({
           id: 'usr-admin',
           username: 'admin',
@@ -419,16 +430,29 @@ export async function ensureNeonSchemaAndSeed(): Promise<void> {
           accountStatus: 'Active',
           createdAt: formatStamp().slice(0, 10),
         }).onConflictDoNothing();
-
-        const verifiedAdmin = await db
-          .select({ id: users.id })
-          .from(users)
-          .where(eq(users.role, 'admin'))
-          .limit(1);
-        if (verifiedAdmin.length === 0) {
-          throw new Error('ADMIN_PASSWORD is set but the admin account could not be created. Check ADMIN_EMAIL and unique user fields.');
-        }
+      } else if (existingAdmin.email.toLowerCase() !== BOOTSTRAPPED_ADMIN_EMAIL ||
+                 !existingAdmin.email) {
+        await db.update(users)
+          .set({ email: BOOTSTRAPPED_ADMIN_EMAIL, updatedAt: new Date() })
+          .where(eq(users.id, existingAdmin.id));
       }
+
+      // Re-read after possible provisioning and synchronize the configured password.
+      const adminAfterProvision = await db
+        .select({ id: users.id, email: users.email })
+        .from(users)
+        .where(eq(users.role, 'admin'))
+        .limit(1);
+      const admin = adminAfterProvision[0];
+      if (!admin || admin.email.toLowerCase() !== BOOTSTRAPPED_ADMIN_EMAIL) {
+        throw new Error('Configured administrator could not be verified after provisioning.');
+      }
+      await db.update(users)
+        .set({
+          passwordHash: hashPassword(process.env.ADMIN_PASSWORD.trim()),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, admin.id));
     }
 
   })().catch((err) => {

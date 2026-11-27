@@ -589,7 +589,7 @@ function OfferPage() {
     { season: 'Winter', batch: 'Batch D: Winter', application: 'December ~', migration: 'February', qualification: '3', reach: '$25,000', reward: '15%', Icon: Hourglass },
   ];
   return <>
-    <PageHero eyebrow="YOUR GATEWAY TO EXCLUSIVE INVESTMENT OPPORTUNITIES AND REWARDS" title="AssetCrest Investment Users Offer" image="2019/04/bgn-quotes.jpg" />
+    <PageHero eyebrow="YOUR GATEWAY TO EXCLUSIVE INVESTMENT OPPORTUNITIES AND REWARDS" title="AssetCrest Investment Users Offer" image="2025/01/file-20181126-140531-19c0p83.jpg" />
     <section className="bg-white px-6 py-16 sm:py-20">
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-4xl text-center">

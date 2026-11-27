@@ -222,7 +222,7 @@ function StatsSection() {
             <circle cx="60" cy="60" r="39" />
             <circle cx="60" cy="60" r="29" />
             <path d="M60 12v9M60 99v9M12 60h9M99 60h9" />
-            <path d="m60 37 8 25-8 21-8-21 8-25Z" />
+            <g className="assetcrest-compass-needle"><path d="m60 37 8 25-8 21-8-21 8-25Z" /></g>
             <path d="M60 21v8M60 91v8M21 60h8M91 60h8" />
             <circle cx="60" cy="60" r="3" />
           </svg>}

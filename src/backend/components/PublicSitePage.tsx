@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight, MessageCircle, Clock3, MapPin, Facebook, Twitter } from 'lucide-react';
+import { X, Menu, ArrowUp, Scale, ChartPie, Users, Building2, Mountain, HardHat, Sun, FlaskConical, ArrowLeftRight, Hourglass, TrendingUp, GitBranch, ChevronLeft, ChevronRight, MessageCircle, Clock3, MapPin, Facebook, Twitter, Mail, ArrowUpRight } from 'lucide-react';
 
 const media = (file: string) => `https://assetcrest.co/wp-content/uploads/${file}`;
 
@@ -79,23 +79,44 @@ function Logo() {
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = typeof window === 'undefined' ? '/' : window.location.pathname.replace(/\\/+$/, '') || '/';
   return (
-    <header className="relative z-40 bg-white">
-      <div className="mx-auto flex h-[104px] max-w-[1440px] items-center justify-start gap-7 px-6 sm:h-[150px] sm:gap-10 sm:px-10 lg:h-[229px] lg:gap-12 lg:px-[7%]">
-        <button type="button" onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} className="flex h-12 w-[54px] shrink-0 flex-col items-center justify-center gap-[7px] text-[#171717] sm:h-[100px] sm:w-[105px] sm:gap-[33px]">
-          {menuOpen ? <X className="h-10 w-10 sm:h-14 sm:w-14" strokeWidth={2.2} /> : <><span className="h-[4px] w-full bg-[#171717] sm:h-[6px]" /><span className="h-[4px] w-full bg-[#171717] sm:h-[6px]" /><span className="h-[4px] w-full bg-[#171717] sm:h-[6px]" /></>}
-        </button>
-        <Logo />
-      </div>
-      {menuOpen && <div className="absolute inset-x-0 top-full z-50 border-t border-slate-100 bg-white shadow-2xl">
-        <div className="mx-auto grid max-w-7xl gap-1 px-6 py-6 sm:grid-cols-2 lg:grid-cols-3">
-          {navItems.map(item => <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)} className="border-b border-slate-100 px-3 py-4 text-base font-semibold text-[#1b4962] hover:text-[#e94d65]">{item.label}</a>)}
-          <div className="grid grid-cols-2 gap-3 pt-4 sm:col-span-2 lg:col-span-3">
-            <a href="/register" className="bg-[#e94d65] px-6 py-4 text-center text-sm font-bold text-white">Register</a>
-            <a href="/login" className="bg-[#1b4962] px-6 py-4 text-center text-sm font-bold text-white">Login</a>
+    <header id="top" className="assetcrest-site-header relative z-40 bg-white shadow-[0_3px_18px_rgba(27,73,98,.07)]">
+      <div className="bg-[#1b4962] text-white">
+        <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-5 py-3 text-[11px] sm:px-8 sm:text-xs">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <span className="inline-flex items-center gap-2"><Clock3 className="ac-motion-icon h-4 w-4 text-[#e94d65]" /> Monday - Friday <strong className="font-semibold text-white">8AM - 9PM</strong></span>
+            <span className="hidden items-center gap-2 md:inline-flex"><MapPin className="ac-motion-icon h-4 w-4 text-[#e94d65]" /> Moor House, 120 London Wall, London EC2Y 5ET, United Kingdom</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline">Visit our social pages</span>
+            <a href="https://www.facebook.com/" aria-label="Facebook" className="site-social-link"><Facebook className="ac-motion-icon h-4 w-4" /></a>
+            <a href="https://twitter.com/" aria-label="Twitter" className="site-social-link"><Twitter className="ac-motion-icon h-4 w-4" /></a>
           </div>
         </div>
-      </div>}
+      </div>
+      <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-4 px-5 py-4 sm:px-8 sm:py-5 lg:py-6">
+        <Logo />
+        <div className="hidden items-center gap-3 sm:flex">
+          <a href="/register" className="site-action site-action-primary">Register <ArrowUpRight className="ac-motion-icon h-4 w-4" /></a>
+          <a href="/login" className="site-action site-action-secondary">Login <ArrowUpRight className="ac-motion-icon h-4 w-4" /></a>
+        </div>
+        <button type="button" onClick={() => setMenuOpen(value => !value)} aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} aria-controls="assetcrest-primary-navigation" className="site-menu-toggle sm:hidden">
+          {menuOpen ? <X className="ac-motion-icon h-6 w-6" /> : <Menu className="ac-motion-icon h-6 w-6" />}
+        </button>
+      </div>
+      <nav id="assetcrest-primary-navigation" aria-label="Main navigation" className={`border-t border-slate-100 bg-white ${menuOpen ? 'block' : 'hidden'} sm:block`}>
+        <div className="mx-auto flex max-w-[1240px] flex-col px-5 sm:flex-row sm:items-center sm:justify-center sm:px-8">
+          {navItems.map(item => {
+            const active = pathname === item.href.replace(/\\/+$/, '') || (item.href === '/' && pathname === '/');
+            return <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)} aria-current={active ? 'page' : undefined} className={`site-nav-link ${active ? 'is-active' : ''}`}>{item.label}</a>;
+          })}
+          <div className="grid grid-cols-2 gap-2 py-3 sm:hidden">
+            <a href="/register" onClick={() => setMenuOpen(false)} className="site-action site-action-primary justify-center">Register</a>
+            <a href="/login" onClick={() => setMenuOpen(false)} className="site-action site-action-secondary justify-center">Login</a>
+          </div>
+        </div>
+      </nav>
     </header>
   );
 }
@@ -103,49 +124,49 @@ function Header() {
 function Footer() {
   return (
     <>
-      <section className="bg-white px-6 pb-12 pt-16 text-center sm:pb-14 sm:pt-20">
+      <section className="bg-white px-6 py-14 text-center sm:py-16">
         <div className="mx-auto max-w-4xl">
-          <h2 className="text-3xl font-bold text-[#171717] sm:text-4xl">Contact</h2>
-          <div className="mt-16 flex flex-row justify-center gap-4 sm:mt-20 sm:gap-8">
-            <a href="/register" className="flex min-h-[72px] min-w-0 flex-1 items-center justify-center bg-[#191919] px-2 py-4 text-xl font-bold text-white shadow-[0_5px_0_rgba(0,0,0,.12)] transition hover:bg-[#303030] sm:min-h-[104px] sm:min-w-[270px] sm:flex-none sm:px-10 sm:py-5 sm:text-3xl">Register</a>
-            <a href="/login" className="flex min-h-[72px] min-w-0 flex-1 items-center justify-center bg-[#d9576a] px-2 py-4 text-xl font-bold text-white shadow-[0_5px_0_rgba(150,38,58,.2)] transition hover:bg-[#c94a60] sm:min-h-[104px] sm:min-w-[270px] sm:flex-none sm:px-10 sm:py-5 sm:text-3xl">Login</a>
+          <p className="mb-3 text-xs font-bold uppercase tracking-[.22em] text-[#e94d65]">Get started with AssetCrest</p>
+          <h2 className="text-3xl font-bold text-[#1b4962] sm:text-4xl">Ready to explore your account?</h2>
+          <div className="mt-8 flex flex-row justify-center gap-3 sm:gap-6">
+            <a href="/register" className="site-footer-cta site-footer-cta-dark">Register</a>
+            <a href="/login" className="site-footer-cta site-footer-cta-pink">Login</a>
           </div>
         </div>
       </section>
-      <footer className="bg-[#1b3d55] px-6 py-12 text-white sm:py-16">
-        <div className="mx-auto max-w-6xl">
-          <div className="border-y border-white/15 py-12 text-center sm:py-16">
-            <section className="flex flex-col items-center">
-              <Clock3 className="h-14 w-14 text-[#df6075] sm:h-16 sm:w-16" strokeWidth={2.5} />
-              <h2 className="mt-5 text-2xl font-medium text-white sm:text-3xl">Monday - Friday</h2>
-              <p className="mt-3 text-xl text-slate-400 sm:text-2xl">8AM - 9PM</p>
+      <footer className="assetcrest-reference-footer bg-[#1b4962] px-6 pb-7 pt-14 text-white sm:px-8 sm:pt-16">
+        <div className="mx-auto max-w-[1240px]">
+          <div className="grid gap-12 border-b border-white/15 pb-12 md:grid-cols-2 md:gap-10 lg:grid-cols-[1.15fr_1fr_1fr] lg:gap-14 lg:pb-14">
+            <section>
+              <h2 className="site-footer-heading">ASSETCREST Headquarters</h2>
+              <p className="mt-5 max-w-md text-sm leading-7 text-slate-300">At AssetCrest, we aim to make account information and support easy to access. Contact our team for general enquiries, assistance with your account, or help navigating the platform.</p>
+              <div className="mt-6 space-y-3 text-sm">
+                <a href="mailto:info@assetcrestonline.com" className="site-footer-contact"><Mail className="ac-motion-icon h-4 w-4" /> info@assetcrestonline.com</a>
+                <a href="https://assetcrestonline.com" className="site-footer-contact"><ArrowUpRight className="ac-motion-icon h-4 w-4" /> assetcrestonline.com</a>
+              </div>
             </section>
-            <section className="mt-16 flex flex-col items-center sm:mt-20">
-              <MapPin className="h-14 w-14 fill-[#df6075] text-[#df6075] sm:h-16 sm:w-16" strokeWidth={1.5} />
-              <h2 className="mt-5 text-2xl font-medium text-white sm:text-3xl">Offices</h2>
-              <p className="mt-3 max-w-4xl text-lg leading-relaxed text-slate-400 sm:text-2xl">Moor House, 120 London Wall, London<br className="hidden sm:block" /> EC2Y 5ET, United Kingdom</p>
+            <section>
+              <h2 className="site-footer-heading">OUR LOCATIONS</h2>
+              <p className="mt-2 text-sm font-semibold text-white">Where to find us?</p>
+              <img src={media('2019/04/img-footer-map.png')} alt="Map illustration showing the AssetCrest office location" loading="lazy" className="mt-5 h-[142px] w-full max-w-[390px] object-contain object-left opacity-90" />
+              <p className="mt-4 max-w-sm text-sm leading-7 text-slate-300">Moor House, 120 London Wall, London EC2Y 5ET, United Kingdom</p>
+            </section>
+            <section>
+              <h2 className="site-footer-heading">GET IN TOUCH</h2>
+              <p className="mt-2 text-sm font-semibold text-white">AssetCrest Social links</p>
+              <p className="mt-5 text-sm leading-7 text-slate-300">For support or account-related questions, contact our team using the official company email address. Please never send passwords or verification codes through email.</p>
+              <a href="mailto:customersupport@assetcrestonline.com" className="site-footer-contact mt-5"><Mail className="ac-motion-icon h-4 w-4" /> customersupport@assetcrestonline.com</a>
+              <div className="mt-6 flex items-center gap-3">
+                <a href="https://www.facebook.com/" aria-label="Facebook" className="site-footer-social"><Facebook className="ac-motion-icon h-5 w-5" /></a>
+                <a href="https://twitter.com/" aria-label="Twitter" className="site-footer-social"><Twitter className="ac-motion-icon h-5 w-5" /></a>
+              </div>
             </section>
           </div>
-          <section className="pt-12 text-center sm:pt-16">
-            <h2 className="text-2xl font-medium text-white sm:text-3xl">Contact details</h2>
-            <div className="mt-6 flex flex-col items-center gap-3 text-base text-slate-300">
-              <a href="mailto:info@assetcrestonline.com" className="hover:text-white">info@assetcrestonline.com</a>
-              <a href="mailto:customersupport@assetcrestonline.com" className="hover:text-white">customersupport@assetcrestonline.com</a>
-              <a href="mailto:compliance%26maintenance@assetcrestonline.com" className="hover:text-white">compliance&maintenance@assetcrestonline.com</a>
-              <a href="https://assetcrestonline.com" className="hover:text-white">assetcrestonline.com</a>
-            </div>
-          </section>
-          <section className="pt-12 text-center sm:pt-16">
-            <h2 className="text-2xl font-medium text-white sm:text-3xl">Visit our social pages</h2>
-            <div className="mt-8 flex items-center justify-center gap-7 text-[#df6075]">
-              <a href="https://www.facebook.com/" aria-label="Facebook" className="transition hover:text-white"><Facebook className="h-8 w-8 fill-current" /></a>
-              <a href="https://twitter.com/" aria-label="Twitter" className="transition hover:text-white"><Twitter className="h-8 w-8 fill-current" /></a>
-            </div>
-          </section>
-          <div className="mt-12 border-t border-white/15 pt-6 text-center text-xs text-slate-400">
-            <p>© {new Date().getFullYear()} AssetCrest. All rights reserved.</p>
-            <nav aria-label="Footer navigation" className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-3 text-[11px] font-bold uppercase tracking-wide text-slate-300">
-              {navItems.map(item => <a key={item.href} href={item.href} className="hover:text-[#ff9aaa]">{item.label}</a>)}
+          <div className="flex flex-col items-center justify-between gap-5 pt-7 text-center sm:flex-row sm:text-left">
+            <p className="text-xs text-slate-400">All rights reserved. © {new Date().getFullYear()} AssetCrest.</p>
+            <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-x-5 gap-y-3 text-[10px] font-bold uppercase tracking-[.12em] text-slate-300 sm:justify-end">
+              {navItems.map(item => <a key={item.href} href={item.href} className="site-footer-nav-link">{item.label}</a>)}
+              <a href="#top" className="site-footer-nav-link inline-flex items-center gap-1">Back to top <ArrowUp className="ac-motion-icon h-3 w-3" /></a>
             </nav>
           </div>
         </div>
@@ -624,5 +645,5 @@ export default function PublicSitePage() {
     case '/contact-us': page = <ContactPage />; break;
     default: page = <HomePage />;
   }
-  return <div className="min-h-screen bg-white font-sans text-[#202124]"><Header /><main>{page}</main><Footer /></div>;
+  return <div className="assetcrest-public-site min-h-screen bg-white font-sans text-[#202124]"><Header /><main>{page}</main><Footer /></div>;
 }

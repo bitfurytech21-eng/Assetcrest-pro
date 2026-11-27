@@ -197,6 +197,52 @@ function RegisterCTA() {
   return <div className="mt-9 flex flex-wrap gap-3"><a href="/register" className="bg-[#e94d65] px-7 py-4 text-sm font-bold text-white hover:bg-[#d83f58]">Register</a><a href="/login" className="bg-[#1b4962] px-7 py-4 text-sm font-bold text-white hover:bg-[#12394f]">Login</a></div>;
 }
 
+
+function StatsSection() {
+  const stats = [
+    { value: '$7.1B', caption: 'Enabled over $7.1 billion in deposits', Icon: 'deposits' as const },
+    { value: '$901M', caption: 'With over $901 million withdrawn', Icon: 'withdrawals' as const },
+    { value: '209K', caption: 'Proudly serving 209,000+ users', Icon: 'users' as const },
+  ];
+  return <section aria-label="AssetCrest statistics" className="assetcrest-stats-section relative isolate overflow-hidden border-t border-[#E5E5E5] bg-white px-6 py-16 sm:py-20 lg:py-24">
+    <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 w-[48%] assetcrest-stats-stripes" aria-hidden="true" />
+    <div className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-y-12 gap-x-10 md:grid-cols-3 md:gap-y-0 md:gap-x-8">
+      {stats.map(({ value, caption, Icon }) => <article key={value} className="flex flex-col items-center text-center">
+        <div className="mb-6 flex h-[108px] w-[108px] items-center justify-center text-[#C95D68] sm:mb-7" aria-hidden="true">
+          {Icon === 'deposits' && <svg viewBox="0 0 120 120" className="h-full w-full" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="34" y="39" width="52" height="42" rx="5" />
+            <circle cx="60" cy="60" r="13" />
+            <path d="M64.5 53.5c-1.2-1.4-2.8-2-4.8-2-2.6 0-4.5 1.3-4.5 3.4 0 5 10 2.4 10 7.5 0 2.1-2 3.6-4.9 3.6-2.1 0-4-.8-5.3-2.2M60 48v24" />
+            <path d="M40 33c5-5 12-8 20-8 8 0 15 3 20 8" />
+            <path d="m72 25 8 8-11 1" />
+            <path d="M80 87c-5 5-12 8-20 8-8 0-15-3-20-8" />
+            <path d="m48 95-8-8 11-1" />
+          </svg>}
+          {Icon === 'withdrawals' && <svg viewBox="0 0 120 120" className="h-full w-full" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="60" cy="60" r="39" />
+            <circle cx="60" cy="60" r="29" />
+            <path d="M60 12v9M60 99v9M12 60h9M99 60h9" />
+            <path d="m60 37 8 25-8 21-8-21 8-25Z" />
+            <path d="M60 21v8M60 91v8M21 60h8M91 60h8" />
+            <circle cx="60" cy="60" r="3" />
+          </svg>}
+          {Icon === 'users' && <svg viewBox="0 0 120 120" className="h-full w-full" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M38 27h44l-4 34c-1 10-9 17-18 17s-17-7-18-17l-4-34Z" />
+            <path d="M38 34H26c0 13 6 20 17 21M82 34h12c0 13-6 20-17 21" />
+            <path d="M60 78v14M48 92h24" />
+            <path d="M43 92h34l8 9H35l8-9Z" />
+            <path d="M49 42l11 9 11-9-3 18-8-4-8 4-3-18Z" /><path d="m54 60-2 8 8-4 8 4-2-8" />
+            <rect x="43" y="96" width="34" height="9" rx="1.5" />
+          </svg>}
+        </div>
+        <p className="text-[56px] font-bold leading-none tracking-tight text-[#2F4660] tabular-nums">{value}</p>
+        <p className="mt-4 max-w-[330px] text-[18px] font-normal leading-[1.55] text-[#191919] sm:text-xl">{caption}</p>
+      </article>)}
+    </div>
+    <p className="mx-auto mt-10 max-w-7xl text-center text-[11px] leading-5 text-slate-500">Figures reproduced from the original AssetCrest website and have not been independently verified.</p>
+  </section>;
+}
+
 function HomePage() {
   const [slide, setSlide] = useState(1);
   const [marketPrices, setMarketPrices] = useState<Record<string, number>>({});
@@ -389,16 +435,11 @@ function HomePage() {
           <h2 className="text-4xl font-extrabold leading-tight text-[#1b4962] sm:text-5xl">Get your <span className="text-[#e94d65]">Investment Right</span></h2>
           <p className="mt-6 text-base leading-8 text-[#242424]">At AssetCrest, we strive for transparency, security, and innovation. Our mission is to provide investors with high-quality, tax-efficient financial solutions, backed by real-time market data, advanced technology, and a deep understanding of global financial markets.</p>
           <a href="/register" className="mt-8 inline-flex bg-[#e94d65] px-8 py-4 text-base font-bold text-white hover:bg-[#d83f58]">Register</a>
-          <div className="mt-12 grid gap-8 sm:grid-cols-3">
-            <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$7.1B</p><p className="mt-2 text-sm leading-6 text-slate-600">Enabled over $7.1 billion in deposits</p></div>
-            <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$901M</p><p className="mt-2 text-sm leading-6 text-slate-600">With over $901 million withdrawn</p></div>
-            <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">209K+</p><p className="mt-2 text-sm leading-6 text-slate-600">Proudly serving 209,000+ users</p></div>
-          </div>
-          <p className="mt-6 text-[11px] leading-5 text-slate-500">These figures are displayed on the reference website and have not been independently verified.</p>
         </div>
         <img src={media('2019/04/img-callback.png')} alt="AssetCrest information and contact illustration" loading="lazy" className="mx-auto max-h-[440px] w-full object-contain" />
       </div>
     </section>
+    <StatsSection />
   </>;
 }
 

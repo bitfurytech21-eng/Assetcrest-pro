@@ -163,6 +163,51 @@ export function signWebhookPayload(secret: string, timestampSec: string, rawBody
   return `sha256=${hmac}`;
 }
 
+async function deliverViaResend(
+  settings: EmailDeliverySettingsRecord,
+  toEmail: string,
+  subject: string,
+  html: string,
+  text: string
+): Promise<{ ok: boolean; httpStatus?: number; error?: string }> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) return { ok: false, error: 'RESEND_API_KEY is not configured' };
+
+  const fromEmail = process.env.RESEND_FROM_EMAIL?.trim() || settings.fromEmail;
+  const fromName = settings.fromName || 'AssetCrest';
+  if (!fromEmail || !fromEmail.includes('@')) {
+    return { ok: false, error: 'A verified RESEND_FROM_EMAIL sender is required' };
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': crypto.randomUUID(),
+      },
+      body: JSON.stringify({
+        from: `${fromName} <${fromEmail}>`,
+        to: [toEmail],
+        subject,
+        html,
+        text,
+        reply_to: settings.replyTo || fromEmail,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+    const responseText = await response.text().catch(() => '');
+    return {
+      ok: response.ok,
+      httpStatus: response.status,
+      error: response.ok ? undefined : `Resend HTTP ${response.status}: ${responseText.slice(0, 180)}`,
+    };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || 'Resend request failed' };
+  }
+}
+
 async function deliverViaSmtp(
   settings: EmailDeliverySettingsRecord,
   toEmail: string,
@@ -278,12 +323,30 @@ export async function dispatchEmailWithSettings(params: {
   let httpStatus: number | undefined;
   let errorMessage: string | undefined;
 
-  const trySmtp = settings.mode === 'smtp' || (settings.mode === 'auto' && canSmtp);
+  const resendConfigured = Boolean(process.env.RESEND_API_KEY?.trim());
+  const tryResend = settings.mode === 'auto' && resendConfigured;
+  const trySmtp = settings.mode === 'smtp' || (settings.mode === 'auto' && !resendConfigured && canSmtp);
   let smtpFailed = false;
   let delivered = false;
   let attemptedDelivery = false;
 
-  if (trySmtp) {
+  // Resend is the primary automatic provider when RESEND_API_KEY is configured.
+  if (tryResend) {
+    attemptedDelivery = true;
+    const res = await deliverViaResend(settings, params.toEmail, params.subject, params.html, params.text);
+    httpStatus = res.httpStatus;
+    if (res.ok) {
+      status = 'Sent';
+      delivered = true;
+    } else {
+      status = 'Failed';
+      errorMessage = res.error || 'Resend delivery failed';
+      // A definitive HTTP rejection can safely fall through to an explicitly configured relay.
+      smtpFailed = Boolean(res.httpStatus);
+    }
+  }
+
+  if (!delivered && trySmtp) {
     attemptedDelivery = true;
     try {
       const res = await deliverViaSmtp(settings, params.toEmail, params.subject, params.html, params.text);
@@ -308,7 +371,7 @@ export async function dispatchEmailWithSettings(params: {
     !delivered &&
     settings.mode !== 'smtp' &&
     (settings.mode === 'webhook' || settings.mode === 'auto') &&
-    (!trySmtp || smtpFailed);
+    (!trySmtp || smtpFailed || (tryResend && smtpFailed));
 
   if (shouldTryRelay && canWebhook) {
     attemptedDelivery = true;
@@ -330,7 +393,7 @@ export async function dispatchEmailWithSettings(params: {
   }
 
   // A configured email_relay endpoint is the final automatic fallback.
-  if (!delivered && settings.mode === 'auto' && (!trySmtp || smtpFailed)) {
+  if (!delivered && settings.mode === 'auto' && (!trySmtp || smtpFailed || (tryResend && smtpFailed))) {
     const webhooks = await listRawWebhookEndpoints();
     const relayHook = webhooks.find(
       (w) =>
@@ -363,7 +426,7 @@ export async function dispatchEmailWithSettings(params: {
   if (!attemptedDelivery) {
     status = 'Queued';
     errorMessage =
-      'No active SMTP or email relay provider is configured. Configure SMTP or an Email Relay Webhook to deliver externally.';
+      'No email provider completed delivery. Configure RESEND_API_KEY and a verified RESEND_FROM_EMAIL, SMTP credentials, or an Email Relay Webhook.';
   }
 
   return appendAutomationDeliveryLog({

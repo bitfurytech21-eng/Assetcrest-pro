@@ -1219,10 +1219,11 @@ export default function AssetCrestPortal() {
       notify('Allow pop-ups to print your transaction statement.', 'error');
       return;
     }
+    const htmlEntities: Record<string, string> = {
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    };
     const escapeHtml = (value: unknown) =>
-      String(value ?? '').replace(/[&<>"']/g, (char) => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-      }[char] || char));
+      String(value ?? '').replace(/[&<>"']/g, (char) => htmlEntities[char] || char);
     const rows = filteredTransactions.map((tx) => \`
       <tr>
         <td>\${escapeHtml(tx.id)}</td>

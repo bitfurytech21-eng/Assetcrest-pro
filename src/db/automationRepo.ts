@@ -64,6 +64,7 @@ export interface PublicEmailDeliverySettings {
   smtpSecure: boolean;
   smtpUser: string;
   hasSmtpPass: boolean;
+  hasResendApiKey: boolean;
   emailWebhookUrl: string;
   hasEmailWebhookSecret: boolean;
   notifyAdminOnEvents: boolean;
@@ -488,6 +489,7 @@ export async function getPublicEmailDeliverySettings(): Promise<PublicEmailDeliv
     smtpSecure: s.smtpSecure,
     smtpUser: s.smtpUser,
     hasSmtpPass: Boolean(s.smtpPass),
+    hasResendApiKey: Boolean(process.env.RESEND_API_KEY?.trim()),
     emailWebhookUrl: s.emailWebhookUrl,
     hasEmailWebhookSecret: Boolean(s.emailWebhookSecret),
     notifyAdminOnEvents: s.notifyAdminOnEvents,

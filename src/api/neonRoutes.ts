@@ -594,6 +594,9 @@ export function createNeonApiRouter(): Router {
           : 'Standard';
 
       const planName = String(body.planName || 'Investment Plan');
+      if (category === 'Standard' && planName.trim().toLowerCase() === 'premium' && amount > 499999) {
+        return res.status(400).json({ error: 'The Premium plan maximum investment is $499,999.' });
+      }
       const dailyRate = String(body.dailyRate || '1.0%');
       const id = await investPlanInNeon({
         userId: req.user.id,

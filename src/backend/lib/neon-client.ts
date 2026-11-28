@@ -752,6 +752,7 @@ export interface EmailDeliverySettings {
   smtpSecure: boolean;
   smtpUser: string;
   hasSmtpPass: boolean;
+  hasResendApiKey: boolean;
   emailWebhookUrl: string;
   hasEmailWebhookSecret: boolean;
   notifyAdminOnEvents: boolean;

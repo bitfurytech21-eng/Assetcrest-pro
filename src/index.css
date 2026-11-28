@@ -896,6 +896,58 @@ textarea:focus-visible,
 }
 
 
+/* Reference-B statistics background: subtle diagonal line panels */
+.assetcrest-stats-pattern {
+  pointer-events: none;
+  overflow: hidden;
+}
+.assetcrest-stats-pattern::before,
+.assetcrest-stats-pattern::after {
+  content: "";
+  position: absolute;
+  display: block;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0,
+    transparent 10px,
+    rgba(225, 228, 232, .72) 10px,
+    rgba(225, 228, 232, .72) 12px
+  );
+}
+.assetcrest-stats-pattern::before {
+  left: -4%;
+  top: 23%;
+  width: 57%;
+  height: 58%;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+  opacity: .72;
+}
+.assetcrest-stats-pattern::after {
+  right: -3%;
+  top: 0;
+  width: 26%;
+  height: 100%;
+  clip-path: polygon(100% 0, 100% 100%, 0 0);
+  opacity: .5;
+}
+@media (max-width: 767px) {
+  .assetcrest-stats-pattern::before {
+    top: 25%;
+    width: 78%;
+    height: 45%;
+    opacity: .62;
+  }
+  .assetcrest-stats-pattern::after {
+    width: 34%;
+    opacity: .38;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .assetcrest-compass-needle {
+    animation: none !important;
+  }
+}
+
 /* Slow, continuous compass-needle motion in the homepage statistics icon */
 .assetcrest-compass-needle {
   transform-box: view-box;

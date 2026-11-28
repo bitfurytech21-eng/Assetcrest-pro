@@ -98,7 +98,7 @@ function envDefaultSettings(): EmailDeliverySettingsRecord {
     mode: 'auto',
     fromName: 'AssetCrest',
     fromEmail: (process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM || 'info@assetcrestonline.com').trim(),
-    replyTo: (process.env.RESEND_REPLY_TO || process.env.SMTP_FROM || 'info@assetcrestonline.com').trim(),
+    replyTo: (process.env.RESEND_REPLY_TO || 'info@assetcrestonline.com').trim(),
     smtpHost: (process.env.SMTP_HOST || '').trim(),
     smtpPort: Number(process.env.SMTP_PORT || 587) || 587,
     smtpSecure: String(process.env.SMTP_SECURE || '').toLowerCase() === 'true',
@@ -478,7 +478,8 @@ export async function updateEmailTemplateRecord(
 export async function getRawEmailDeliverySettings(): Promise<EmailDeliverySettingsRecord> {
   await ensureAutomationSchemaAndSeed();
   if (!isDatabaseConfigured) {
-    return { ...memoryAutomationState.mailSettings };
+    const env = envDefaultSettings();
+    return { ...memoryAutomationState.mailSettings, fromEmail: env.fromEmail, replyTo: env.replyTo };
   }
   const rows = await db
     .select()
@@ -492,8 +493,8 @@ export async function getRawEmailDeliverySettings(): Promise<EmailDeliverySettin
     id: r.id,
     mode: (r.mode === 'smtp' || r.mode === 'webhook' ? r.mode : 'auto') as MailDeliveryMode,
     fromName: r.fromName || env.fromName,
-    fromEmail: r.fromEmail || env.fromEmail,
-    replyTo: r.replyTo || env.replyTo,
+    fromEmail: env.fromEmail,
+    replyTo: env.replyTo,
     smtpHost: r.smtpHost || env.smtpHost,
     smtpPort: Number(r.smtpPort || env.smtpPort || 587),
     smtpSecure: Boolean(r.smtpSecure),

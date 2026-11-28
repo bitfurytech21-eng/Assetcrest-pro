@@ -362,17 +362,65 @@ function RegisterCTA() {
 }
 
 
+function AnimatedStatValue({ value, suffix, prefix = '', decimals = 0, label }: { value: number; suffix: string; prefix?: string; decimals?: number; label: string }) {
+  const [displayValue, setDisplayValue] = useState(0);
+  const valueRef = useRef<HTMLSpanElement | null>(null);
+  useEffect(() => {
+    const node = valueRef.current;
+    if (!node) return;
+    let frame = 0;
+    let observer: IntersectionObserver | null = null;
+    let started = false;
+    const finish = () => setDisplayValue(value);
+    const animate = () => {
+      if (started) return;
+      started = true;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        finish();
+        return;
+      }
+      const duration = 1800;
+      const startTime = performance.now();
+      const tick = (now: number) => {
+        const progress = Math.min(1, (now - startTime) / duration);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setDisplayValue(value * eased);
+        if (progress < 1) frame = requestAnimationFrame(tick);
+        else setDisplayValue(value);
+      };
+      frame = requestAnimationFrame(tick);
+    };
+    if ('IntersectionObserver' in window) {
+      observer = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          animate();
+          observer?.disconnect();
+        }
+      }, { threshold: 0.35 });
+      observer.observe(node);
+    } else {
+      animate();
+    }
+    return () => {
+      observer?.disconnect();
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, [value]);
+  const formatted = decimals > 0 ? displayValue.toFixed(decimals) : Math.round(displayValue).toLocaleString('en-US');
+  return <span ref={valueRef} aria-label={label}>{prefix}{formatted}{suffix}</span>;
+}
+
 function StatsSection() {
   const stats = [
-    { value: '$7.1B', caption: 'Enabled over $7.1 billion in deposits', Icon: 'deposits' as const },
-    { value: '$901M', caption: 'With over $901 million withdrawn', Icon: 'withdrawals' as const },
-    { value: '209K', caption: 'Proudly serving 209,000+ users', Icon: 'users' as const },
+    { value: 7.1, suffix: 'B', prefix: '$', decimals: 1, label: '$7.1 billion', caption: 'Enabled over $7.1 billion in deposits', Icon: 'deposits' as const },
+    { value: 901, suffix: 'M', prefix: '$', decimals: 0, label: '$901 million', caption: 'With over $901 million withdrawn', Icon: 'withdrawals' as const },
+    { value: 209, suffix: 'K', prefix: '', decimals: 0, label: '209,000+', caption: 'Proudly serving 209,000+ users', Icon: 'users' as const },
   ];
   return <section aria-label="AssetCrest statistics" className="assetcrest-stats-section assetcrest-white-bg-pattern relative isolate overflow-hidden border-t border-[#E5E5E5] bg-white px-6 py-16 sm:py-20 lg:py-24">
-    <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 w-[48%] assetcrest-stats-stripes" aria-hidden="true" />
-    <div className="mx-auto grid max-w-7xl grid-cols-1 items-start gap-y-12 gap-x-10 md:grid-cols-3 md:gap-y-0 md:gap-x-8">
-      {stats.map(({ value, caption, Icon }) => <article key={value} className="flex flex-col items-center text-center">
-        <div className="mb-6 flex h-[108px] w-[108px] items-center justify-center text-[#C95D68] sm:mb-7" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-0 -z-10 assetcrest-stats-pattern" aria-hidden="true" />
+    <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-y-16 md:grid-cols-3 md:gap-x-8 md:gap-y-0">
+      {stats.map(({ value, suffix, prefix, decimals, label, caption, Icon }) => <article key={label} className="flex flex-col items-center text-center">
+        <div className="mb-7 flex h-[88px] w-[88px] items-center justify-center text-[#C16B75] sm:h-[100px] sm:w-[100px]" aria-hidden="true">
           {Icon === 'deposits' && <svg viewBox="0 0 120 120" className="h-full w-full" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
             <rect x="34" y="39" width="52" height="42" rx="5" />
             <circle cx="60" cy="60" r="13" />
@@ -386,7 +434,7 @@ function StatsSection() {
             <circle cx="60" cy="60" r="39" />
             <circle cx="60" cy="60" r="29" />
             <path d="M60 12v9M60 99v9M12 60h9M99 60h9" />
-            <g className="assetcrest-compass-needle"><path d="m60 37 8 25-8 21-8-21 8-25Z" /></g>
+            <g className="assetcrest-compass-needle"><path d="m60 37 8 25-8 21-8-25 8-21Z" /></g>
             <path d="M60 21v8M60 91v8M21 60h8M91 60h8" />
             <circle cx="60" cy="60" r="3" />
           </svg>}
@@ -395,12 +443,15 @@ function StatsSection() {
             <path d="M38 34H26c0 13 6 20 17 21M82 34h12c0 13-6 20-17 21" />
             <path d="M60 78v14M48 92h24" />
             <path d="M43 92h34l8 9H35l8-9Z" />
-            <path d="M49 42l11 9 11-9-3 18-8-4-8 4-3-18Z" /><path d="m54 60-2 8 8-4 8 4-2-8" />
+            <path d="M49 42l11 9 11-9-3 18-8-4-8 4-3-18Z" />
+            <path d="m54 60-2 8 8-4 8 4-2-8" />
             <rect x="43" y="96" width="34" height="9" rx="1.5" />
           </svg>}
         </div>
-        <p className="text-[56px] font-bold leading-none tracking-tight text-[#2F4660] tabular-nums">{value}</p>
-        <p className="mt-4 max-w-[330px] text-[18px] font-normal leading-[1.55] text-[#191919] sm:text-xl">{caption}</p>
+        <p className="text-[54px] font-extrabold leading-none tracking-tight text-[#2F4660] tabular-nums sm:text-[64px] lg:text-[68px]">
+          <AnimatedStatValue value={value} suffix={suffix} prefix={prefix} decimals={decimals} label={label} />
+        </p>
+        <p className="mt-5 max-w-[360px] text-[17px] font-medium leading-[1.5] text-[#3F4858] sm:text-[19px]">{caption}</p>
       </article>)}
     </div>
   </section>;
@@ -822,11 +873,7 @@ function ProcessPage() {
       <div className="grid gap-6 md:grid-cols-2">{steps.map(([n,title,copy])=><article key={n} className="flex gap-5 border border-slate-200 p-7"><span className="text-3xl font-extrabold text-[#e94d65]">{n}</span><div><h3 className="mb-3 text-xl font-bold text-[#1b4962]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></div></article>)}</div>
       <div className="mt-16"><SectionHeading eyebrow="Our services" title="Investment sectors" /><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{sectors.map(({title,copy,Icon})=><article key={title} className="flex gap-4 border border-slate-200 p-6"><Icon className="h-12 w-12 shrink-0 text-[#d9576a]" strokeWidth={2.5}/><div><h3 className="mb-2 font-bold text-[#294760]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></div></article>)}</div></div>
       <div className="mt-16"><SectionHeading eyebrow="Platform features" title="More information for investors" /><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{features.map(([title,copy])=><article key={title} className="bg-[#f4f6f8] p-7"><h3 className="mb-3 font-bold text-[#1b4962]">{title}</h3><p className="text-sm leading-7 text-slate-600">{copy}</p></article>)}</div></div>
-      <div className="mt-16 grid gap-8 border-y border-slate-200 py-12 text-center sm:grid-cols-3">
-        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$7.1B</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">Enabled over $7.1 billion in deposits</h3></div>
-        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$901M</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">With over $901 million withdrawn</h3></div>
-        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">209,000+</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">Proudly serving 209,000+ users</h3></div>
-      </div>
+      <div className="mt-16"><StatsSection /></div>
       <div className="mt-12 grid items-center gap-10 lg:grid-cols-2"><img src={media('2019/04/img-faq-2.png')} alt="Investment process illustration" loading="lazy" className="mx-auto max-h-80 w-full object-contain" /><div><h3 className="text-2xl font-extrabold text-[#1b4962]">Support throughout the process</h3><p className="mt-4 text-sm leading-7 text-slate-600">Our support team is ready at every stage—from onboarding and plan selection to portfolio tracking and withdrawals—whenever you need assistance.</p><RegisterCTA /></div></div>
     </div></section>
   </>;
@@ -892,11 +939,7 @@ function OfferPage() {
           <div className="mt-8 flex flex-wrap gap-4"><a href="/register" className="bg-[#e94d65] px-7 py-4 text-sm font-bold text-white hover:bg-[#d83f58]">Register</a><a href="/login" className="bg-[#294760] px-7 py-4 text-sm font-bold text-white hover:bg-[#1b3449]">Login</a></div>
         </div>
       </div>
-      <div className="mx-auto mt-16 grid max-w-7xl gap-8 border-t border-slate-200 pt-12 text-center sm:grid-cols-3">
-        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$7.1B</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">Enabled over $7.1 billion in deposits</h3></div>
-        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">$901M</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">With over $901 million withdrawn</h3></div>
-        <div><p className="text-3xl font-extrabold text-[#1b4962] sm:text-4xl">209,000+</p><h3 className="mt-3 text-sm font-semibold leading-6 text-slate-600">Proudly serving 209,000+ users</h3></div>
-      </div>
+      <div className="mx-auto mt-16 max-w-7xl"><StatsSection /></div>
     </section>
     <section className="relative overflow-hidden bg-[#1b4962] px-6 py-16 text-white sm:py-24" style={{backgroundImage:'linear-gradient(rgba(27,73,98,.94),rgba(27,73,98,.96)),url("' + media('2019/04/bgn-quotes.jpg') + '")',backgroundPosition:'center',backgroundSize:'cover'}}>
       <div className="mx-auto max-w-7xl">

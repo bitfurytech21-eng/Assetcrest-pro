@@ -237,6 +237,30 @@ export async function ensureAutomationSchemaAndSeed(): Promise<void> {
         .onConflictDoNothing();
     }
 
+    // Upgrade the stock welcome template once while preserving any admin-customized copy.
+    const welcomeDefault = DEFAULT_EMAIL_TEMPLATES.find((tpl) => tpl.eventKey === 'user.registered');
+    if (welcomeDefault) {
+      const [existingWelcome] = await db
+        .select({ id: emailTemplates.id, htmlBody: emailTemplates.htmlBody })
+        .from(emailTemplates)
+        .where(eq(emailTemplates.eventKey, 'user.registered'))
+        .limit(1);
+      if (existingWelcome?.htmlBody.includes('Your investor profile is registered and secured')) {
+        await db
+          .update(emailTemplates)
+          .set({
+            name: welcomeDefault.name,
+            subject: welcomeDefault.subject,
+            preheader: welcomeDefault.preheader,
+            htmlBody: welcomeDefault.htmlBody,
+            textBody: welcomeDefault.textBody,
+            variables: welcomeDefault.variables,
+            updatedAt: new Date(),
+          })
+          .where(eq(emailTemplates.id, existingWelcome.id));
+      }
+    }
+
     const existingSettings = await db
       .select({ id: emailDeliverySettings.id })
       .from(emailDeliverySettings)

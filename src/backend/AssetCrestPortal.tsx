@@ -1191,7 +1191,7 @@ export default function AssetCrestPortal() {
   const handleExportCsv = () => {
     const csvCell = (value: unknown) => {
       const text = String(value ?? '');
-      return \`"\${text.replace(/"/g, '""')}"\`;
+      return `"${text.replace(/"/g, '""')}"`;
     };
     const columns = ['Reference', 'Type', 'Payment Method', 'Amount (USD)', 'Status', 'Date'];
     const rows = userTransactions.map((tx) =>
@@ -1205,7 +1205,7 @@ export default function AssetCrestPortal() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = \`assetcrest-\${(activeUser?.referralCode || 'investor').toLowerCase()}-transactions.csv\`;
+    a.download = `assetcrest-${(activeUser?.referralCode || 'investor').toLowerCase()}-transactions.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1224,16 +1224,16 @@ export default function AssetCrestPortal() {
     };
     const escapeHtml = (value: unknown) =>
       String(value ?? '').replace(/[&<>"']/g, (char) => htmlEntities[char] || char);
-    const rows = filteredTransactions.map((tx) => \`
+    const rows = filteredTransactions.map((tx) => `
       <tr>
-        <td>\${escapeHtml(tx.id)}</td>
-        <td>\${escapeHtml(tx.type)}</td>
-        <td>\${escapeHtml(tx.method)}</td>
-        <td class="amount">$ \${Number(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        <td>\${escapeHtml(tx.status)}</td>
-        <td>\${escapeHtml(tx.date)}</td>
-      </tr>\`).join('');
-    printWindow.document.write(\`<!doctype html>
+        <td>${escapeHtml(tx.id)}</td>
+        <td>${escapeHtml(tx.type)}</td>
+        <td>${escapeHtml(tx.method)}</td>
+        <td class="amount">$ ${Number(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td>${escapeHtml(tx.status)}</td>
+        <td>${escapeHtml(tx.date)}</td>
+      </tr>`).join('');
+    printWindow.document.write(`<!doctype html>
       <html><head><meta charset="utf-8"><title>AssetCrest Transaction Statement</title>
       <style>
         @page { size: A4 landscape; margin: 14mm; }
@@ -1248,12 +1248,12 @@ export default function AssetCrestPortal() {
         footer { margin-top: 18px; color: #64748b; font-size: 10px; }
       </style></head><body>
       <h1>AssetCrest — Transaction Statement</h1>
-      <div class="meta">Account: \${escapeHtml(activeUser?.name || 'Investor')} · Generated: \${escapeHtml(new Date().toLocaleString())}</div>
+      <div class="meta">Account: ${escapeHtml(activeUser?.name || 'Investor')} · Generated: ${escapeHtml(new Date().toLocaleString())}</div>
       <table><thead><tr><th>Reference</th><th>Type</th><th>Payment Method</th><th>Amount (USD)</th><th>Status</th><th>Date</th></tr></thead>
-      <tbody>\${rows || '<tr><td class="empty" colspan="6">No transactions to print.</td></tr>'}</tbody></table>
+      <tbody>${rows || '<tr><td class="empty" colspan="6">No transactions to print.</td></tr>'}</tbody></table>
       <footer>AssetCrest transaction record. Uploaded receipt photographs and attachments are intentionally excluded.</footer>
       <script>window.addEventListener('load', () => { window.focus(); window.print(); });</script>
-      </body></html>\`);
+      </body></html>`);
     printWindow.document.close();
   };
 

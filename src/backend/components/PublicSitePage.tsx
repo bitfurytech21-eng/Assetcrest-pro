@@ -773,7 +773,7 @@ function PlansPage() {
     {name:'Beginners',min:'$200',max:'$4,999',daily:'1.36%',monthly:'40.8%',referral:'5%',duration:'30'},
     {name:'Prime',min:'$5,000',max:'$49,999',daily:'1.72%',monthly:'51.6%',referral:'5%',duration:'30'},
     {name:'Executive',min:'$50,000',max:'$99,999',daily:'2.08%',monthly:'62.4%',referral:'5%',duration:'30'},
-    {name:'Premium',min:'$100,000',max:'$1,000,000',daily:'2.44%',monthly:'73.2%',referral:'5%',duration:'30'},
+    {name:'Premium',min:'$100,000',max:'$499,999',daily:'2.44%',monthly:'73.2%',referral:'5%',duration:'30'},
   ];
   const benefits = [
     ['Daily Returns','Earn consistent daily returns tailored to your selected plan, helping you grow your investment steadily over time.'],

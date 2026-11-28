@@ -558,7 +558,7 @@ function HomePage() {
 
     <section className="assetcrest-white-bg-pattern bg-white px-6 pb-8 pt-0 sm:pb-12">
       <div className="relative z-20 mx-auto -mt-16 grid max-w-7xl gap-5 sm:-mt-24 lg:grid-cols-3">
-        {principles.map(([title, copy, image]) => <article key={title} className="relative min-h-[390px] overflow-hidden bg-cover bg-center px-7 py-10 shadow-[0_12px_38px_rgba(0,0,0,.12)] sm:min-h-[430px] sm:px-10 sm:py-12" style={{ backgroundImage: 'linear-gradient(180deg,rgba(255,255,255,.88),rgba(255,255,255,.76)),url("' + media(image) + '")' }}>
+        {principles.map(([title, copy, image]) => <article key={title} className="relative min-h-[390px] overflow-hidden bg-cover bg-center px-7 py-10 shadow-[0_12px_38px_rgba(0,0,0,.12)] sm:min-h-[430px] sm:px-10 sm:py-12" style={{ backgroundImage: 'linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.64)),url("' + media(image) + '")' }}>
           <span className="mb-8 block h-1 w-16 bg-[#e94d65]" />
           <h2 className="mb-5 text-3xl font-extrabold leading-tight text-[#1b4962] sm:text-4xl">{title}</h2>
           <p className="max-w-md text-base leading-8 text-[#191919] sm:text-lg">{copy}</p>

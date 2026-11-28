@@ -161,7 +161,7 @@ export function createNeonApiRouter(): Router {
       const token = await createSessionForUser(user.id);
       setSessionCookie(req, res, token);
 
-      void dispatchPortalAutomation({
+      await dispatchPortalAutomation({
         eventKey: 'user.registered',
         recipientEmail: user.email,
         adminCopyEmail: BOOTSTRAPPED_ADMIN_EMAIL,

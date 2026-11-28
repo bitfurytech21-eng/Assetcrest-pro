@@ -2309,25 +2309,6 @@ export default function AssetCrestPortal() {
               </div>
             )}
 
-            {/* KYC Warning Strip if not approved */}
-            {activeUser.kycStatus !== 'Approved' && (
-              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-200">
-                  <ShieldAlert className="h-4 w-4 shrink-0" />
-                  <span>
-                    <strong>KYC Status: {activeUser.kycStatus}</strong> — Complete verification and receive Admin approval before making withdrawals.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigateTo('kyc')}
-                  className="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-3 py-1.5 rounded cursor-pointer"
-                >
-                  {activeUser.kycStatus === 'Pending' ? 'View KYC Status' : 'Verify Identity'}
-                </button>
-              </div>
-            )}
-
             {/* 5 KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-md p-5 flex items-center gap-5">

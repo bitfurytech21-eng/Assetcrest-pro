@@ -412,7 +412,7 @@ export async function updateEmailTemplateRecord(
     return next;
   }
 
-  await db
+  const updatedRows = await db
     .update(emailTemplates)
     .set({
       name: next.name,
@@ -423,7 +423,25 @@ export async function updateEmailTemplateRecord(
       textBody: next.textBody,
       updatedAt: new Date(),
     })
-    .where(eq(emailTemplates.id, id));
+    .where(eq(emailTemplates.id, id))
+    .returning({ id: emailTemplates.id });
+
+  // If a seed row is absent, persist the default-backed template on first save.
+  if (updatedRows.length === 0) {
+    await db.insert(emailTemplates).values({
+      id: next.id,
+      eventKey: next.eventKey,
+      name: next.name,
+      category: next.category,
+      enabled: next.enabled,
+      subject: next.subject,
+      preheader: next.preheader,
+      htmlBody: next.htmlBody,
+      textBody: next.textBody,
+      variables: next.variables,
+      updatedAt: new Date(),
+    });
+  }
 
   return next;
 }

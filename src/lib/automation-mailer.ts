@@ -427,9 +427,11 @@ export async function dispatchEmailWithSettings(params: {
   }
 
   if (!attemptedDelivery) {
-    status = 'Queued';
+    status = 'Failed';
     errorMessage =
-      'No email provider completed delivery. Configure RESEND_API_KEY and a verified RESEND_FROM_EMAIL, SMTP credentials, or an Email Relay Webhook.';
+      settings.mode === 'smtp'
+        ? 'SMTP mode is selected but SMTP_HOST, SMTP_USER and SMTP_PASS are not all configured.'
+        : 'No email provider is configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL, SMTP_HOST/SMTP_USER/SMTP_PASS, or an Email Relay Webhook.';
   }
 
   return appendAutomationDeliveryLog({
@@ -491,6 +493,18 @@ export async function dispatchPortalAutomation(params: {
     let renderedEmail: { subject: string; preheader: string; html: string; text: string } | null =
       null;
 
+    if (params.recipientEmail && (!tpl || !tpl.enabled)) {
+      await appendAutomationDeliveryLog({
+        kind: 'email',
+        eventKey: params.eventKey,
+        target: params.recipientEmail,
+        subjectOrMethod: 'Template dispatch',
+        status: 'Skipped',
+        errorMessage: !tpl ? 'No email template exists for this event key.' : 'Email template is disabled in Admin Automation.',
+        payloadPreview: JSON.stringify({ eventKey: params.eventKey }),
+      });
+    }
+
     if (tpl && tpl.enabled && params.recipientEmail) {
       renderedEmail = renderEmailTemplate(tpl, params.variables || {});
       await dispatchEmailWithSettings({
@@ -550,7 +564,19 @@ export async function dispatchPortalAutomation(params: {
       await triggerWebhookEndpoint(hook, params.eventKey, payload);
     }
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
     console.error(`[AssetCrest Automation] Failed dispatching ${params.eventKey}:`, err);
+    await appendAutomationDeliveryLog({
+      kind: 'email',
+      eventKey: params.eventKey,
+      target: params.recipientEmail || 'No recipient',
+      subjectOrMethod: 'Automation dispatch',
+      status: 'Failed',
+      errorMessage: message.slice(0, 500),
+      payloadPreview: JSON.stringify({ eventKey: params.eventKey, recipientEmail: params.recipientEmail || null }),
+    }).catch((logError) => {
+      console.error('[AssetCrest Automation] Could not persist dispatch failure log:', logError);
+    });
   }
 }
 

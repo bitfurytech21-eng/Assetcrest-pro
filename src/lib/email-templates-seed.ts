@@ -184,6 +184,49 @@ function wrapSection(title: string, badge: string, bodyHtml: string, ctaLabel: s
 </html>`;
 }
 
+function wrapWelcomeEmail(title: string, bodyHtml: string, ctaHref: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="supported-color-schemes" content="dark" />
+  <title>${title}</title>
+</head>
+<body style="margin:0;padding:0;background:#090b0e;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e8eaf0;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Welcome to AssetCrest. Your account journey starts here.</div>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#090b0e;padding:28px 12px;">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:560px;background:#111315;border:1px solid #25292e;border-radius:12px;overflow:hidden;">
+        <tr><td align="center" style="padding:34px 24px;background:#202427;border-bottom:1px solid #30353a;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
+            <td style="font-size:27px;line-height:1;color:#e51e45;font-weight:800;padding-right:9px;">◆</td>
+            <td style="font-size:24px;line-height:1.2;letter-spacing:-0.6px;font-weight:800;color:#f1a0b1;">ASSETCREST</td>
+          </tr></table>
+        </td></tr>
+        <tr><td style="padding:34px 30px 18px;">
+          <h1 style="margin:0 0 20px;font-size:23px;line-height:1.35;font-weight:700;color:#d8deeb;">${title}</h1>
+          ${bodyHtml}
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:28px 0 14px;">
+            <tr><td align="center" bgcolor="#df3153" style="border-radius:5px;">
+              <a href="${ctaHref}" style="display:inline-block;padding:15px 27px;color:#ffffff;text-decoration:none;font-size:15px;line-height:1;font-weight:700;">Visit your dashboard</a>
+            </td></tr>
+          </table>
+          <p style="margin:18px 0 0;font-size:14px;line-height:1.75;color:#aab1bf;">We look forward to supporting you. If you need help, simply reply to this email or contact our support team.</p>
+          <p style="margin:22px 0 0;font-size:14px;line-height:1.7;color:#aab1bf;">Thanks,<br/><strong style="color:#e7eaf0;">AssetCrest</strong></p>
+        </td></tr>
+        <tr><td style="padding:20px 30px;background:#0c0e10;border-top:1px solid #292d32;text-align:center;">
+          <p style="margin:0;font-size:11px;line-height:1.7;color:#737b88;">AssetCrest™<br/>© 2026 AssetCrest. All rights reserved.</p>
+          <p style="margin:8px 0 0;font-size:11px;line-height:1.6;color:#737b88;"><a href="mailto:info@assetcrestonline.com" style="color:#c2c8d2;text-decoration:underline;">info@assetcrestonline.com</a></p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+}
+
 export const DEFAULT_EMAIL_TEMPLATES: EmailTemplateDefinition[] = [
   {
     id: 'tpl-user-registered',
@@ -191,24 +234,18 @@ export const DEFAULT_EMAIL_TEMPLATES: EmailTemplateDefinition[] = [
     name: 'Welcome & Onboarding Email',
     category: 'Authentication',
     enabled: true,
-    subject: 'Welcome to AssetCrest, {{name}} (@{{username}})',
-    preheader: 'Your AssetCrest investor account is active. Referral ID: {{referralCode}}.',
-    htmlBody: wrapSection(
-      'Welcome to AssetCrest, {{name}}',
-      'New Account',
-      `<p style="margin:0 0 14px 0;font-size:14px;line-height:1.6;color:#334155;">Your investor profile is registered and secured. Here are your account details:</p>
-      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:14px;font-size:13px;color:#1e293b;">
-        <tr><td style="padding:4px 0;"><strong>Username:</strong> @{{username}}</td></tr>
-        <tr><td style="padding:4px 0;"><strong>Email:</strong> {{email}}</td></tr>
-        <tr><td style="padding:4px 0;"><strong>Country:</strong> {{country}}</td></tr>
-        <tr><td style="padding:4px 0;"><strong>Personal Referral Code:</strong> <span style="font-family:monospace;">{{referralCode}}</span></td></tr>
-      </table>
-      <p style="margin:14px 0 0 0;font-size:13px;line-height:1.6;color:#475569;">Next steps: fund your wallet using our supported crypto settlement rails and complete KYC verification to unlock full withdrawal privileges.</p>`,
-      'Open Investor Dashboard',
+    subject: 'Hurray {{name}} — welcome to AssetCrest!',
+    preheader: 'We are excited to welcome you to the AssetCrest community. Your journey starts here.',
+    htmlBody: wrapWelcomeEmail(
+      'Hurray {{name}},',
+      `<p style="margin:0 0 18px;font-size:16px;line-height:1.75;color:#aeb5c3;">We are really excited to welcome you to <strong style="color:#e4e8f0;">AssetCrest</strong> community.</p>
+      <p style="margin:0 0 18px;font-size:16px;line-height:1.75;color:#aeb5c3;">This is just the beginning of greater things to come.</p>
+      <p style="margin:0 0 18px;font-size:16px;line-height:1.75;color:#aeb5c3;">Here is how you can get the most out of our system.</p>
+      <p style="margin:0;font-size:16px;line-height:1.75;color:#aeb5c3;">Make a deposit, explore an investment plan, and review the plan details and terms so you can make informed decisions about putting your money to work.</p>`,
       '{{dashboardUrl}}'
     ),
     textBody:
-      'Welcome to AssetCrest, {{name}}!\n\nYour account (@{{username}}) is active.\nEmail: {{email}}\nCountry: {{country}}\nReferral Code: {{referralCode}}\n\nAccess your dashboard: {{dashboardUrl}}',
+      'Hurray {{name}},\\n\\nWe are really excited to welcome you to AssetCrest community.\\n\\nThis is just the beginning of greater things to come.\\n\\nHere is how you can get the most out of our system. Make a deposit, explore an investment plan, and review the plan details and terms so you can make informed decisions about putting your money to work.\\n\\nVisit your dashboard: {{dashboardUrl}}\\n\\nThanks,\\nAssetCrest\\n\\n© 2026 AssetCrest. All rights reserved.',
     variables: ['name', 'username', 'email', 'country', 'referralCode', 'dashboardUrl'],
   },
   {

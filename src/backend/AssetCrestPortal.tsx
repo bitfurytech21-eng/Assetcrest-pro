@@ -28,6 +28,7 @@ import {
   ArrowRightCircle,
   Smartphone,
   Download,
+  Printer,
   Cpu,
   RefreshCw,
   CheckCircle2,
@@ -1188,23 +1189,71 @@ export default function AssetCrestPortal() {
   };
 
   const handleExportCsv = () => {
-    const header = 'Reference,Type,Method,Amount,Status,Date\n';
-    const rows = userTransactions
-      .map(
-        (tx) =>
-          `${tx.id},${tx.type},"${tx.method}",${tx.amount.toFixed(2)},${tx.status},"${tx.date}"`
-      )
-      .join('\n');
-    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
+    const csvCell = (value: unknown) => {
+      const text = String(value ?? '');
+      return \`"\${text.replace(/"/g, '""')}"\`;
+    };
+    const columns = ['Reference', 'Type', 'Payment Method', 'Amount (USD)', 'Status', 'Date'];
+    const rows = userTransactions.map((tx) =>
+      [tx.id, tx.type, tx.method, Number(tx.amount || 0).toFixed(2), tx.status, tx.date]
+        .map(csvCell)
+        .join(',')
+    );
+    // UTF-8 BOM helps mobile spreadsheet apps recognize and display the CSV correctly.
+    const csv = '\uFEFF' + [columns.map(csvCell).join(','), ...rows].join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `assetcrest-${(activeUser?.referralCode || 'investor').toLowerCase()}-transactions.csv`;
+    a.download = \`assetcrest-\${(activeUser?.referralCode || 'investor').toLowerCase()}-transactions.csv\`;
     document.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     notify('Transactions exported to CSV.', 'success');
+  };
+
+  const handlePrintTransactions = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      notify('Allow pop-ups to print your transaction statement.', 'error');
+      return;
+    }
+    const escapeHtml = (value: unknown) =>
+      String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+      }[char] || char));
+    const rows = filteredTransactions.map((tx) => \`
+      <tr>
+        <td>\${escapeHtml(tx.id)}</td>
+        <td>\${escapeHtml(tx.type)}</td>
+        <td>\${escapeHtml(tx.method)}</td>
+        <td class="amount">$ \${Number(tx.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td>\${escapeHtml(tx.status)}</td>
+        <td>\${escapeHtml(tx.date)}</td>
+      </tr>\`).join('');
+    printWindow.document.write(\`<!doctype html>
+      <html><head><meta charset="utf-8"><title>AssetCrest Transaction Statement</title>
+      <style>
+        @page { size: A4 landscape; margin: 14mm; }
+        body { font: 12px Arial, sans-serif; color: #172b3a; }
+        h1 { margin: 0 0 5px; font-size: 22px; }
+        .meta { color: #64748b; margin-bottom: 18px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #d8e0e8; padding: 9px 7px; text-align: left; }
+        th { background: #edf2f6; font-weight: 700; }
+        .amount { text-align: right; white-space: nowrap; }
+        .empty { padding: 20px; text-align: center; color: #64748b; }
+        footer { margin-top: 18px; color: #64748b; font-size: 10px; }
+      </style></head><body>
+      <h1>AssetCrest — Transaction Statement</h1>
+      <div class="meta">Account: \${escapeHtml(activeUser?.name || 'Investor')} · Generated: \${escapeHtml(new Date().toLocaleString())}</div>
+      <table><thead><tr><th>Reference</th><th>Type</th><th>Payment Method</th><th>Amount (USD)</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>\${rows || '<tr><td class="empty" colspan="6">No transactions to print.</td></tr>'}</tbody></table>
+      <footer>AssetCrest transaction record. Uploaded receipt photographs and attachments are intentionally excluded.</footer>
+      <script>window.addEventListener('load', () => { window.focus(); window.print(); });</script>
+      </body></html>\`);
+    printWindow.document.close();
   };
 
   const shareReferralUrl = `${detectedOrigin}/?ref=${activeUser?.referralCode || ''}`;
@@ -2955,14 +3004,24 @@ export default function AssetCrestPortal() {
                   <span>Transactions</span>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={handleExportCsv}
-                className="bg-[#2b4865] hover:bg-[#223a52] text-white text-xs font-medium px-4 py-2 rounded-md inline-flex items-center gap-1.5 cursor-pointer"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Export CSV
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handlePrintTransactions}
+                  className="border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-medium px-4 py-2 rounded-md inline-flex items-center gap-1.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Print Statement
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportCsv}
+                  className="bg-[#2b4865] hover:bg-[#223a52] text-white text-xs font-medium px-4 py-2 rounded-md inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  Export CSV
+                </button>
+              </div>
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-md p-5 space-y-4">

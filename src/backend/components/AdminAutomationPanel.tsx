@@ -106,6 +106,7 @@ export function AdminAutomationPanel({
   const [testEmailTarget, setTestEmailTarget] = useState(adminEmail);
   const [savingTpl, setSavingTpl] = useState(false);
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [testingAllTemplates, setTestingAllTemplates] = useState(false);
 
   // Webhooks state
   const [editingHookId, setEditingHookId] = useState<string | null>(null);
@@ -267,6 +268,45 @@ export function AdminAutomationPanel({
       onNotify(err?.message || 'Failed to send test email.', 'error');
     } finally {
       setSendingTestEmail(false);
+    }
+  };
+
+  const handleTestAllTemplates = async () => {
+    if (!snapshot || !testEmailTarget.trim()) {
+      onNotify('Enter a test recipient email address first.', 'error');
+      return;
+    }
+    const enabledTemplates = snapshot.templates.filter((tpl) => tpl.enabled);
+    if (enabledTemplates.length === 0) {
+      onNotify('There are no enabled email templates to test.', 'error');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Send ${enabledTemplates.length} real test emails to ${testEmailTarget.trim()}? Each enabled template will generate one email.`
+    );
+    if (!confirmed) return;
+    setTestingAllTemplates(true);
+    let sent = 0;
+    let failed = 0;
+    let queued = 0;
+    try {
+      for (const tpl of enabledTemplates) {
+        try {
+          const log = await cloudSendTestTemplateEmail(tpl.id, testEmailTarget.trim());
+          if (log.status === 'Sent') sent += 1;
+          else if (log.status === 'Queued') queued += 1;
+          else failed += 1;
+        } catch {
+          failed += 1;
+        }
+      }
+      await loadAutomation();
+      onNotify(
+        `Email test complete: ${sent} sent, ${failed} failed, ${queued} queued. Review the delivery log for details.`,
+        failed > 0 || queued > 0 ? 'error' : 'success'
+      );
+    } finally {
+      setTestingAllTemplates(false);
     }
   };
 
@@ -740,6 +780,15 @@ export function AdminAutomationPanel({
                     >
                       <Send className="h-3.5 w-3.5 text-sky-600" />
                       {sendingTestEmail ? 'Sending...' : 'Send Test Email'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleTestAllTemplates()}
+                      disabled={testingAllTemplates || sendingTestEmail || !snapshot?.templates.some((tpl) => tpl.enabled)}
+                      className="px-3 py-1.5 rounded border border-[#23446c] text-[#23446c] dark:text-sky-300 dark:border-sky-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                      {testingAllTemplates ? 'Testing all templates...' : 'Test All Enabled'}
                     </button>
                   </div>
 

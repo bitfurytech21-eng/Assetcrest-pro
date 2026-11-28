@@ -360,7 +360,10 @@ export async function getEmailTemplateById(id: string): Promise<EmailTemplateRec
   }
   const rows = await db.select().from(emailTemplates).where(eq(emailTemplates.id, id)).limit(1);
   const r = rows[0];
-  if (!r) return null;
+  if (!r) {
+    const fallback = DEFAULT_EMAIL_TEMPLATES.find((tpl) => tpl.id === id);
+    return fallback ? { ...fallback, updatedAt: nowStamp() } : null;
+  }
   return {
     id: r.id,
     eventKey: r.eventKey,

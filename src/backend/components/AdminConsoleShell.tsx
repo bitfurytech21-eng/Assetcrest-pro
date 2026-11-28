@@ -771,7 +771,7 @@ export function AdminConsoleShell({
       referralBonusPct: refPct,
       durationDays: daysVal,
       min: minVal,
-      max: maxVal,
+      max: effectiveMaxVal,
       isActive: newPlanActive,
       features: newPlanCategory === 'Standard' ? STANDARD_PLAN_FEATURES : undefined,
       destination: newPlanCategory === 'Vacation' ? newPlanMeta.trim() || 'Any War-Free City or State of Preference' : undefined,

@@ -584,6 +584,7 @@ export default function AssetCrestPortal() {
   const apkTargetUrl = customTargetUrl ?? detectedOrigin;
   const [isBuildingApk, setIsBuildingApk] = useState(false);
   const [apkReady, setApkReady] = useState(false);
+  const [apkError, setApkError] = useState<string | null>(null);
   const [bundleBlobUrl, setBundleBlobUrl] = useState<string | null>(null);
   const [bundleFilename, setBundleFilename] = useState('assetcrest-v1.0.4-android-apk-bundle.zip');
   const [bundleSizeKb, setBundleSizeKb] = useState<number | null>(null);
@@ -1327,34 +1328,63 @@ export default function AssetCrestPortal() {
   const handleBuildApkBundle = async () => {
     setIsBuildingApk(true);
     setApkReady(false);
+    setApkError(null);
     try {
+      const target = new URL(apkTargetUrl);
+      if (!['https:', 'http:'].includes(target.protocol)) {
+        throw new Error('Enter a valid website URL beginning with https://.');
+      }
+      if (!apkAppName.trim()) throw new Error('Enter an app name.');
+      if (!/^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+$/.test(apkPackageName.trim())) {
+        throw new Error('Package ID must look like com.example.app.');
+      }
+
       const res = await fetch('/api/apk/package', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          appName: apkAppName,
-          packageName: apkPackageName,
-          versionName: apkVersionName,
+          appName: apkAppName.trim(),
+          packageName: apkPackageName.trim(),
+          versionName: apkVersionName.trim(),
           versionCode: apkVersionCode,
           themeColor: '#2b4865',
-          targetUrl: apkTargetUrl,
+          targetUrl: target.toString(),
           enablePush: true,
         }),
       });
-      if (!res.ok) throw new Error('Build failed');
+      if (!res.ok) {
+        let message = 'The server could not create the Android project bundle.';
+        try {
+          const payload = await res.json();
+          if (typeof payload?.error === 'string') message = payload.error;
+        } catch {
+          // Keep the readable fallback when the server returns a non-JSON error page.
+        }
+        throw new Error(message);
+      }
+
+      const contentType = res.headers.get('Content-Type') || '';
+      if (!contentType.includes('application/zip')) {
+        throw new Error('The server returned an unexpected file type. Please try again.');
+      }
+
+      const blob = await res.blob();
+      if (blob.size < 1024) throw new Error('The generated project bundle is incomplete. Please try again.');
+
       const disposition = res.headers.get('Content-Disposition') || '';
       const match = disposition.match(/filename="([^"]+)"/);
-      const filename = match?.[1] || 'assetcrest-android-apk-bundle.zip';
-      const blob = await res.blob();
+      const filename = match?.[1] || 'assetcrest-android-project.zip';
       if (bundleBlobUrl) URL.revokeObjectURL(bundleBlobUrl);
       const url = URL.createObjectURL(blob);
       setBundleBlobUrl(url);
       setBundleFilename(filename);
       setBundleSizeKb(Math.max(1, Math.round(blob.size / 1024)));
       setApkReady(true);
-      notify('Android APK project bundle compiled!', 'success');
-    } catch {
-      notify('Failed to compile APK bundle.', 'error');
+      notify('Android project bundle is ready to download. It is not an installable APK yet.', 'success');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Could not create the Android project bundle.';
+      setApkError(message);
+      notify(message, 'error');
     } finally {
       setIsBuildingApk(false);
     }
@@ -3658,7 +3688,7 @@ export default function AssetCrestPortal() {
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md p-5 space-y-4">
                 <div className="flex items-center gap-2 text-[#2b4865] dark:text-sky-400 font-bold text-sm">
                   <ShieldCheck className="h-4 w-4" />
-                  <span>Build Android APK Project (.zip)</span>
+                  <span>Prepare Android App Project (.zip)</span>
                 </div>
                 <div className="space-y-3">
                   <div>
@@ -3716,15 +3746,21 @@ export default function AssetCrestPortal() {
                     {isBuildingApk ? (
                       <>
                         <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                        Packaging APK Bundle...
+                        Preparing Android Project...
                       </>
                     ) : (
                       <>
                         <Cpu className="h-3.5 w-3.5" />
-                        Package Android APK Bundle (.zip)
+                        Prepare Android Project Bundle (.zip)
                       </>
                     )}
                   </button>
+
+                  {apkError && (
+                    <div role="alert" className="rounded-md border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-300">
+                      {apkError}
+                    </div>
+                  )}
 
                   {apkReady && (
                     <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-md space-y-2">
@@ -3740,11 +3776,11 @@ export default function AssetCrestPortal() {
                         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium py-2 rounded-md inline-flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <Download className="h-3.5 w-3.5" />
-                        Download Android APK Project (.zip)
+                        Download Android Project Bundle (.zip)
                       </button>
                       <div className="text-[11px] text-slate-600 dark:text-slate-300 flex items-center gap-1">
                         <Terminal className="h-3.5 w-3.5 text-[#2b4865] dark:text-sky-400 shrink-0" />
-                        <span>Includes Gradle, TWA manifest &amp; GitHub Actions APK CI.</span>
+                        <span>Source project only. Build the installable APK with Android Studio or the included GitHub Actions workflow.</span>
                       </div>
                     </div>
                   )}

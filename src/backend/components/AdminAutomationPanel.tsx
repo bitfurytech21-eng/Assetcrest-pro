@@ -1070,8 +1070,19 @@ export function AdminAutomationPanel({
               Email Transport &amp; Delivery Settings
             </h2>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Deliver automatic emails directly over SMTP or forward rendered HTML/text payloads to an Email Relay Webhook.
+              Automatic delivery uses Resend first when configured, then SMTP, then the Email Relay Webhook as a fallback.
             </p>
+            <div className="mt-2 flex flex-wrap gap-2 text-[10px] font-semibold">
+              <span className={`rounded-full px-2 py-1 ${snapshot?.mailSettings.hasResendApiKey ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300'}`}>
+                Resend API key: {snapshot?.mailSettings.hasResendApiKey ? 'Configured' : 'Missing in Render'}
+              </span>
+              <span className={`rounded-full px-2 py-1 ${snapshot?.mailSettings.hasSmtpPass && snapshot.mailSettings.smtpHost && snapshot.mailSettings.smtpUser ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
+                SMTP: {snapshot?.mailSettings.hasSmtpPass && snapshot.mailSettings.smtpHost && snapshot.mailSettings.smtpUser ? 'Configured' : 'Not fully configured'}
+              </span>
+              <span className={`rounded-full px-2 py-1 ${snapshot?.mailSettings.emailWebhookUrl ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
+                Email relay: {snapshot?.mailSettings.emailWebhookUrl ? 'Configured' : 'Not configured'}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1082,7 +1093,7 @@ export function AdminAutomationPanel({
                 onChange={(e) => setMailMode(e.target.value as 'auto' | 'smtp' | 'webhook')}
                 className="w-full rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2"
               >
-                <option value="auto">Auto (SMTP if configured, else Email Webhook)</option>
+                <option value="auto">Auto (Resend, then SMTP, then Email Webhook)</option>
                 <option value="smtp">SMTP Server Only</option>
                 <option value="webhook">Email Relay Webhook Only</option>
               </select>

@@ -368,7 +368,11 @@ export async function getEmailTemplateByEventKey(
     eventKey: r.eventKey,
     name: r.name,
     category: r.category as EmailTemplateCategory,
-    enabled: Boolean(r.enabled),
+    // Pending treasury notifications are mandatory transactional receipts.
+    // Keep these enabled even if an old admin setting accidentally disabled them.
+    enabled: eventKey === 'deposit.submitted' || eventKey === 'withdrawal.requested'
+      ? true
+      : Boolean(r.enabled),
     subject: r.subject,
     preheader: r.preheader,
     htmlBody: r.htmlBody,

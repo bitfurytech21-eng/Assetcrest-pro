@@ -699,10 +699,12 @@ export function AdminConsoleShell({
     e.preventDefault();
     const minVal = Number(newPlanMin) || 0;
     const maxVal = Number(newPlanMax) || 0;
+    const isPremiumPlan = editingPlanId === 'premium' || (newPlanCategory === 'Standard' && newPlanName.trim().toLowerCase() === 'premium');
+    const effectiveMaxVal = isPremiumPlan ? 499999 : maxVal;
     const daysVal = Math.max(1, Math.round(Number(newPlanDays) || 30));
     const rateNum = parseFloat(newPlanRate.replace('%', '')) || 0;
 
-    if (!newPlanName.trim() || rateNum <= 0 || minVal <= 0 || maxVal < minVal) {
+    if (!newPlanName.trim() || rateNum <= 0 || minVal <= 0 || effectiveMaxVal < minVal) {
       onNotify('Provide a valid plan name, positive daily ROI %, and min/max range.', 'error');
       return;
     }
@@ -726,7 +728,7 @@ export function AdminConsoleShell({
                 referralBonusPct: p.referralBonusPct ?? refPct,
                 durationDays: daysVal,
                 min: minVal,
-                max: maxVal,
+                max: effectiveMaxVal,
                 isActive: newPlanActive,
                 destination:
                   newPlanCategory === 'Vacation'
@@ -748,7 +750,7 @@ export function AdminConsoleShell({
           actorName: user.name,
           action: `Updated ${newPlanCategory} plan`,
           category: 'plan',
-          detail: `${newPlanName.trim()} · ${formattedRate}/day (${computedMonthly}/mo) · $${minVal.toLocaleString('en-US')}–$${maxVal.toLocaleString('en-US')}`,
+          detail: `${newPlanName.trim()} · ${formattedRate}/day (${computedMonthly}/mo) · ${minVal.toLocaleString('en-US')}–${effectiveMaxVal.toLocaleString('en-US')}`,
         }),
       }));
       setEditingPlanId(null);

@@ -331,7 +331,13 @@ export async function getEmailTemplateByEventKey(
     .where(eq(emailTemplates.eventKey, eventKey))
     .limit(1);
   const r = rows[0];
-  if (!r) return null;
+  if (!r) {
+    // Keep event delivery operational if a template row was removed or a partial
+    // database migration skipped the seed insert. The admin list already uses
+    // these defaults when a row is absent, so event dispatch must do the same.
+    const fallback = DEFAULT_EMAIL_TEMPLATES.find((tpl) => tpl.eventKey === eventKey);
+    return fallback ? { ...fallback, updatedAt: nowStamp() } : null;
+  }
   return {
     id: r.id,
     eventKey: r.eventKey,

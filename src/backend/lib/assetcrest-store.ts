@@ -306,7 +306,7 @@ export const INVESTMENT_PLANS: InvestmentPlanConfig[] = [
     referralBonusPct: 5,
     durationDays: 30,
     min: 100000,
-    max: 1000000,
+    max: 499999,
     isActive: true,
     features: STANDARD_PLAN_FEATURES,
   },
@@ -605,7 +605,9 @@ function migrateInvestmentPlans(rawPlans?: InvestmentPlanConfig[]): InvestmentPl
     // Ensure new seed plans exist if missing, preserving any admin status/edits
     const byId = new Map(rawPlans.map((p) => [p.id, p]));
     const missingDefaults = DEFAULT_INVESTMENT_PLANS.filter((d) => !byId.has(d.id));
-    return missingDefaults.length > 0 ? [...rawPlans, ...missingDefaults] : rawPlans;
+    const syncedPlans = missingDefaults.length > 0 ? [...rawPlans, ...missingDefaults] : rawPlans;
+    // Enforce the Premium tier ceiling for previously persisted platform configurations too.
+    return syncedPlans.map((plan) => plan.id === 'premium' ? { ...plan, max: 499999 } : plan);
   }
 
   const prevActiveById = new Map(rawPlans.map((p) => [p.id, p.isActive]));

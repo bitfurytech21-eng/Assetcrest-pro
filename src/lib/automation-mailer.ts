@@ -323,13 +323,13 @@ export async function dispatchEmailWithSettings(params: {
   let httpStatus: number | undefined;
   let errorMessage: string | undefined;
 
+  let smtpFailed = false;
   const resendConfigured = Boolean(process.env.RESEND_API_KEY?.trim());
   // An explicit Resend API key selects Resend as the primary provider unless webhook-only mode was chosen.
   // Production default: when Resend credentials exist, use Resend automatically regardless
   // of stale database/admin delivery-mode settings. Admin configuration is optional.
   const tryResend = resendConfigured;
   const trySmtp = canSmtp && (settings.mode === 'smtp' || settings.mode === 'auto' || (resendConfigured && smtpFailed));
-  let smtpFailed = false;
   let delivered = false;
   let attemptedDelivery = false;
 
